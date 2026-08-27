@@ -295,7 +295,16 @@
 			"subtitle": "Cambia o crea sessioni",
 			"empty": "Nessuna conversazione ancora.",
 			"msgsCount": "{{count}} messaggi · {{date}}"
-		}
+		},
+		"responding": "Risposta in corso…",
+		"responseInterrupted": "Risposta interrotta. Il contenuto è incompleto.",
+		"contextSettings": "Contesto della conversazione",
+		"contextReferenceHint": "Scegli un riferimento per stimare l’uso della cronologia. Non modifica il limite reale del modello.",
+		"contextReferenceLabel": "Dimensione di riferimento (token)",
+		"contextReferenceScope": "Salvato nelle impostazioni IA per tutte le conversazioni. Stima solo il testo della cronologia, escluse istruzioni di sistema, strumenti e dati del progetto. La compressione resta manuale.",
+		"contextReferenceInvalid": "Inserisci un intero tra 1.000 e 2.000.000.",
+		"contextReferenceReset": "Ripristina 80.000",
+		"contextReferenceSaveFailed": "Impossibile salvare il riferimento del contesto."
 	},
 	"newProjectDialog": {
 		"title": "Nuovo progetto",

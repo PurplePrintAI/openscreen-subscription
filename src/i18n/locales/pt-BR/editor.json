@@ -295,7 +295,16 @@
 			"subtitle": "Alternar ou criar sessões",
 			"empty": "Ainda não há conversas.",
 			"msgsCount": "{{count}} mensagens · {{date}}"
-		}
+		},
+		"responding": "Gerando resposta…",
+		"responseInterrupted": "Resposta interrompida. O conteúdo está incompleto.",
+		"contextSettings": "Contexto da conversa",
+		"contextReferenceHint": "Escolha uma referência para estimar o uso do histórico. Isso não altera o limite real do modelo.",
+		"contextReferenceLabel": "Tamanho de referência (tokens)",
+		"contextReferenceScope": "Salvo nas configurações de IA para todas as conversas. Estima apenas o texto do histórico, sem instruções do sistema, ferramentas ou dados do projeto. A compactação continua manual.",
+		"contextReferenceInvalid": "Digite um inteiro entre 1.000 e 2.000.000.",
+		"contextReferenceReset": "Redefinir para 80.000",
+		"contextReferenceSaveFailed": "Não foi possível salvar a referência de contexto."
 	},
 	"newProjectDialog": {
 		"title": "Novo projeto",

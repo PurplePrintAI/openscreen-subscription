@@ -11,12 +11,14 @@ import { readFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { safeStorage } from "electron";
+import { isValidContextBudget } from "../../src/lib/ai-edition/contextBudget";
 
 export interface LlmConfig {
 	provider: string;
 	model: string;
 	baseUrl?: string;
 	reasoningEffort?: string;
+	contextBudgetTokens?: number;
 	/**
 	 * P2.5 — when false, the agent's write tools are refused and the model is
 	 * told to ask the user for confirmation. Undefined means enabled.
@@ -88,8 +90,14 @@ export class LlmConfigStore {
 	}
 
 	async setConfig(config: LlmConfig): Promise<void> {
-		this.config = config;
+		if (
+			config.contextBudgetTokens !== undefined &&
+			!isValidContextBudget(config.contextBudgetTokens)
+		) {
+			throw new Error("Context reference must be a whole number from 1,000 to 2,000,000 tokens.");
+		}
 		await fs.writeFile(this.configPath, JSON.stringify(config, null, 2), "utf8");
+		this.config = config;
 	}
 
 	/**

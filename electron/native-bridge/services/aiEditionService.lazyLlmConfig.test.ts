@@ -50,6 +50,26 @@ function serviceWithCountingFactory(): { service: AiEditionService; builds: () =
 }
 
 describe("AiEditionService — LLM store resolution is deferred", () => {
+	it("uses the saved context reference on both usage routes without changing the native token estimate", () => {
+		const store = { getConfig: () => ({ contextBudgetTokens: 200_000 }) } as LlmConfigStore;
+		const getContextUsage = vi.fn(() => ({
+			usedTokens: 20_000,
+			budgetTokens: 80_000,
+			ratio: 0.25,
+			fillPercent: 25,
+		}));
+		const service = new AiEditionService({
+			llmConfig: () => store,
+			getContextUsage,
+		} as unknown as AiEditionServiceOptions);
+		expect(service.chatBudget("p", "s")).toEqual({
+			usedTokens: 20_000,
+			budgetTokens: 200_000,
+			ratio: 0.1,
+			fillPercent: 10,
+		});
+		expect(service.chatContextUsage("p", "s")).toEqual(service.chatBudget("p", "s"));
+	});
 	it("reports subscription readiness from the official runtime, without an API credential", async () => {
 		const { service } = serviceWithCountingFactory();
 		const snapshot = await service.llmGetSnapshot();

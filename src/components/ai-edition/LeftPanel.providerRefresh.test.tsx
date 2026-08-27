@@ -10,10 +10,16 @@
 // here: refreshed once on mount, not again when the dialog opens, once more when it closes.
 
 import "@testing-library/jest-dom";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useProjectStore } from "@/lib/ai-edition/store/projectStore";
+import type {
+	AiEditionChatEvent,
+	AiEditionChatResult,
+	AiEditionLlmSnapshot,
+} from "@/native/contracts";
 
-const llmGetSnapshot = vi.fn(() =>
+const llmGetSnapshot = vi.fn<() => Promise<AiEditionLlmSnapshot>>(() =>
 	Promise.resolve({
 		config: null,
 		connectedProviders: [],
@@ -21,12 +27,31 @@ const llmGetSnapshot = vi.fn(() =>
 		credentialSummary: [],
 	}),
 );
+const chatListSessions = vi.fn(
+	async (_projectId: string) =>
+		[] as Array<{
+			id: string;
+			projectId: string;
+			title: string;
+			messageCount: number;
+			createdAt: string;
+		}>,
+);
+const chatSelectSession = vi.fn();
+const chatCreateSession = vi.fn();
+const chatRewind = vi.fn();
+const chatRun = vi.fn<() => Promise<AiEditionChatResult>>();
+let chatEvent: ((event: AiEditionChatEvent) => void) | undefined;
 
 vi.mock("@/native/client", () => ({
 	nativeBridgeClient: {
 		aiEdition: {
 			llmGetSnapshot: () => llmGetSnapshot(),
-			chatListSessions: () => Promise.resolve([]),
+			chatListSessions: (id: string) => chatListSessions(id),
+			chatSelectSession: (...args: unknown[]) => chatSelectSession(...args),
+			chatCreateSession: (...args: unknown[]) => chatCreateSession(...args),
+			chatRun: () => chatRun(),
+			chatRewind: (...args: unknown[]) => chatRewind(...args),
 			chatBudget: () => Promise.resolve(null),
 			llmListProviderModels: () => Promise.resolve({ models: [] }),
 		},
@@ -58,11 +83,20 @@ function CaptureDialogActions() {
 
 beforeEach(() => {
 	llmGetSnapshot.mockClear();
+	chatListSessions.mockReset().mockResolvedValue([]);
+	chatSelectSession.mockReset().mockResolvedValue(null);
+	chatCreateSession.mockReset();
+	chatRewind.mockReset().mockResolvedValue({ success: false, error: "test refused" });
+	chatRun.mockReset();
+	useProjectStore.setState({ projectId: null, document: null });
 	dialogActions = null;
 	// The panel subscribes to streamed chat events on mount; there is no preload in jsdom.
 	(window as unknown as { electronAPI?: unknown }).electronAPI = {
-		onAiEditionChatEvent: () => () => {
-			/* unsubscribe */
+		onAiEditionChatEvent: (callback: (event: AiEditionChatEvent) => void) => {
+			chatEvent = callback;
+			return () => {
+				chatEvent = undefined;
+			};
 		},
 	};
 	// jsdom implements no scrolling at all, and the transcript pins itself to the bottom on
@@ -74,7 +108,160 @@ beforeEach(() => {
 
 afterEach(() => {
 	cleanup();
+	useProjectStore.setState({ projectId: null, document: null });
 	(window as unknown as { electronAPI?: unknown }).electronAPI = undefined;
+});
+
+describe("ChatStripPanel streaming", () => {
+	const session = {
+		id: "session-stream",
+		projectId: "project-stream",
+		title: "Conversation",
+		messageCount: 0,
+		createdAt: "2026-08-27T12:00:00Z",
+	};
+	async function ready(empty = false) {
+		llmGetSnapshot.mockResolvedValue({
+			config: { provider: "openai", model: "test" },
+			connectedProviders: ["openai"],
+			availableProviders: [],
+			credentialSummary: [],
+		});
+		useProjectStore.setState({ projectId: session.projectId });
+		chatListSessions.mockResolvedValue([session]);
+		if (empty) chatListSessions.mockResolvedValueOnce([]);
+		chatSelectSession.mockResolvedValue({ ...session, messages: [] });
+		chatCreateSession.mockResolvedValue(session);
+		render(
+			<EditorDialogsProvider>
+				<LeftPanel active="chat" />
+			</EditorDialogsProvider>,
+		);
+		await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
+		if (!empty) await waitFor(() => expect(chatSelectSession).toHaveBeenCalled());
+	}
+	function send() {
+		fireEvent.change(screen.getByRole("textbox"), { target: { value: "My prompt" } });
+		fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
+	}
+	it("streams Markdown, ignores unrelated events and reconciles one final message with a working rewind ID", async () => {
+		let finish!: (result: AiEditionChatResult) => void;
+		chatRun.mockReturnValue(
+			new Promise((resolve) => {
+				finish = resolve;
+			}),
+		);
+		await ready(true);
+		send();
+		await waitFor(() => expect(chatRun).toHaveBeenCalledOnce());
+		act(() => {
+			chatEvent?.({ kind: "text", sessionId: "other-session", delta: "WRONG" });
+			chatEvent?.({ kind: "text", sessionId: session.id, delta: "**Live" });
+			chatEvent?.({ kind: "text", sessionId: session.id, delta: " answer**" });
+			chatEvent?.({ kind: "thinking", sessionId: session.id, delta: "Trace from this turn" });
+		});
+		await waitFor(() => expect(screen.getByText("Live answer").tagName).toBe("STRONG"));
+		expect(screen.queryByText("WRONG")).toBeNull();
+		expect(screen.getAllByText("My prompt")).toHaveLength(1);
+		await act(async () =>
+			finish({
+				success: true,
+				userMessageCheckpointId: "canonical-user",
+				assistantMessage: {
+					id: "final-assistant",
+					role: "assistant",
+					content: "**Final answer**",
+					createdAt: "2026-08-27T12:00:01Z",
+				},
+			}),
+		);
+		expect(screen.queryByText("Live answer")).toBeNull();
+		expect(screen.getAllByText("Final answer")).toHaveLength(1);
+		expect(screen.getByText("Trace from this turn")).toBeInTheDocument();
+		expect(screen.getAllByRole("article")).toHaveLength(2);
+		fireEvent.click(screen.getByRole("button", { name: "chat.rewindToMessage" }));
+		expect(screen.getByRole("button", { name: "chat.rewindToMessage" })).toHaveAttribute(
+			"aria-expanded",
+			"true",
+		);
+		fireEvent.click(screen.getByRole("button", { name: "chat.rewindConfirm" }));
+		await waitFor(() =>
+			expect(chatRewind).toHaveBeenCalledWith(session.projectId, session.id, "canonical-user"),
+		);
+		act(() => chatEvent?.({ kind: "text", sessionId: session.id, delta: "AFTER FINISH" }));
+		expect(screen.queryByText("AFTER FINISH")).toBeNull();
+	});
+
+	it("keeps an interrupted partial reply, clearly marked incomplete", async () => {
+		let finish!: (result: AiEditionChatResult) => void;
+		chatRun.mockReturnValue(
+			new Promise((resolve) => {
+				finish = resolve;
+			}),
+		);
+		await ready();
+		send();
+		await waitFor(() => expect(chatRun).toHaveBeenCalledOnce());
+		act(() => chatEvent?.({ kind: "text", sessionId: session.id, delta: "Partial reply" }));
+		await act(async () => finish({ success: false, error: "Connection lost" }));
+		expect(screen.getByText("Partial reply")).toBeInTheDocument();
+		expect(screen.getByText("chat.responseInterrupted")).toBeInTheDocument();
+		expect(screen.queryByText("chat.responding")).toBeNull();
+	});
+
+	it("leaves scroll position alone while reading older messages and follows again at the bottom", async () => {
+		let finish!: (result: AiEditionChatResult) => void;
+		chatRun.mockReturnValue(
+			new Promise((resolve) => {
+				finish = resolve;
+			}),
+		);
+		await ready();
+		send();
+		await waitFor(() => expect(chatRun).toHaveBeenCalledOnce());
+		const transcript = screen.getAllByRole("article")[0].parentElement!;
+		Object.defineProperties(transcript, {
+			scrollHeight: { configurable: true, value: 1000 },
+			clientHeight: { configurable: true, value: 200 },
+		});
+		const scroll = vi.spyOn(transcript, "scrollTo");
+		fireEvent.scroll(transcript);
+		act(() => chatEvent?.({ kind: "text", sessionId: session.id, delta: "First chunk" }));
+		await screen.findByText("First chunk");
+		expect(scroll).not.toHaveBeenCalled();
+		transcript.scrollTop = 800;
+		fireEvent.scroll(transcript);
+		act(() => chatEvent?.({ kind: "text", sessionId: session.id, delta: " continued" }));
+		await waitFor(() => expect(scroll).toHaveBeenCalled());
+		await act(async () => finish({ success: false, error: "test ended" }));
+	});
+
+	it("does not apply or display a late response after changing projects", async () => {
+		let finish!: (result: AiEditionChatResult) => void;
+		chatRun.mockReturnValue(
+			new Promise((resolve) => {
+				finish = resolve;
+			}),
+		);
+		await ready();
+		send();
+		await waitFor(() => expect(chatRun).toHaveBeenCalledOnce());
+		chatListSessions.mockResolvedValue([]);
+		act(() => useProjectStore.setState({ projectId: "different-project" }));
+		await act(async () =>
+			finish({
+				success: true,
+				assistantMessage: {
+					id: "late",
+					role: "assistant",
+					content: "LATE RESPONSE",
+					createdAt: "2026-08-27T12:00:01Z",
+				},
+			}),
+		);
+		expect(screen.queryByText("LATE RESPONSE")).toBeNull();
+		expect(screen.queryByText("My prompt")).toBeNull();
+	});
 });
 
 describe("ChatStripPanel, against the lifted provider dialog", () => {

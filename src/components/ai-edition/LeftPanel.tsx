@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Film, Loader2, MessageSquare, Plus, Search, X } from "lucide-react";
+import { ArrowLeft, Check, Film, MessageSquare, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
@@ -18,11 +18,7 @@ import { useChatPromptBus } from "@/lib/ai-edition/store/useChatPromptBus";
 import { splitRoundedTime } from "@/lib/ai-edition/timeline/format";
 import type { AssetTranscriptionView } from "@/lib/ai-edition/transcription/status";
 import { nativeBridgeClient } from "@/native/client";
-import type {
-	AiEditionChatEvent,
-	AiEditionLlmConfig,
-	AiEditionToolCallSummary,
-} from "@/native/contracts";
+import type { AiEditionChatEvent, AiEditionLlmConfig } from "@/native/contracts";
 import { formatBytes } from "@/utils/formatBytes";
 import {
 	getReasoningEffortLabel,
@@ -30,7 +26,9 @@ import {
 	PROVIDER_DEFINITIONS,
 	type ReasoningEffort,
 } from "../../../electron/ai-edition/provider-registry";
+import { type ChatDisplayMessage, ChatMessage } from "./ChatMessage";
 import { ChatWelcome } from "./ChatWelcome";
+import { ContextBudgetDialog } from "./ContextBudgetDialog";
 import { canSendChat } from "./chatAvailability";
 import { ChatHistoryModal, SourceTranscriptModal } from "./Modals";
 import styles from "./NewEditorShell.module.css";
@@ -310,22 +308,6 @@ export function MediaPane() {
 
 export function LeftPanel({ active }: { active: LeftTab }) {
 	return active === "chat" ? <ChatStripPanel /> : <MediaPane />;
-}
-
-interface ChatDisplayMessage {
-	id?: string;
-	role: string;
-	content: string;
-	time?: string;
-	toolCalls?: AiEditionToolCallSummary[];
-	// ponytail: axcut parity — non-null on user messages that have a
-	// rewind-able document snapshot, so the per-message ↩ button shows.
-	checkpointId?: string | null;
-	// ponytail: when an assistant message carries the model's reasoning trace
-	// (Anthropic/MiniMax thinking), the chat renders it as a collapsible block
-	// above the answer. Ephemeral — only present for the turn that streamed it;
-	// reloading a session won't show past traces.
-	thinking?: string;
 }
 
 // Quick-access model picker anchored to the composer's model pill — mirrors
@@ -624,108 +606,6 @@ function ModelQuickPopover({
 	);
 }
 
-// ponytail: collapsible block that renders a model's reasoning trace (the
-// streaming text from Anthropic/MiniMax `thinking` blocks). Default state is
-// the last ~240 chars of the trace, clamped to two lines — the latest
-// reasoning the model produced. Clicking the header toggles into "solid" mode
-// (full text, scrollable). Used both while the reasoning is still streaming
-// (so the user sees the model is alive) and on the completed message (so the
-// trace is still there to revisit, collapsed by default).
-const THINKING_PREVIEW_TAIL_CHARS = 240;
-function ThinkingBlock({
-	text,
-	expanded,
-	onToggle,
-	label,
-}: {
-	text: string;
-	expanded: boolean;
-	onToggle: () => void;
-	label: string;
-}) {
-	const preview =
-		text.length > THINKING_PREVIEW_TAIL_CHARS
-			? `…${text.slice(-THINKING_PREVIEW_TAIL_CHARS)}`
-			: text;
-	return (
-		<button
-			type="button"
-			onClick={onToggle}
-			aria-expanded={expanded}
-			style={{
-				display: "block",
-				width: "100%",
-				textAlign: "left",
-				background: "transparent",
-				border: "1px solid var(--border-soft)",
-				borderRadius: "var(--r-sm)",
-				padding: "6px 8px",
-				marginBottom: 4,
-				color: expanded ? "var(--fg-2)" : "var(--muted)",
-				font: "400 11px/1.5 var(--font-body)",
-				cursor: "pointer",
-			}}
-		>
-			<div
-				style={{
-					display: "flex",
-					alignItems: "center",
-					gap: 4,
-					marginBottom: expanded ? 4 : 0,
-					color: "var(--muted)",
-					font: "500 10px/1 var(--font-mono)",
-				}}
-			>
-				<svg
-					width={10}
-					height={10}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					style={{
-						transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
-						transition: "transform 120ms ease",
-						flex: "0 0 auto",
-					}}
-					aria-hidden="true"
-				>
-					<polyline points="9 6 15 12 9 18" />
-				</svg>
-				<span>{label}</span>
-			</div>
-			{expanded ? (
-				<div
-					style={{
-						maxHeight: 220,
-						overflow: "auto",
-						whiteSpace: "pre-wrap",
-						wordBreak: "break-word",
-						font: "400 11px/1.5 var(--font-mono)",
-					}}
-				>
-					{text}
-				</div>
-			) : (
-				<div
-					style={{
-						display: "-webkit-box",
-						WebkitLineClamp: 2,
-						WebkitBoxOrient: "vertical",
-						overflow: "hidden",
-						whiteSpace: "pre-wrap",
-						wordBreak: "break-word",
-					}}
-				>
-					{preview}
-				</div>
-			)}
-		</button>
-	);
-}
-
 function ChatStripPanel() {
 	const t = useScopedT("editor");
 	const tc = useScopedT("common");
@@ -761,13 +641,18 @@ function ChatStripPanel() {
 	// start; deltas append through the chat-event subscription; once the run
 	// resolves we copy it onto the assistant message and clear it.
 	const [thinkingText, setThinkingText] = useState("");
-	const [thinkingExpanded, setThinkingExpanded] = useState(false);
-	// sessionId of the in-flight run — late events for prior runs (or for
-	// other windows) are ignored so a stale stream can't pollute the new turn.
-	const thinkingRunSessionRef = useRef<string | null>(null);
-	// Per-message expand state for completed turns. Using a Set keeps the
-	// default-collapsed preview lightweight and the click-to-expand obvious.
-	const [thinkingExpandedIds, setThinkingExpandedIds] = useState<Set<string>>(() => new Set());
+	const [streamText, setStreamText] = useState("");
+	const projectIdRef = useRef(projectId);
+	projectIdRef.current = projectId;
+	const activeRunRef = useRef<{
+		projectId: string;
+		sessionId: string | null;
+		text: string;
+		thinking: string;
+	} | null>(null);
+	const flushFrameRef = useRef<number | null>(null);
+	const followLatestRef = useRef(true);
+	const [contextBudgetOpen, setContextBudgetOpen] = useState(false);
 	const [reasoningOpen, setReasoningOpen] = useState(false);
 	const reasoningButtonRef = useRef<HTMLButtonElement | null>(null);
 	const [reasoningMenuRect, setReasoningMenuRect] = useState<{
@@ -800,6 +685,7 @@ function ChatStripPanel() {
 	const refreshSessions = useCallback(async (pid: string, preferFirst = false) => {
 		try {
 			const list = await nativeBridgeClient.aiEdition.chatListSessions(pid);
+			if (projectIdRef.current !== pid) return;
 			setSessions(list);
 			if (list.length === 0) {
 				setActiveSessionId(null);
@@ -822,28 +708,44 @@ function ChatStripPanel() {
 		if (!providerSettingsOpen) void refreshLlm();
 	}, [providerSettingsOpen, refreshLlm]);
 
-	// ponytail: subscribe to streamed chat events so the reasoning trace (and
-	// any future streaming text deltas) lands live instead of arriving all at
-	// once when chatRun resolves. We only act on `thinking` here — text deltas
-	// are ignored in the renderer today because the chat already renders the
-	// final assistant text on chatRun resolve, and a parallel live stream
-	// would race the final message. Add `text` handling when that flow lands.
+	// Coalesce IPC chunks into one visual update per frame. The final RPC response
+	// replaces the live row; refs keep the final text/reasoning out of stale closures.
 	useEffect(() => {
-		const unsubChatEvent = window.electronAPI.onAiEditionChatEvent((event: AiEditionChatEvent) => {
-			if (event.kind !== "thinking") return;
-			if (event.sessionId !== thinkingRunSessionRef.current) return;
-			setThinkingText((prev) => prev + event.delta);
+		const unsubscribe = window.electronAPI.onAiEditionChatEvent((event: AiEditionChatEvent) => {
+			const run = activeRunRef.current;
+			if (!run || event.sessionId !== run.sessionId || projectIdRef.current !== run.projectId)
+				return;
+			if (event.kind === "text") run.text += event.delta;
+			else if (event.kind === "thinking") run.thinking += event.delta;
+			else return;
+			if (flushFrameRef.current !== null) return;
+			flushFrameRef.current = requestAnimationFrame(() => {
+				flushFrameRef.current = null;
+				if (activeRunRef.current !== run) return;
+				setStreamText(run.text);
+				setThinkingText(run.thinking);
+			});
 		});
-		return unsubChatEvent;
+		return () => {
+			unsubscribe();
+			activeRunRef.current = null;
+			if (flushFrameRef.current !== null) cancelAnimationFrame(flushFrameRef.current);
+		};
 	}, []);
 
 	useEffect(() => {
-		if (!projectId) {
-			setSessions([]);
-			setActiveSessionId(null);
-			setMessages([]);
-			return;
-		}
+		activeRunRef.current = null;
+		if (flushFrameRef.current !== null) cancelAnimationFrame(flushFrameRef.current);
+		flushFrameRef.current = null;
+		setStreamText("");
+		setThinkingText("");
+		setBusy(false);
+		followLatestRef.current = true;
+		setSessions([]);
+		setActiveSessionId(null);
+		activeSessionIdRef.current = null;
+		setMessages([]);
+		if (!projectId) return;
 		void refreshSessions(projectId, true);
 	}, [projectId, refreshSessions]);
 
@@ -852,12 +754,16 @@ function ChatStripPanel() {
 			setMessages([]);
 			return;
 		}
+		followLatestRef.current = true;
+		if (activeRunRef.current?.sessionId === activeSessionId) return;
+		let cancelled = false;
 		void (async () => {
 			try {
 				const session = await nativeBridgeClient.aiEdition.chatSelectSession(
 					projectId,
 					activeSessionId,
 				);
+				if (cancelled || activeRunRef.current?.sessionId === activeSessionId) return;
 				if (session) {
 					setMessages(
 						session.messages.map((m) => ({
@@ -876,15 +782,21 @@ function ChatStripPanel() {
 				// ponytail: silent — shim mode
 			}
 		})();
+		return () => {
+			cancelled = true;
+		};
 	}, [projectId, activeSessionId]);
 
+	// Do not pull a reader back to the bottom while they inspect an earlier message.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: content changes trigger scrolling.
 	useEffect(() => {
-		scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-	});
+		if (followLatestRef.current)
+			scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "auto" });
+	}, [messages, streamText, thinkingText, busy]);
 
 	const send = async (overrideText?: string) => {
 		const text = (overrideText ?? input).trim();
-		if (!projectId || !text || busy) return;
+		if (!projectId || !text || busy || activeRunRef.current) return;
 		// ponytail: nothing to talk to. Bounce to the settings modal instead of
 		// firing a doomed request. The composer is disabled in this state too,
 		// but Auto-enhance calls send() directly and Enter can slip through.
@@ -895,15 +807,11 @@ function ChatStripPanel() {
 		}
 		setInput("");
 		setBusy(true);
-		// ponytail: prepare the live reasoning-trace accumulator. Late events
-		// from a previous run (or from another panel/window) won't match this
-		// sessionId and are dropped by the subscription above.
+		const run = { projectId, sessionId: activeSessionId, text: "", thinking: "" };
+		activeRunRef.current = run;
+		followLatestRef.current = true;
+		setStreamText("");
 		setThinkingText("");
-		setThinkingExpanded(false);
-		thinkingRunSessionRef.current = null;
-		// ponytail: pre-seed the user message so the rewind ↩ button is
-		// available before the server confirms. Mirrors axcut's
-		// `before-message` checkpoint that runChat records in chat-service.
 		const optimisticUserId = `local_${Date.now()}_u`;
 		setMessages((prev) => [
 			...prev,
@@ -911,8 +819,8 @@ function ChatStripPanel() {
 				id: optimisticUserId,
 				role: "user",
 				content: text,
-				time: new Date().toLocaleTimeString(),
-				checkpointId: optimisticUserId,
+				time: new Date().toISOString(),
+				checkpointId: null,
 			},
 		]);
 		try {
@@ -923,12 +831,12 @@ function ChatStripPanel() {
 			if (!sessionId) {
 				const created = await nativeBridgeClient.aiEdition.chatCreateSession(projectId);
 				sessionId = created.id;
+				if (activeRunRef.current !== run || projectIdRef.current !== projectId) return;
+				activeSessionIdRef.current = sessionId;
 				setSessions((prev) => [...prev, created]);
 				setActiveSessionId(sessionId);
 			}
-			// ponytail: start collecting the live reasoning trace for THIS run —
-			// the subscription only appends deltas whose sessionId matches.
-			thinkingRunSessionRef.current = sessionId;
+			run.sessionId = sessionId;
 			// Send the current document snapshot so the agent can run edit tools
 			// against it (P1). Falls back to text-only chat when no doc is open.
 			// `runAgentTurn` reads the document AND the revision it is at from one snapshot
@@ -937,6 +845,7 @@ function ChatStripPanel() {
 			const { result, applyDocument } = await runAgentTurn((documentSnapshot) =>
 				nativeBridgeClient.aiEdition.chatRun(projectId, sessionId, text, documentSnapshot),
 			);
+			if (activeRunRef.current !== run || projectIdRef.current !== projectId) return;
 			const assistant = result.assistantMessage;
 			if (result.success && assistant) {
 				if (result.document) {
@@ -977,36 +886,56 @@ function ChatStripPanel() {
 						});
 					}
 				}
+				if (activeRunRef.current !== run || projectIdRef.current !== projectId) return;
 				setMessages((prev) => [
-					...prev,
+					...prev.map((m) =>
+						m.id === optimisticUserId
+							? {
+									...m,
+									id: result.userMessageCheckpointId ?? m.id,
+									checkpointId: result.userMessageCheckpointId ?? null,
+								}
+							: m,
+					),
 					{
+						id: assistant.id,
 						role: "assistant",
 						content: assistant.content,
-						time: new Date().toLocaleTimeString(),
+						time: assistant.createdAt,
 						toolCalls: assistant.toolCalls,
-						// ponytail: snapshot the live reasoning trace onto the
-						// finished message so it can be revisited (collapsed by
-						// default, click-to-expand) instead of vanishing. The
-						// live accumulator is cleared in `finally`.
-						thinking: thinkingText || undefined,
+						thinking: run.thinking || undefined,
 					},
 				]);
 				void refreshSessions(projectId);
 			} else {
-				toast.error(result.error ?? t("chat.chatFailed"));
+				throw new Error(result.error ?? t("chat.chatFailed"));
 			}
 		} catch (err) {
+			if (activeRunRef.current !== run || projectIdRef.current !== projectId) return;
+			if (run.text)
+				setMessages((prev) => [
+					...prev,
+					{
+						id: "partial_" + optimisticUserId,
+						role: "assistant",
+						content: run.text,
+						thinking: run.thinking || undefined,
+						time: new Date().toISOString(),
+						interrupted: true,
+					},
+				]);
 			toast.error(t("chat.chatFailed"), {
 				description: err instanceof Error ? err.message : String(err),
 			});
 		} finally {
-			setBusy(false);
-			// ponytail: stop accepting thinking deltas and drop the in-flight
-			// preview — the snapshot was either attached to the assistant
-			// message above, or there's no message to attach it to (failure).
-			thinkingRunSessionRef.current = null;
-			setThinkingText("");
-			setThinkingExpanded(false);
+			if (activeRunRef.current === run) {
+				activeRunRef.current = null;
+				if (flushFrameRef.current !== null) cancelAnimationFrame(flushFrameRef.current);
+				flushFrameRef.current = null;
+				setBusy(false);
+				setStreamText("");
+				setThinkingText("");
+			}
 		}
 	};
 
@@ -1035,6 +964,13 @@ function ChatStripPanel() {
 		messageId: string;
 		anchor: { left: number; bottom: number } | null;
 	} | null>(null);
+	const openRewind = useCallback((messageId: string, button: HTMLButtonElement) => {
+		const rect = button.getBoundingClientRect();
+		setRewindFor({
+			messageId,
+			anchor: { left: rect.left + rect.width / 2, bottom: window.innerHeight - rect.top + 6 },
+		});
+	}, []);
 	const confirmRewind = useCallback(
 		async (messageId: string) => {
 			if (!projectId || !activeSessionId) return;
@@ -1179,11 +1115,16 @@ function ChatStripPanel() {
 	// visible. The renderer estimate is only shown until the first answer arrives --
 	// including in web builds, where the shim answers with its own transcript estimate
 	// rather than leaving the fallback in place.
-	const budget = useChatBudget({ projectId, sessionId: activeSessionId, messages });
+	const budget = useChatBudget({
+		projectId,
+		sessionId: activeSessionId,
+		messages,
+		budgetTokens: llmConfig?.contextBudgetTokens,
+	});
 
 	const [compactNowPending, setCompactNowPending] = useState(false);
 	const compactNow = useCallback(async () => {
-		if (!projectId || !activeSessionId || compactNowPending) return;
+		if (!projectId || !activeSessionId || compactNowPending || activeRunRef.current) return;
 		setCompactNowPending(true);
 		try {
 			const result = await nativeBridgeClient.aiEdition.chatCompact(projectId, activeSessionId);
@@ -1212,7 +1153,7 @@ function ChatStripPanel() {
 	}, [projectId, activeSessionId, compactNowPending, t]);
 
 	const newChat = useCallback(async () => {
-		if (!projectId) return;
+		if (!projectId || activeRunRef.current) return;
 		try {
 			const created = await nativeBridgeClient.aiEdition.chatCreateSession(projectId);
 			setSessions((prev) => [...prev, created]);
@@ -1226,12 +1167,13 @@ function ChatStripPanel() {
 	}, [projectId, t]);
 
 	const selectSession = useCallback((id: string) => {
+		if (activeRunRef.current) return;
 		setActiveSessionId(id);
 	}, []);
 
 	const handleDelete = useCallback(
 		async (id: string) => {
-			if (!projectId) return;
+			if (!projectId || activeRunRef.current) return;
 			try {
 				const res = await nativeBridgeClient.aiEdition.chatDeleteSession(projectId, id);
 				if (!res.success) return;
@@ -1303,16 +1245,19 @@ function ChatStripPanel() {
 			<div className={styles.panelHeader}>
 				<div className={styles.chatStrip}>
 					<div className={styles.chatStripRow}>
-						<span
+						<button
+							type="button"
+							aria-label={t("chat.contextSettings")}
+							onClick={() => (llmConfig ? setContextBudgetOpen(true) : openProviderSettings())}
 							className={styles.ctxPill}
 							title={t("chat.contextTooltip", {
-								usedTokens: budget.usedTokens,
-								budgetTokens: budget.budgetTokens,
+								usedTokens: budget.usedTokens.toLocaleString(),
+								budgetTokens: budget.budgetTokens.toLocaleString(),
 							})}
 						>
 							<span className={styles.d} aria-hidden />
 							{t("chat.contextPercent", { percent: Math.min(100, Math.round(budget.ratio * 100)) })}
-						</span>
+						</button>
 						<span className={styles.stripActions}>
 							<button
 								type="button"
@@ -1320,7 +1265,7 @@ function ChatStripPanel() {
 								aria-label={t("chat.compactContext")}
 								className={styles.iconBtn}
 								onClick={() => void compactNow()}
-								disabled={!activeSessionId || compactNowPending}
+								disabled={!activeSessionId || compactNowPending || busy}
 							>
 								<svg
 									width={14}
@@ -1363,6 +1308,7 @@ function ChatStripPanel() {
 								title={t("chat.history")}
 								aria-label={t("chat.history")}
 								onClick={() => setChatsOpen(true)}
+								disabled={busy}
 							>
 								<svg
 									width={14}
@@ -1384,6 +1330,7 @@ function ChatStripPanel() {
 								title={t("chat.newConversation")}
 								aria-label={t("chat.newConversation")}
 								onClick={newChat}
+								disabled={busy}
 							>
 								<svg
 									width={14}
@@ -1539,7 +1486,14 @@ function ChatStripPanel() {
 				) : null}
 			</div>
 
-			<div className={styles.panelBody} ref={scrollRef}>
+			<div
+				className={styles.panelBody + " " + styles.chatTranscript}
+				ref={scrollRef}
+				onScroll={(event) => {
+					const el = event.currentTarget;
+					followLatestRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+				}}
+			>
 				{!canChat && messages.length === 0 ? (
 					<ChatWelcome onOpenProviderSettings={openProviderSettings} />
 				) : messages.length === 0 ? (
@@ -1556,200 +1510,40 @@ function ChatStripPanel() {
 					</p>
 				) : (
 					<>
-						{messages.map((m, i) => (
-							<div className={styles.msg} key={i}>
-								<div className={styles.msgHead}>
-									<span className={styles.msgAuthor}>
-										{m.role === "user" ? t("chat.authorUser") : t("chat.authorAssistant")}
-									</span>
-									{m.time ? (
-										<span
-											className="right"
-											style={{ font: "500 10px/1 var(--font-mono)", color: "var(--muted)" }}
-										>
-											{m.time}
-										</span>
-									) : null}
-								</div>
-								{m.thinking && m.role !== "user" ? (
-									<ThinkingBlock
-										text={m.thinking}
-										expanded={m.id !== undefined && thinkingExpandedIds.has(m.id)}
-										onToggle={() => {
-											if (!m.id) return;
-											setThinkingExpandedIds((prev) => {
-												const next = new Set(prev);
-												if (next.has(m.id!)) {
-													next.delete(m.id!);
-												} else {
-													next.add(m.id!);
-												}
-												return next;
-											});
-										}}
-										label={t("chat.thinking")}
-									/>
-								) : null}
-								<div className={styles.msgBubble}>{m.content}</div>
-								<div
-									style={{
-										display: "flex",
-										alignItems: "center",
-										gap: 4,
-										marginTop: 4,
-										justifyContent: "flex-end",
-									}}
-								>
-									{m.role === "user" && m.checkpointId ? (
-										<button
-											type="button"
-											data-rewind-trigger="true"
-											title={t("chat.rewindToMessage")}
-											aria-label={t("chat.rewindToMessage")}
-											aria-expanded={rewindFor?.messageId === m.id}
-											onClick={(event) => {
-												const rect = event.currentTarget.getBoundingClientRect();
-												setRewindFor({
-													messageId: m.id ?? "",
-													anchor: {
-														left: rect.left + rect.width / 2,
-														bottom: window.innerHeight - rect.top + 6,
-													},
-												});
-											}}
-											style={{
-												width: 22,
-												height: 22,
-												display: "inline-flex",
-												alignItems: "center",
-												justifyContent: "center",
-												background: "transparent",
-												border: "1px solid var(--border-soft)",
-												borderRadius: "var(--r-sm)",
-												color: "var(--fg-2)",
-												cursor: "pointer",
-											}}
-										>
-											<svg
-												width={12}
-												height={12}
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-											>
-												<path d="M3 7v6h6" />
-												<path d="M21 17a9 9 0 0 0-15-6.7L3 13" />
-											</svg>
-										</button>
-									) : null}
-									<button
-										type="button"
-										title={t("chat.copyMessage")}
-										aria-label={t("chat.copyMessage")}
-										onClick={() => {
-											void navigator.clipboard.writeText(m.content).then(
-												() => toast.success(t("chat.copiedToClipboard")),
-												() => toast.error(t("chat.copyFailed")),
-											);
-										}}
-										style={{
-											width: 22,
-											height: 22,
-											display: "inline-flex",
-											alignItems: "center",
-											justifyContent: "center",
-											background: "transparent",
-											border: "1px solid var(--border-soft)",
-											borderRadius: "var(--r-sm)",
-											color: "var(--fg-2)",
-											cursor: "pointer",
-										}}
-									>
-										<svg
-											width={12}
-											height={12}
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											strokeWidth="2"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										>
-											<rect x="9" y="9" width="13" height="13" rx="2" />
-											<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-										</svg>
-									</button>
-								</div>
-								{m.toolCalls?.length ? (
-									<div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 2 }}>
-										{m.toolCalls.map((call, j) => (
-											<div
-												key={j}
-												style={{
-													font: "500 10px/1.5 var(--font-mono)",
-													color: "var(--success)",
-												}}
-											>
-												{t("chat.appliedPrefix")} {call.summary}
-											</div>
-										))}
-									</div>
-								) : null}
-							</div>
+						{messages.map((message, i) => (
+							<ChatMessage
+								key={message.id ?? i}
+								message={message}
+								busy={busy}
+								actionsOpen={rewindFor?.messageId === message.id}
+								onRewind={openRewind}
+							/>
 						))}
 						{busy ? (
-							<div className={styles.msg} aria-live="polite">
-								<div className={styles.msgHead}>
-									<span className={styles.msgAuthor}>{t("chat.authorAssistant")}</span>
-								</div>
-								{thinkingText ? (
-									<div
-										style={{
-											display: "flex",
-											alignItems: "flex-start",
-											gap: 6,
-										}}
-									>
-										<Loader2
-											size={12}
-											className="animate-spin"
-											style={{
-												marginTop: 10,
-												flex: "0 0 auto",
-												color: "var(--muted)",
-											}}
-										/>
-										<div style={{ flex: 1, minWidth: 0 }}>
-											<ThinkingBlock
-												text={thinkingText}
-												expanded={thinkingExpanded}
-												onToggle={() => setThinkingExpanded((v) => !v)}
-												label={t("chat.thinking")}
-											/>
-										</div>
-									</div>
-								) : (
-									<div
-										className={styles.msgBubble}
-										style={{ color: "var(--muted)", fontStyle: "italic" }}
-									>
-										<Loader2
-											size={12}
-											className="animate-spin"
-											style={{ marginRight: 6, verticalAlign: "middle" }}
-										/>
-										{t("chat.thinking")}
-									</div>
-								)}
-							</div>
+							<ChatMessage
+								streaming
+								message={{ role: "assistant", content: streamText, thinking: thinkingText }}
+							/>
 						) : null}
 					</>
 				)}
 			</div>
 
+			{contextBudgetOpen && llmConfig ? (
+				<ContextBudgetDialog
+					value={budget.budgetTokens}
+					onClose={() => setContextBudgetOpen(false)}
+					onSave={async (tokens) => {
+						const snapshot = await nativeBridgeClient.aiEdition.llmGetSnapshot();
+						if (!snapshot.config) throw new Error(t("chat.composerDisabledNoProvider"));
+						const config = { ...snapshot.config, contextBudgetTokens: tokens };
+						const result = await nativeBridgeClient.aiEdition.llmSetConfig(config);
+						if (!result.success)
+							throw new Error(result.error ?? t("chat.contextReferenceSaveFailed"));
+						setLlmConfig(config);
+					}}
+				/>
+			) : null}
 			<div className={styles.chatInput}>
 				<textarea
 					placeholder={

@@ -80,4 +80,30 @@ Preserve dynamic FFmpeg libraries and their source/build references. Do not swap
 the LGPL build for GPL/nonfree variants. Third-party components retain their own
 licenses; this document does not replace them.
 
+## Chat UI changes in subscription.2
+
+The context badge opens a configurable **reference**, saved as
+`contextBudgetTokens` in the existing AI configuration. It applies across
+conversations; valid values are whole numbers from 1,000 to 2,000,000, with an
+80,000 default for existing configurations. This is not the provider's actual
+context limit. It estimates history text only, excludes system prompts, tool
+schemas and project data, and changes neither history selection nor manual
+compaction behavior.
+
+User messages align right; assistant Markdown aligns left. Timestamps, copy and
+rewind appear on hover or keyboard focus (always visible on touch devices).
+Text and reasoning chunks are coalesced per animation frame; the completed RPC
+replaces the live row without a duplicate. Interrupted partial text is marked
+incomplete. Late replies from a different project are ignored. Reading older
+messages suspends automatic scrolling until the reader returns to the bottom.
+
+Markdown uses `react-markdown` and `remark-gfm`, without raw HTML, remote image
+loading, local-file links or custom URL protocols. Original Markdown is copied
+to the clipboard. Message checkpoints and the confirmation before rewind remain
+in place; the optimistic user ID is replaced by the server checkpoint ID.
+
+The desktop visual smoke test uses an isolated profile and a local deterministic
+OpenAI-compatible SSE server, not the user's subscription or real project data.
+It is a UI/IPC test, not evidence of a new live subscription inference test.
+
 Fork support: https://github.com/PurplePrintAI/openscreen-subscription/issues

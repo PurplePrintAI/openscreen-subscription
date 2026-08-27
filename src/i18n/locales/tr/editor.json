@@ -295,7 +295,16 @@
 			"subtitle": "Oturum değiştir veya oluştur",
 			"empty": "Henüz konuşma yok.",
 			"msgsCount": "{{count}} mesaj · {{date}}"
-		}
+		},
+		"responding": "Yanıt hazırlanıyor…",
+		"responseInterrupted": "Yanıt kesildi. İçerik henüz tamamlanmadı.",
+		"contextSettings": "Sohbet bağlamı",
+		"contextReferenceHint": "Tahmini geçmiş kullanımı için bir referans seçin. Modelin gerçek bağlam sınırı değişmez.",
+		"contextReferenceLabel": "Referans boyutu (token)",
+		"contextReferenceScope": "Tüm sohbetler için AI ayarlarına kaydedilir. Yalnızca geçmiş metni tahmin edilir; sistem istemleri, araçlar ve proje verileri dahil değildir. Sıkıştırma elle yapılır.",
+		"contextReferenceInvalid": "1.000 ile 2.000.000 arasında bir tam sayı girin.",
+		"contextReferenceReset": "80.000 olarak sıfırla",
+		"contextReferenceSaveFailed": "Bağlam referansı kaydedilemedi."
 	},
 	"newProjectDialog": {
 		"title": "Yeni proje",

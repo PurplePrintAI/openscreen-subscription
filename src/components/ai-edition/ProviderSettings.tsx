@@ -136,6 +136,7 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 				reasoningEffort:
 					existing?.reasoningEffort ?? (def.authKind === "subscription" ? "medium" : undefined),
 				allowAgentEdits: existing?.allowAgentEdits,
+				contextBudgetTokens: existing?.contextBudgetTokens ?? prev?.contextBudgetTokens,
 			};
 		});
 		setMode("form");

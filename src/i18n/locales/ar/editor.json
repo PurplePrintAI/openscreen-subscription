@@ -295,7 +295,16 @@
 			"subtitle": "التبديل بين الجلسات أو إنشاء جلسة جديدة",
 			"empty": "لا توجد محادثات بعد.",
 			"msgsCount": "{{count}} رسالة · {{date}}"
-		}
+		},
+		"responding": "جارٍ إنشاء الرد…",
+		"responseInterrupted": "انقطع الرد. هذا النص غير مكتمل.",
+		"contextSettings": "سياق المحادثة",
+		"contextReferenceHint": "اختر قيمة مرجعية لتقدير استخدام السجل. لا يغيّر ذلك حد السياق الفعلي للنموذج.",
+		"contextReferenceLabel": "الحجم المرجعي (رموز)",
+		"contextReferenceScope": "يُحفظ في إعدادات الذكاء الاصطناعي لجميع المحادثات. يقدّر نص السجل فقط دون تعليمات النظام والأدوات وبيانات المشروع. يظل الاختصار يدويًا.",
+		"contextReferenceInvalid": "أدخل عددًا صحيحًا من 1,000 إلى 2,000,000.",
+		"contextReferenceReset": "إعادة الضبط إلى 80,000",
+		"contextReferenceSaveFailed": "تعذر حفظ القيمة المرجعية للسياق."
 	},
 	"newProjectDialog": {
 		"title": "مشروع جديد",

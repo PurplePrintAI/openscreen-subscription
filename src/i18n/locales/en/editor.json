@@ -295,7 +295,16 @@
 			"subtitle": "Switch or create sessions",
 			"empty": "No conversations yet.",
 			"msgsCount": "{{count}} msgs · {{date}}"
-		}
+		},
+		"responding": "Responding…",
+		"responseInterrupted": "Response interrupted. This is an incomplete answer.",
+		"contextSettings": "Conversation context",
+		"contextReferenceHint": "Choose a reference for estimated history usage. This does not change the model’s actual context limit.",
+		"contextReferenceLabel": "Reference size (tokens)",
+		"contextReferenceScope": "Saved in AI settings for all conversations. Estimates history text only, excluding system prompts, tools and project data. Compaction remains manual.",
+		"contextReferenceInvalid": "Enter a whole number from 1,000 to 2,000,000.",
+		"contextReferenceReset": "Reset to 80,000",
+		"contextReferenceSaveFailed": "Could not save the context reference."
 	},
 	"newProjectDialog": {
 		"title": "New project",

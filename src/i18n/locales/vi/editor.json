@@ -295,7 +295,16 @@
 			"subtitle": "Chuyển đổi hoặc tạo phiên",
 			"empty": "Chưa có cuộc trò chuyện nào.",
 			"msgsCount": "{{count}} tin nhắn · {{date}}"
-		}
+		},
+		"responding": "Đang soạn câu trả lời…",
+		"responseInterrupted": "Phản hồi bị gián đoạn. Nội dung chưa hoàn tất.",
+		"contextSettings": "Ngữ cảnh hội thoại",
+		"contextReferenceHint": "Chọn mốc tham chiếu để ước tính mức dùng lịch sử. Giới hạn ngữ cảnh thực của mô hình không thay đổi.",
+		"contextReferenceLabel": "Kích thước tham chiếu (token)",
+		"contextReferenceScope": "Lưu trong cài đặt AI cho mọi hội thoại. Chỉ ước tính văn bản lịch sử, không gồm chỉ dẫn hệ thống, công cụ và dữ liệu dự án. Việc nén vẫn thực hiện thủ công.",
+		"contextReferenceInvalid": "Nhập số nguyên từ 1.000 đến 2.000.000.",
+		"contextReferenceReset": "Đặt lại thành 80.000",
+		"contextReferenceSaveFailed": "Không thể lưu mốc tham chiếu ngữ cảnh."
 	},
 	"newProjectDialog": {
 		"title": "Dự án mới",

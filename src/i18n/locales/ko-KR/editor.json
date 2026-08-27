@@ -295,7 +295,16 @@
 			"subtitle": "세션 전환 또는 새로 만들기",
 			"empty": "아직 대화가 없습니다.",
 			"msgsCount": "메시지 {{count}}개 · {{date}}"
-		}
+		},
+		"responding": "답변 작성 중…",
+		"responseInterrupted": "응답이 중단되었습니다. 아직 완성되지 않은 답변입니다.",
+		"contextSettings": "대화 컨텍스트",
+		"contextReferenceHint": "대화 사용률을 계산할 기준입니다. 모델의 실제 컨텍스트 한도를 변경하지 않습니다.",
+		"contextReferenceLabel": "기준 크기 (토큰)",
+		"contextReferenceScope": "AI 설정에 저장되어 모든 대화에 적용됩니다. 대화 텍스트만 추정하며 시스템 프롬프트·도구·프로젝트 데이터는 제외합니다. 압축은 수동으로 실행됩니다.",
+		"contextReferenceInvalid": "1,000부터 2,000,000까지의 정수를 입력하세요.",
+		"contextReferenceReset": "80,000으로 초기화",
+		"contextReferenceSaveFailed": "컨텍스트 기준을 저장하지 못했습니다."
 	},
 	"newProjectDialog": {
 		"title": "새 프로젝트",

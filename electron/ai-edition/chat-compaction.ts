@@ -13,6 +13,7 @@
 // retuned. Until the app can ask a provider for the real window, the only
 // honest trigger is a person deciding they want it, which is the button.
 
+import { DEFAULT_CONTEXT_BUDGET_TOKENS } from "../../src/lib/ai-edition/contextBudget";
 import type { AiEditionChatMessage } from "../../src/native/contracts";
 
 // ponytail: rough 4-chars-per-token heuristic. Models vary, but for a
@@ -33,7 +34,7 @@ export interface CompactionBudget {
  * never regain a decision: read it as "the conversation is about this big",
  * not as "you are this close to a limit".
  */
-export const DEFAULT_BUDGET_TOKENS = 80_000;
+export const DEFAULT_BUDGET_TOKENS = DEFAULT_CONTEXT_BUDGET_TOKENS;
 
 /** Estimate token count for a flat list of messages. */
 export function estimateHistoryTokens(messages: AiEditionChatMessage[]): number {

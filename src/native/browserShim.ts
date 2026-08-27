@@ -4,6 +4,7 @@
 // rapid iteration without the Electron window overhead.
 
 import { PROVIDER_DEFINITIONS } from "../../electron/ai-edition/provider-registry";
+import { isValidContextBudget, resolveContextBudget } from "../lib/ai-edition/contextBudget";
 import { axcutSchemaVersion, migrateRawDocumentToCurrent } from "../lib/ai-edition/schema";
 import { nativeBridgeClient as realClient } from "./client";
 
@@ -245,6 +246,7 @@ function createShimBridgeClient() {
 		baseUrl?: string;
 		reasoningEffort?: string;
 		allowAgentEdits?: boolean;
+		contextBudgetTokens?: number;
 	};
 	const credentialsByProvider = new Map<string, { apiKey: string }>();
 	let activeConfig: ShimLlmConfig | null = null;
@@ -436,6 +438,12 @@ function createShimBridgeClient() {
 			},
 			llmGetSnapshot: () => Promise.resolve(buildLlmSnapshot()),
 			llmSetConfig: (config: ShimLlmConfig) => {
+				if (
+					config.contextBudgetTokens !== undefined &&
+					!isValidContextBudget(config.contextBudgetTokens)
+				) {
+					return Promise.resolve({ success: false, error: "Invalid context reference." });
+				}
 				activeConfig = config;
 				saveLlmState();
 				return Promise.resolve({ success: true });
@@ -593,7 +601,8 @@ function createShimBridgeClient() {
 				if (!s) return Promise.resolve(null);
 				const chars = s.messages.reduce((acc, m) => acc + m.content.length, 0);
 				const used = Math.ceil(chars / 4);
-				return Promise.resolve({ usedTokens: used, budgetTokens: 80_000, ratio: used / 80_000 });
+				const budgetTokens = resolveContextBudget(activeConfig?.contextBudgetTokens);
+				return Promise.resolve({ usedTokens: used, budgetTokens, ratio: used / budgetTokens });
 			},
 			chatCompact: (projectId: string, sessionId: string) => {
 				// ponytail: browser shim is a no-op compaction — it just hand-summarizes

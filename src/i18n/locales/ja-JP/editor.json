@@ -295,7 +295,16 @@
 			"subtitle": "セッションを切り替えるか新規作成",
 			"empty": "まだ会話はありません。",
 			"msgsCount": "{{count}} 件のメッセージ · {{date}}"
-		}
+		},
+		"responding": "回答を作成中…",
+		"responseInterrupted": "応答が中断されました。未完成の回答です。",
+		"contextSettings": "会話コンテキスト",
+		"contextReferenceHint": "履歴の推定使用量の基準です。モデルの実際のコンテキスト上限は変わりません。",
+		"contextReferenceLabel": "基準サイズ（トークン）",
+		"contextReferenceScope": "AI設定に保存され、すべての会話に適用されます。履歴テキストのみを推定し、システムプロンプト、ツール、プロジェクトデータは含みません。圧縮は手動です。",
+		"contextReferenceInvalid": "1,000～2,000,000の整数を入力してください。",
+		"contextReferenceReset": "80,000に戻す",
+		"contextReferenceSaveFailed": "コンテキスト基準を保存できませんでした。"
 	},
 	"newProjectDialog": {
 		"title": "新規プロジェクト",

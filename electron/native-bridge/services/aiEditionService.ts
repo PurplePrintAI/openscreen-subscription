@@ -1,3 +1,4 @@
+import { resolveContextBudget } from "../../../src/lib/ai-edition/contextBudget";
 import { documentSchema } from "../../../src/lib/ai-edition/schema";
 import type {
 	AiEditionAssetResult,
@@ -356,7 +357,11 @@ export class AiEditionService {
 	}
 
 	chatContextUsage(projectId: string, sessionId: string): AiEditionChatBudget | null {
-		return this.options.getContextUsage(projectId, sessionId);
+		const usage = this.options.getContextUsage(projectId, sessionId);
+		if (!usage) return null;
+		const budgetTokens = resolveContextBudget(this.llmConfig.getConfig()?.contextBudgetTokens);
+		const ratio = usage.usedTokens / budgetTokens;
+		return { ...usage, budgetTokens, ratio, fillPercent: Math.min(100, Math.round(ratio * 100)) };
 	}
 
 	chatCompactNow(projectId: string, sessionId: string): Promise<AiEditionChatCompactResult | null> {
@@ -393,14 +398,7 @@ export class AiEditionService {
 	}
 
 	chatBudget(projectId: string, sessionId: string): AiEditionChatBudget | null {
-		const usage = this.options.getContextUsage(projectId, sessionId);
-		if (!usage) return null;
-		return {
-			usedTokens: usage.usedTokens,
-			budgetTokens: usage.budgetTokens,
-			ratio: usage.ratio,
-			fillPercent: usage.fillPercent,
-		};
+		return this.chatContextUsage(projectId, sessionId);
 	}
 
 	async chatCompact(

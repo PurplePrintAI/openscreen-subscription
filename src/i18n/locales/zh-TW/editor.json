@@ -295,7 +295,16 @@
 			"subtitle": "切換或新增工作階段",
 			"empty": "尚無對話。",
 			"msgsCount": "{{count}} 則訊息 · {{date}}"
-		}
+		},
+		"responding": "正在產生回答…",
+		"responseInterrupted": "回答已中斷，內容尚未完成。",
+		"contextSettings": "對話上下文",
+		"contextReferenceHint": "設定歷史用量估算的參考值。這不會改變模型的實際上下文上限。",
+		"contextReferenceLabel": "參考大小（詞元）",
+		"contextReferenceScope": "儲存在 AI 設定中並套用至所有對話。僅估算歷史文字，不含系統提示、工具與專案資料。壓縮仍需手動執行。",
+		"contextReferenceInvalid": "請輸入 1,000 到 2,000,000 之間的整數。",
+		"contextReferenceReset": "重設為 80,000",
+		"contextReferenceSaveFailed": "無法儲存上下文參考值。"
 	},
 	"newProjectDialog": {
 		"title": "新增專案",

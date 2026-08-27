@@ -233,6 +233,8 @@ export interface AiEditionLlmConfig {
 	model: string;
 	baseUrl?: string;
 	reasoningEffort?: string;
+	/** History meter reference only; does not change the provider's limit or compact history. */
+	contextBudgetTokens?: number;
 	/** P2.5 — when false, the agent must ask before running write tools.
 	 * Undefined means enabled (edits allowed, protected by checkpoints). */
 	allowAgentEdits?: boolean;

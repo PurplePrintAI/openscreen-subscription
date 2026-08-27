@@ -25,6 +25,27 @@ const message = (content: string) => [{ content }];
 
 describe("useChatBudget", () => {
 	beforeEach(() => chatBudgetMock.mockReset());
+	it("updates the reference without reverting a compacted native estimate", async () => {
+		chatBudgetMock
+			.mockResolvedValueOnce({
+				usedTokens: 400,
+				budgetTokens: 80_000,
+				ratio: 0.005,
+				fillPercent: 1,
+			})
+			.mockResolvedValue(null);
+		const messages = message("x".repeat(8000));
+		const { result, rerender } = renderHook(
+			({ budgetTokens }) =>
+				useChatBudget({ projectId: "p", sessionId: "s", messages, budgetTokens }),
+			{ initialProps: { budgetTokens: 80_000 } },
+		);
+		await waitFor(() => expect(result.current.usedTokens).toBe(400));
+		rerender({ budgetTokens: 200_000 });
+		expect(result.current).toEqual({ usedTokens: 400, budgetTokens: 200_000, ratio: 0.002 });
+		await waitFor(() => expect(chatBudgetMock).toHaveBeenCalledTimes(2));
+		expect(result.current.usedTokens).toBe(400);
+	});
 
 	it("uses the transcript estimate until native model-context usage arrives", async () => {
 		const native = deferred<{

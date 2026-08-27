@@ -13,6 +13,8 @@
 // and do not let this number regain a decision. Understanding compaction does not
 // make the denominator any less invented.
 
+import { DEFAULT_CONTEXT_BUDGET_TOKENS } from "@/lib/ai-edition/contextBudget";
+
 const CHARS_PER_TOKEN = 4;
 
 export interface ChatBudget {
@@ -21,7 +23,7 @@ export interface ChatBudget {
 	ratio: number;
 }
 
-const DEFAULT_CHAT_BUDGET_TOKENS = 80_000;
+const DEFAULT_CHAT_BUDGET_TOKENS = DEFAULT_CONTEXT_BUDGET_TOKENS;
 
 export interface RenderableChatMessage {
 	content: string;
