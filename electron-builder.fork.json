@@ -24,11 +24,5 @@
 		"createDesktopShortcut": false,
 		"shortcutName": "OpenScreen Subscription"
 	},
-	"extraResources": [
-		{ "from": "LICENSE", "to": "LICENSE" },
-		{ "from": "THIRD-PARTY-NOTICES.md", "to": "THIRD-PARTY-NOTICES.md" },
-		{ "from": "FORK.md", "to": "FORK.md" },
-		{ "from": "public/wallpapers", "to": "wallpapers" },
-		{ "from": "public/cursors", "to": "cursors" }
-	]
+	"extraResources": [{ "from": "FORK.md", "to": "FORK.md" }]
 }

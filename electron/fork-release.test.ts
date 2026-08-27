@@ -11,7 +11,15 @@ describe("fork release identity", () => {
 			{ provider: "github", owner: "PurplePrintAI", repo: "openscreen-subscription" },
 		]);
 		expect(config.nsis.createStartMenuShortcut).toBe(true);
-		expect(config.extraResources.map((entry: { to: string }) => entry.to)).toEqual(
+		const parent = fs.readFileSync(path.resolve("electron-builder.json5"), "utf8");
+		const inheritedResources = parent.match(/"extraResources"\s*:\s*\[([\s\S]*?)\]/)?.[1] ?? "";
+		const inheritedTargets = [...inheritedResources.matchAll(/"to"\s*:\s*"([^"]+)"/g)].map(
+			(match) => match[1],
+		);
+		const forkTargets: string[] = config.extraResources.map((entry: { to: string }) => entry.to);
+		// electron-builder concatenates these arrays. Duplicate targets race in copyFile on Windows.
+		expect(forkTargets.filter((target) => inheritedTargets.includes(target))).toEqual([]);
+		expect([...inheritedTargets, ...forkTargets]).toEqual(
 			expect.arrayContaining(["LICENSE", "THIRD-PARTY-NOTICES.md", "FORK.md"]),
 		);
 	});
