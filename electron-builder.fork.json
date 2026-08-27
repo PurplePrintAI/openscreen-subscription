@@ -10,9 +10,7 @@
 			"url": "git+https://github.com/PurplePrintAI/openscreen-subscription.git"
 		}
 	},
-	"publish": [
-		{ "provider": "github", "owner": "PurplePrintAI", "repo": "openscreen-subscription" }
-	],
+	"publish": { "provider": "github", "owner": "PurplePrintAI", "repo": "openscreen-subscription" },
 	"win": {
 		"target": ["nsis"],
 		"artifactName": "OpenScreen-Subscription-${version}-Windows-x64-Setup.${ext}"
