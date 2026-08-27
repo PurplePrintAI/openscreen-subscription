@@ -4,6 +4,8 @@
 	"productName": "OpenScreen Subscription",
 	"extraMetadata": {
 		"name": "openscreen-subscription",
+		"description": "Unofficial OpenScreen fork with optional ChatGPT subscription routing",
+		"author": { "name": "PurplePrintAI", "url": "https://github.com/PurplePrintAI" },
 		"homepage": "https://github.com/PurplePrintAI/openscreen-subscription",
 		"repository": {
 			"type": "git",

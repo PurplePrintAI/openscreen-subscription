@@ -7,6 +7,10 @@ describe("fork release identity", () => {
 		const config = await getConfig(process.cwd(), path.resolve("electron-builder.fork.json"), null);
 		expect(config.appId).not.toBe("com.etiennelescot.openscreen");
 		expect(config.extraMetadata?.name).toBe("openscreen-subscription");
+		expect(config.extraMetadata?.author).toEqual({
+			name: "PurplePrintAI",
+			url: "https://github.com/PurplePrintAI",
+		});
 		// Arrays are concatenated during inheritance; an object replaces the upstream feed.
 		expect(config.publish).toEqual({
 			provider: "github",
