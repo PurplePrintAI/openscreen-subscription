@@ -99,12 +99,21 @@ Smoke-test the helper with:
 
 ```powershell
 npm run test:wgc-helper:win
+npm run test:wgc-helper:win -- --unicode-path
 npm run test:wgc-window:win
 npm run test:wgc-audio:win
 npm run test:wgc-mic:win
 npm run test:wgc-mixed-audio:win
 npm run test:wgc-webcam:win
 ```
+
+The `--unicode-path` smoke test records into a directory containing Korean,
+Japanese, accented Latin characters, spaces, and an emoji. It verifies the exact
+output path in the filesystem and the `recording-stopped` event, in addition to
+the existing MP4/decoder checks. Combine it with `--system-audio` or `--webcam`
+to exercise those outputs too. The helper uses `wmain` and explicitly converts
+the UTF-16 JSON argument to UTF-8; interpreting ANSI `main` arguments as UTF-8
+causes file creation errors for non-ASCII user profile paths.
 
 To validate a specific native webcam manually:
 
