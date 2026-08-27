@@ -1,7 +1,7 @@
 {
 	"name": "openscreen",
 	"private": true,
-	"version": "1.10.0",
+	"version": "1.10.0-subscription.1",
 	"description": "Record your screen and polish the demo",
 	"homepage": "https://getopenscreen.com/",
 	"license": "MIT",
@@ -92,7 +92,8 @@
 		"prepare": "husky",
 		"fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
 		"fetch:ffmpeg:mac": "node scripts/fetch-ffmpeg-macos.mjs",
-		"fetch:ffmpeg:sdk": "node scripts/fetch-ffmpeg.mjs --sdk-only"
+		"fetch:ffmpeg:sdk": "node scripts/fetch-ffmpeg.mjs --sdk-only",
+		"build:win:fork": "npm run build:native:win && npm run fetch:ffmpeg && node scripts/stage-fork-speech.mjs && npm run stage:vcomp && npm run build:native:compositor && tsc && vite build && electron-builder --win nsis --x64 --config electron-builder.fork.json --config.npmRebuild=false --publish never"
 	},
 	"dependencies": {
 		"@fix-webm-duration/fix": "^1.0.1",

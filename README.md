@@ -1,3 +1,5 @@
+> **Unofficial fork: OpenScreen Subscription.** Adds local ChatGPT/Codex subscription routing and a Windows Unicode recording-path fix. This is not an upstream release or endorsement. See [FORK.md](FORK.md) for attribution, the policy review and the fork's release/contribution procedure. Use this fork's release artifacts, not the upstream installers linked in the original documentation below.
+
 <p align="center">
   <img src="public/openscreen.png" alt="OpenScreen Logo" width="64" />
 </p>

@@ -8,11 +8,11 @@
 
 import type { InstallChannel } from "./install-channel";
 
-export const WEBSITE_URL = "https://getopenscreen.com";
+export const WEBSITE_URL = "https://github.com/PurplePrintAI/openscreen-subscription";
 /** The brand spelling, for the surfaces we render ourselves. NOT `app.name`: that resolves to
  *  electron-builder's `productName` ("Openscreen") when packaged and to package.json's `name`
  *  ("openscreen") in dev, so the About box would disagree with its own title bar. */
-export const PRODUCT_NAME = "OpenScreen";
+export const PRODUCT_NAME = "OpenScreen Subscription";
 /** The collective form, and deliberately NOT the whole of LICENSE. LICENSE carries two holders:
  *  Siddharth Vaddem, who created the project — MIT obliges us to keep that notice on a codebase
  *  that still contains his code — and the contributors collectively. This is the line every user
@@ -57,5 +57,6 @@ export function formatAboutDetail(facts: AboutFacts): string {
 		`Electron ${facts.electron} · Chromium ${facts.chrome} · Node ${facts.node}`,
 		`${facts.platform} ${facts.arch} · ${facts.channel}`,
 		WEBSITE_URL,
+		"Unofficial fork of getopenscreen/openscreen",
 	].join("\n");
 }

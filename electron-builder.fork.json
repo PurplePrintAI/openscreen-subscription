@@ -1,0 +1,34 @@
+{
+	"extends": "./electron-builder.json5",
+	"appId": "io.github.purpleprintai.openscreen-subscription",
+	"productName": "OpenScreen Subscription",
+	"extraMetadata": {
+		"name": "openscreen-subscription",
+		"homepage": "https://github.com/PurplePrintAI/openscreen-subscription",
+		"repository": {
+			"type": "git",
+			"url": "git+https://github.com/PurplePrintAI/openscreen-subscription.git"
+		}
+	},
+	"publish": [
+		{ "provider": "github", "owner": "PurplePrintAI", "repo": "openscreen-subscription" }
+	],
+	"win": {
+		"target": ["nsis"],
+		"artifactName": "OpenScreen-Subscription-${version}-Windows-x64-Setup.${ext}"
+	},
+	"nsis": {
+		"oneClick": false,
+		"allowToChangeInstallationDirectory": true,
+		"createStartMenuShortcut": true,
+		"createDesktopShortcut": false,
+		"shortcutName": "OpenScreen Subscription"
+	},
+	"extraResources": [
+		{ "from": "LICENSE", "to": "LICENSE" },
+		{ "from": "THIRD-PARTY-NOTICES.md", "to": "THIRD-PARTY-NOTICES.md" },
+		{ "from": "FORK.md", "to": "FORK.md" },
+		{ "from": "public/wallpapers", "to": "wallpapers" },
+		{ "from": "public/cursors", "to": "cursors" }
+	]
+}

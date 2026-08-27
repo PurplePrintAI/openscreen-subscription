@@ -1,5 +1,6 @@
-const LATEST_RELEASE_API = "https://api.github.com/repos/getopenscreen/openscreen/releases/latest";
-const OFFICIAL_RELEASE_PREFIX = "/getopenscreen/openscreen/releases/tag/";
+const LATEST_RELEASE_API =
+	"https://api.github.com/repos/PurplePrintAI/openscreen-subscription/releases/latest";
+const OFFICIAL_RELEASE_PREFIX = "/PurplePrintAI/openscreen-subscription/releases/tag/";
 
 interface ReleaseResponse {
 	ok: boolean;

@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { createInterface } from "node:readline";
+import { version } from "../../../package.json";
 
 type ObjectValue = Record<string, unknown>;
 export interface CodexStatus {
@@ -149,7 +150,7 @@ export class CodexAppServer {
 		});
 		try {
 			await this.request("initialize", {
-				clientInfo: { name: "openscreen", title: "OpenScreen", version: "1.10.0" },
+				clientInfo: { name: "openscreen_subscription", title: "OpenScreen Subscription", version },
 				capabilities: { experimentalApi: true },
 			});
 			this.send({ method: "initialized", params: {} });

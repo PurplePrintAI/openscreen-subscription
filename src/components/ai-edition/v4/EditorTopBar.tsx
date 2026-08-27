@@ -389,7 +389,7 @@ function AppMenu({ actions }: { actions: TopBarActions }) {
 				{/* Decorative: the wordmark beside it already names the app — and, being the
 				    button's only text, is also its accessible name. */}
 				<img src={logoMark} alt="" draggable={false} />
-				<span className={styles.name}>OpenScreen</span>
+				<span className={styles.name}>OpenScreen Subscription</span>
 				<ChevronDown size={13} className={styles.brandChevron} aria-hidden />
 			</button>
 			{open ? (
