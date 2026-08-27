@@ -26,6 +26,7 @@ const WITH_WEBCAM =
 const CAPTURE_CURSOR =
 	process.env.OPENSCREEN_WGC_TEST_CAPTURE_CURSOR === "true" ||
 	process.argv.includes("--capture-cursor");
+const WITH_UNICODE_PATH = process.argv.includes("--unicode-path");
 const WITH_SOFTWARE_ENCODER =
 	process.env.OPENSCREEN_WGC_TEST_SOFTWARE_ENCODER === "true" ||
 	process.argv.includes("--software-encoder");
@@ -431,8 +432,14 @@ if (!fs.existsSync(HELPER_PATH)) {
 	throw new Error(`WGC helper not found at ${HELPER_PATH}. Run npm run build:native:win first.`);
 }
 
+// Exercise Unicode across the real Windows command-line boundary, including
+// characters that cannot round-trip through legacy ANSI code pages.
+const outputDir = WITH_UNICODE_PATH
+	? path.join(os.tmpdir(), "openscreen-한글 사용자-日本語-é-🎬")
+	: os.tmpdir();
+fs.mkdirSync(outputDir, { recursive: true });
 const outputPath = path.join(
-	os.tmpdir(),
+	outputDir,
 	`openscreen-wgc-helper-${WITH_WEBCAM ? "webcam" : WITH_WINDOW ? "window" : WITH_SYSTEM_AUDIO || WITH_MICROPHONE ? "audio" : "video"}-${process.pid}-${Date.now()}-${randomUUID()}.mp4`,
 );
 const webcamOutputPath = WITH_WEBCAM ? outputPath.replace(/\.mp4$/i, "-webcam.mp4") : null;
@@ -580,6 +587,17 @@ if (result.code !== 0) {
 }
 if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size === 0) {
 	throw new Error(`WGC helper did not produce a video at ${outputPath}`);
+}
+const stoppedEvent = result.stdout
+	.split(/\r?\n/)
+	.filter((line) => line.startsWith("{"))
+	.map((line) => JSON.parse(line))
+	.find((event) => event.event === "recording-stopped");
+if (stoppedEvent?.screenPath !== outputPath) {
+	throw new Error(`WGC helper did not round-trip the output path: ${JSON.stringify(stoppedEvent)}`);
+}
+if (WITH_WEBCAM && stoppedEvent?.webcamPath !== webcamOutputPath) {
+	throw new Error(`WGC helper did not round-trip the webcam path: ${JSON.stringify(stoppedEvent)}`);
 }
 if (WITH_WEBCAM && (!fs.existsSync(webcamOutputPath) || fs.statSync(webcamOutputPath).size === 0)) {
 	throw new Error(`WGC helper did not produce a webcam video at ${webcamOutputPath}`);

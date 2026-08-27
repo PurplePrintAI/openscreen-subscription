@@ -641,7 +641,7 @@ void readCaptureCommands(CaptureControl& control, const std::function<void(bool)
 
 } // namespace
 
-int main(int argc, char* argv[]) {
+int wmain(int argc, wchar_t* argv[]) {
     // Before anything reads a coordinate. `findMonitorForCapture` matches the
     // config's display bounds against the rects `EnumDisplayMonitors` reports,
     // and the caller sends those bounds in physical pixels; a DPI-unaware
@@ -662,7 +662,9 @@ int main(int argc, char* argv[]) {
     winrt::init_apartment(winrt::apartment_type::multi_threaded);
 
     CaptureConfig config;
-    if (!parseConfig(argv[1], config)) {
+    // Windows narrow argv uses the system code page, not UTF-8. Preserve paths
+    // and device names by converting the original UTF-16 argument explicitly.
+    if (!parseConfig(wideToUtf8(argv[1]), config)) {
         std::cerr << "ERROR: Failed to parse config JSON" << std::endl;
         return 1;
     }
