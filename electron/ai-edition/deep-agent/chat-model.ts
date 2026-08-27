@@ -366,6 +366,10 @@ export function messageContentToThinking(content: unknown): string {
 export async function createOpenScreenChatModel(
 	input: OpenScreenChatModelConfig,
 ): Promise<BaseChatModel> {
+	if (input.provider === "codex-subscription") {
+		const { CodexChatModel } = await import("../codex/chat-model");
+		return new CodexChatModel(input.model, input.reasoningEffort);
+	}
 	// Canonicalise once, here: stored configs can still carry historical
 	// aliases (`claude`, `gemini`, `anthropic-proxy`), and every provider
 	// comparison below is an exact match against a registry id.

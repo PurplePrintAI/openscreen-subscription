@@ -238,7 +238,21 @@ export interface AiEditionLlmConfig {
 	allowAgentEdits?: boolean;
 }
 
-export type AiEditionLlmCredentialKind = "api-key" | "codex" | "github-device" | "github-pat";
+export type AiEditionLlmCredentialKind =
+	| "api-key"
+	| "codex"
+	| "github-device"
+	| "github-pat"
+	| "subscription";
+
+export interface AiEditionSubscriptionStatus {
+	available: boolean;
+	connected: boolean;
+	email?: string;
+	plan?: string;
+	loginPending?: boolean;
+	error?: string;
+}
 
 export interface AiEditionLlmSnapshot {
 	config: AiEditionLlmConfig | null;
@@ -251,6 +265,7 @@ export interface AiEditionLlmSnapshot {
 		authKind: string;
 		credentialKind: AiEditionLlmCredentialKind | null;
 	}>;
+	subscriptions?: Record<string, AiEditionSubscriptionStatus>;
 }
 
 export interface AiEditionLlmDisconnectResult {
@@ -529,6 +544,12 @@ export type NativeBridgeRequest =
 			domain: "aiEdition";
 			action: "llm.getSnapshot";
 			payload?: EmptyPayload;
+			requestId?: string;
+	  }
+	| {
+			domain: "aiEdition";
+			action: "llm.subscriptionLogin" | "llm.subscriptionCancelLogin" | "llm.subscriptionStatus";
+			payload: { providerId: string };
 			requestId?: string;
 	  }
 	| {

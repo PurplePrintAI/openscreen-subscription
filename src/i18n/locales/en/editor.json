@@ -265,7 +265,7 @@
 		"emptyState": "No messages yet. Ask the agent to cut silences, tighten pauses, or add captions.",
 		"welcome": {
 			"title": "Bring your own AI",
-			"subtitle": "The chat edits your video by talking to a language model. Pick a provider you trust and connect an API key to get started.",
+			"subtitle": "Connect an API key or your ChatGPT subscription to edit your video with AI.",
 			"feature1": "Cut silences, tighten pauses, drop filler words",
 			"feature2": "Add captions, zoom on the camera, generate a title",
 			"feature3": "Rewrite a section, rephrase, or split a clip on request",
@@ -382,7 +382,7 @@
 	},
 	"providerSettings": {
 		"title": "AI settings",
-		"subtitle": "Choose a provider. Credentials are stored in the OS keychain (safeStorage).",
+		"subtitle": "Choose an API provider or connect your ChatGPT subscription.",
 		"loadFailed": "Could not load AI settings",
 		"saved": "{{provider}} saved",
 		"connected": "{{provider}} connected",
@@ -408,7 +408,12 @@
 		"disconnect": "Disconnect",
 		"cancel": "Cancel",
 		"save": "Save",
-		"saveAndUse": "Save & use"
+		"saveAndUse": "Save & use",
+		"pillSubscription": "Subscription",
+		"signInChatGPT": "Sign in with ChatGPT",
+		"signInPending": "Finish signing in in your browser. This screen updates automatically.",
+		"cancelSignIn": "Cancel sign-in",
+		"subscriptionHint": "Requires Codex CLI and an eligible ChatGPT plan. Codex manages sign-in in an OpenScreen-only profile; no API key or token is copied. Your selected plan limits apply."
 	},
 	"cpuCompositor": {
 		"notice": "Running without a compatible GPU — rendering on CPU, so playback is slower.",

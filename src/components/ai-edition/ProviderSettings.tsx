@@ -8,10 +8,8 @@
 //                       optional reasoning effort + api-key field +
 //                       Save/Disconnect buttons.
 //
-// Every provider is API-key based since 1.8.0 dropped the ChatGPT and Copilot
-// OAuth providers (see provider-registry.ts); the device-challenge screen went
-// with them. Credentials live in the safeStorage blob (LlmConfigStore) — the
-// renderer never sees raw keys, only `kind`.
+// API keys stay in safeStorage. ChatGPT sign-in is managed by the official
+// local Codex app-server; the renderer only receives connection metadata.
 //
 // `ProviderSettingsDialog` at the bottom is the only mount, and the only caller of the
 // `open` / `onClose` component above it. Internal state is local-only.
@@ -22,7 +20,11 @@ import { toast } from "sonner";
 import { useEditorDialogActions, useEditorDialogSection } from "@/contexts/EditorDialogsContext";
 import { useScopedT } from "@/contexts/I18nContext";
 import { nativeBridgeClient } from "@/native/client";
-import type { AiEditionLlmConfig, AiEditionLlmSnapshot } from "@/native/contracts";
+import type {
+	AiEditionLlmConfig,
+	AiEditionLlmSnapshot,
+	AiEditionSubscriptionStatus,
+} from "@/native/contracts";
 import {
 	getReasoningEffortLabel,
 	getReasoningEffortOptions,
@@ -49,24 +51,44 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const refreshSnapshot = useCallback(async (): Promise<AiEditionLlmSnapshot> => {
-		try {
-			const snap = await nativeBridgeClient.aiEdition.llmGetSnapshot();
-			setSnapshot(snap);
-			if (snap.config) setConfig(snap.config);
-			return snap;
-		} catch (err) {
-			toast.error(te("providerSettings.loadFailed"), {
-				description: err instanceof Error ? err.message : String(err),
-			});
-			throw err;
-		}
-	}, [te]);
+	const refreshSnapshot = useCallback(
+		async (loadConfig = true): Promise<AiEditionLlmSnapshot> => {
+			try {
+				const snap = await nativeBridgeClient.aiEdition.llmGetSnapshot();
+				setSnapshot(snap);
+				if (loadConfig && snap.config) setConfig(snap.config);
+				return snap;
+			} catch (err) {
+				toast.error(te("providerSettings.loadFailed"), {
+					description: err instanceof Error ? err.message : String(err),
+				});
+				throw err;
+			}
+		},
+		[te],
+	);
 
 	useEffect(() => {
 		if (!open) return;
 		void refreshSnapshot();
 	}, [open, refreshSnapshot]);
+
+	useEffect(() => {
+		if (!open || active?.authKind !== "subscription") return;
+		let inFlight = false;
+		const timer = setInterval(() => {
+			if (inFlight) return;
+			inFlight = true;
+			void refreshSnapshot(false)
+				.catch(() => {
+					/* refreshSnapshot already reports errors. */
+				})
+				.finally(() => {
+					inFlight = false;
+				});
+		}, 2000);
+		return () => clearInterval(timer);
+	}, [open, active, refreshSnapshot]);
 
 	useEffect(() => {
 		if (!open) {
@@ -111,7 +133,8 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 				provider: def.id,
 				model: existing?.model ?? def.defaultModel,
 				baseUrl: existing?.baseUrl ?? def.baseUrl,
-				reasoningEffort: existing?.reasoningEffort,
+				reasoningEffort:
+					existing?.reasoningEffort ?? (def.authKind === "subscription" ? "medium" : undefined),
 				allowAgentEdits: existing?.allowAgentEdits,
 			};
 		});
@@ -133,10 +156,12 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 		setError(null);
 		try {
 			if (apiKey.trim()) {
-				await nativeBridgeClient.aiEdition.llmSetApiKey(active.id, apiKey.trim());
+				const keyResult = await nativeBridgeClient.aiEdition.llmSetApiKey(active.id, apiKey.trim());
+				if (!keyResult.success) throw new Error(keyResult.error);
 				setApiKey("");
 			}
-			await nativeBridgeClient.aiEdition.llmSetConfig(config);
+			const saved = await nativeBridgeClient.aiEdition.llmSetConfig(config);
+			if (!saved.success) throw new Error(saved.error);
 			await refreshSnapshot();
 			toast.success(te("providerSettings.saved", { provider: active.label }));
 			setMode("list");
@@ -160,6 +185,23 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 			// dialog was closed and reopened.
 			setSnapshot(result.snapshot);
 			toast.success(te("providerSettings.disconnected", { provider: active.label }));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setBusy(false);
+		}
+	};
+
+	const signIn = async (cancel = false) => {
+		if (!active) return;
+		setBusy(true);
+		setError(null);
+		try {
+			const result = cancel
+				? await nativeBridgeClient.aiEdition.llmSubscriptionCancelLogin(active.id)
+				: await nativeBridgeClient.aiEdition.llmSubscriptionLogin(active.id);
+			if (!result.success) throw new Error(result.error);
+			await refreshSnapshot(false);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		} finally {
@@ -200,6 +242,9 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 					onSave={saveApiKey}
 					onDisconnect={disconnect}
 					listProviderModels={nativeBridgeClient.aiEdition.llmListProviderModels}
+					subscriptionStatus={snapshot?.subscriptions?.[active.id]}
+					onSignIn={() => void signIn()}
+					onCancelSignIn={() => void signIn(true)}
 				/>
 			) : null}
 		</ModalShell>
@@ -253,7 +298,11 @@ function ProviderList({
 							) : (
 								<span className={`${styles.statusPill} ${styles.idle}`}>
 									<KeyIcon />
-									{te("providerSettings.pillApiKey")}
+									{te(
+										def.authKind === "subscription"
+											? "providerSettings.pillSubscription"
+											: "providerSettings.pillApiKey",
+									)}
 								</span>
 							)}
 						</div>
@@ -296,6 +345,9 @@ function ProviderForm({
 	onSave,
 	onDisconnect,
 	listProviderModels,
+	subscriptionStatus,
+	onSignIn,
+	onCancelSignIn,
 }: {
 	def: ProviderDefinition;
 	isConnected: boolean;
@@ -303,13 +355,16 @@ function ProviderForm({
 	apiKey: string;
 	setApiKey: (v: string) => void;
 	config: AiEditionLlmConfig | null;
-	setConfig: (c: AiEditionLlmConfig | null) => void;
+	setConfig: React.Dispatch<React.SetStateAction<AiEditionLlmConfig | null>>;
 	busy: boolean;
 	error: string | null;
 	onBack: () => void;
 	onSave: () => void;
 	onDisconnect: () => void;
 	listProviderModels: (providerId: string) => Promise<{ models: string[]; error?: string }>;
+	subscriptionStatus?: AiEditionSubscriptionStatus;
+	onSignIn: () => void;
+	onCancelSignIn: () => void;
 }) {
 	const te = useScopedT("editor");
 	const showBaseUrl = def.id === "openai-compatible" || Boolean(def.baseUrl);
@@ -332,6 +387,13 @@ function ProviderForm({
 			.then((result) => {
 				if (cancelled) return;
 				setModelOptions(result.models);
+				if (def.authKind === "subscription" && result.models[0]) {
+					setConfig((current) =>
+						current?.provider === def.id && !current.model
+							? { ...current, model: result.models[0] }
+							: current,
+					);
+				}
 				setModelsError(result.error ?? null);
 			})
 			.catch((err) => {
@@ -345,7 +407,7 @@ function ProviderForm({
 		return () => {
 			cancelled = true;
 		};
-	}, [def.id, isConnected, listProviderModels]);
+	}, [def.id, def.authKind, isConnected, listProviderModels, setConfig]);
 
 	const modelSelectable = modelOptions.length > 0;
 
@@ -487,18 +549,53 @@ function ProviderForm({
 				</Field>
 			) : null}
 
-			<Field
-				label={te("providerSettings.apiKeyLabel")}
-				hint={isConnected ? te("providerSettings.apiKeyHintStored") : undefined}
-			>
-				<input
-					type="password"
-					value={apiKey}
-					placeholder={isConnected ? "••••••" : "sk-…"}
-					onChange={(e) => setApiKey(e.target.value)}
-					disabled={busy}
-				/>
-			</Field>
+			{def.authKind === "subscription" ? (
+				<Field
+					label={te("providerSettings.pillSubscription")}
+					hint={te("providerSettings.subscriptionHint")}
+				>
+					{subscriptionStatus?.connected ? (
+						<p>
+							{subscriptionStatus.email}{" "}
+							{subscriptionStatus.plan ? `· ${subscriptionStatus.plan}` : ""}
+						</p>
+					) : (
+						<button
+							type="button"
+							className={`${styles.btn} ${styles.btnPrimary}`}
+							onClick={subscriptionStatus?.loginPending ? onCancelSignIn : onSignIn}
+							disabled={busy}
+						>
+							{te(
+								subscriptionStatus?.loginPending
+									? "providerSettings.cancelSignIn"
+									: "providerSettings.signInChatGPT",
+							)}
+						</button>
+					)}
+					{subscriptionStatus?.loginPending ? (
+						<p role="status">{te("providerSettings.signInPending")}</p>
+					) : null}
+					{subscriptionStatus?.error ? (
+						<p role="alert" className={styles.errorRow}>
+							{subscriptionStatus.error}
+						</p>
+					) : null}
+				</Field>
+			) : (
+				<Field
+					label={te("providerSettings.apiKeyLabel")}
+					hint={isConnected ? te("providerSettings.apiKeyHintStored") : undefined}
+				>
+					<input
+						type="password"
+						value={apiKey}
+						placeholder={isConnected ? "••••••" : "sk-…"}
+						onChange={(e) => setApiKey(e.target.value)}
+						disabled={busy}
+					/>
+				</Field>
+			)}
 
 			<Field
 				label={te("providerSettings.projectEditsLabel")}
@@ -595,24 +692,11 @@ function Field({
 }) {
 	return (
 		<div className={styles.field}>
-			<label>
-				{label}
-				{hint ? (
-					<span
-						style={{
-							display: "block",
-							font: "500 10px/1.2 var(--font-mono)",
-							color: "var(--muted)",
-							letterSpacing: "0.04em",
-							textTransform: "uppercase",
-							marginTop: 2,
-						}}
-					>
-						{hint}
-					</span>
-				) : null}
-			</label>
-			{children}
+			<label>{label}</label>
+			<div className={styles.providerFieldControl}>
+				{children}
+				{hint ? <p className={styles.providerFieldHint}>{hint}</p> : null}
+			</div>
 		</div>
 	);
 }

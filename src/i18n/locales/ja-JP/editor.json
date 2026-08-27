@@ -408,7 +408,12 @@
 		"disconnect": "接続を解除",
 		"cancel": "キャンセル",
 		"save": "保存",
-		"saveAndUse": "保存して使用"
+		"saveAndUse": "保存して使用",
+		"pillSubscription": "サブスクリプション",
+		"signInChatGPT": "ChatGPTでログイン",
+		"signInPending": "ブラウザーでログインを完了してください。接続状態は自動更新されます。",
+		"cancelSignIn": "ログインをキャンセル",
+		"subscriptionHint": "Codex CLIと対応するChatGPTプランが必要です。認証はCodexがOpenScreen専用プロファイルで管理し、APIキーやトークンはコピーしません。プランの利用制限が適用されます。"
 	},
 	"cpuCompositor": {
 		"notice": "対応 GPU がないため CPU で描画しています。再生が遅くなります。",

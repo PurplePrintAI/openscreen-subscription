@@ -408,7 +408,12 @@
 		"disconnect": "قطع الاتصال",
 		"cancel": "إلغاء",
 		"save": "حفظ",
-		"saveAndUse": "حفظ واستخدام"
+		"saveAndUse": "حفظ واستخدام",
+		"pillSubscription": "اشتراك",
+		"signInChatGPT": "تسجيل الدخول باستخدام ChatGPT",
+		"signInPending": "أكمل تسجيل الدخول في المتصفح. يتم تحديث الحالة تلقائيًا.",
+		"cancelSignIn": "إلغاء تسجيل الدخول",
+		"subscriptionHint": "يتطلب Codex CLI وخطة ChatGPT مؤهلة. يدير Codex المصادقة في ملف خاص بـ OpenScreen دون نسخ مفاتيح API أو الرموز. تسري حدود خطتك."
 	},
 	"cpuCompositor": {
 		"notice": "لا توجد بطاقة رسومات متوافقة — تتم المعالجة على المعالج، لذا يكون التشغيل أبطأ.",

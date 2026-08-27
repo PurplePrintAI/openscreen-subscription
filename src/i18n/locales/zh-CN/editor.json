@@ -408,7 +408,12 @@
 		"disconnect": "断开连接",
 		"cancel": "取消",
 		"save": "保存",
-		"saveAndUse": "保存并使用"
+		"saveAndUse": "保存并使用",
+		"pillSubscription": "订阅账户",
+		"signInChatGPT": "使用 ChatGPT 登录",
+		"signInPending": "请在浏览器中完成登录。连接状态会自动更新。",
+		"cancelSignIn": "取消登录",
+		"subscriptionHint": "需要 Codex CLI 和受支持的 ChatGPT 方案。Codex 在 OpenScreen 专用配置中管理认证，不复制 API 密钥或令牌。适用订阅方案的使用限额。"
 	},
 	"cpuCompositor": {
 		"notice": "没有兼容的 GPU，正在使用 CPU 渲染，因此播放较慢。",

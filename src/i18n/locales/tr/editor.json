@@ -408,7 +408,12 @@
 		"disconnect": "Bağlantıyı kes",
 		"cancel": "İptal",
 		"save": "Kaydet",
-		"saveAndUse": "Kaydet ve kullan"
+		"saveAndUse": "Kaydet ve kullan",
+		"pillSubscription": "Abonelik",
+		"signInChatGPT": "ChatGPT ile giriş yap",
+		"signInPending": "Tarayıcınızda girişi tamamlayın. Durum otomatik güncellenir.",
+		"cancelSignIn": "Girişi iptal et",
+		"subscriptionHint": "Codex CLI ve uygun bir ChatGPT planı gerekir. Codex, API anahtarı veya token kopyalamadan OpenScreen’e özel profilde oturum açmayı yönetir. Plan limitleriniz geçerlidir."
 	},
 	"cpuCompositor": {
 		"notice": "Uyumlu GPU yok — işleme CPU üzerinde yapılıyor, bu yüzden oynatma daha yavaş.",

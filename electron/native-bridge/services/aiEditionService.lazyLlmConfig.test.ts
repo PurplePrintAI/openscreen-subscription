@@ -1,6 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmConfigStore } from "../../ai-edition/llm-config-store";
 import { AiEditionService, type AiEditionServiceOptions } from "./aiEditionService";
+
+const runtime = vi.hoisted(() => ({
+	status: vi.fn(async () => ({ available: true, connected: true, plan: "plus" })),
+	logout: vi.fn(async () => undefined),
+	models: vi.fn(async () => ["account-model"]),
+}));
+vi.mock("../../ai-edition/codex/app-server", () => ({ getCodexAppServer: async () => runtime }));
+beforeEach(() => {
+	vi.clearAllMocks();
+});
 
 /**
  * `LlmConfigStore`'s constructor does two sync readFileSync plus a `safeStorage`
@@ -40,6 +50,27 @@ function serviceWithCountingFactory(): { service: AiEditionService; builds: () =
 }
 
 describe("AiEditionService — LLM store resolution is deferred", () => {
+	it("reports subscription readiness from the official runtime, without an API credential", async () => {
+		const { service } = serviceWithCountingFactory();
+		const snapshot = await service.llmGetSnapshot();
+		expect(snapshot.connectedProviders).toContain("codex-subscription");
+		expect(snapshot.subscriptions?.["codex-subscription"]).toMatchObject({
+			connected: true,
+			plan: "plus",
+		});
+		expect(await service.llmSetApiKey("codex-subscription", "not-a-subscription")).toMatchObject({
+			success: false,
+		});
+		expect(await service.llmListProviderModels("codex-subscription")).toEqual({
+			models: ["account-model"],
+		});
+	});
+
+	it("rejects unknown subscription providers without invoking the runtime", async () => {
+		const { service } = serviceWithCountingFactory();
+		expect(await service.llmSubscriptionLogin("openai-oauth")).toMatchObject({ success: false });
+		expect(runtime.status).not.toHaveBeenCalled();
+	});
 	it("does not build the store while the service is constructed", () => {
 		const { builds } = serviceWithCountingFactory();
 		expect(builds()).toBe(0);

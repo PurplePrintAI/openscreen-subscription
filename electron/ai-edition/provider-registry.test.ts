@@ -17,9 +17,11 @@ const FIRST_PARTY_ONLY_HOSTS = [
 ];
 
 describe("PROVIDER_DEFINITIONS", () => {
-	it("ships only API-key providers", () => {
+	it("routes subscriptions only through the implemented official local runtime", () => {
 		const others = PROVIDER_DEFINITIONS.filter((def) => def.authKind !== "api-key");
-		expect(others.map((d) => d.id)).toEqual([]);
+		expect(others.map((d) => d.id)).toEqual(["codex-subscription"]);
+		expect(others[0].baseUrl).toBeUndefined();
+		expect(others[0].envKeys).toEqual([]);
 	});
 
 	it("points at no endpoint reserved for a vendor's own clients", () => {

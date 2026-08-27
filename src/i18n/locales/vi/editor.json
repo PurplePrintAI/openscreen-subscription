@@ -408,7 +408,12 @@
 		"disconnect": "Ngắt kết nối",
 		"cancel": "Hủy",
 		"save": "Lưu",
-		"saveAndUse": "Lưu và dùng"
+		"saveAndUse": "Lưu và dùng",
+		"pillSubscription": "Gói đăng ký",
+		"signInChatGPT": "Đăng nhập bằng ChatGPT",
+		"signInPending": "Hoàn tất đăng nhập trong trình duyệt. Trạng thái sẽ tự cập nhật.",
+		"cancelSignIn": "Hủy đăng nhập",
+		"subscriptionHint": "Cần Codex CLI và gói ChatGPT phù hợp. Codex quản lý đăng nhập trong hồ sơ riêng của OpenScreen, không sao chép khóa API hay token. Áp dụng giới hạn gói đăng ký."
 	},
 	"cpuCompositor": {
 		"notice": "Không có GPU tương thích — kết xuất trên CPU nên phát lại chậm hơn.",

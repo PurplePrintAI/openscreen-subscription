@@ -14,12 +14,14 @@ import type {
 	AiEditionLlmDisconnectResult,
 	AiEditionLlmSnapshot,
 	AiEditionProjectSummary,
+	AiEditionSubscriptionStatus,
 } from "../../../src/native/contracts";
 import {
 	type CaptionTranslateSegment,
 	translateCaptionSegments,
 } from "../../ai-edition/caption-translate";
 import type { ChatEventSink } from "../../ai-edition/chat-service";
+import { getCodexAppServer } from "../../ai-edition/codex/app-server";
 import type { DocumentService } from "../../ai-edition/document-service";
 import type { LlmConfigStore, LlmCredential } from "../../ai-edition/llm-config-store";
 import {
@@ -166,7 +168,20 @@ export class AiEditionService {
 		const config = this.llmConfig.getConfig();
 		const credentialSummary: AiEditionLlmSnapshot["credentialSummary"] = [];
 		const connectedProviders: string[] = [];
+		const subscriptions: Record<string, AiEditionSubscriptionStatus> = {};
 		for (const def of PROVIDER_DEFINITIONS) {
+			if (def.authKind === "subscription") {
+				const status = await this.llmSubscriptionStatus(def.id);
+				subscriptions[def.id] = status;
+				if (status.connected) connectedProviders.push(def.id);
+				credentialSummary.push({
+					providerId: def.id,
+					connected: status.connected,
+					authKind: def.authKind,
+					credentialKind: status.connected ? "subscription" : null,
+				});
+				continue;
+			}
 			const resolved = this.llmConfig.getCredential(def.id, def.envKeys);
 			const connected = Boolean(resolved);
 			if (connected) connectedProviders.push(def.id);
@@ -179,6 +194,7 @@ export class AiEditionService {
 		}
 		return {
 			config,
+			subscriptions,
 			connectedProviders,
 			availableProviders: PROVIDER_DEFINITIONS.map((d) => ({
 				id: d.id,
@@ -191,6 +207,12 @@ export class AiEditionService {
 
 	async llmSetConfig(config: AiEditionLlmConfig): Promise<AiEditionDocumentResult> {
 		try {
+			if (
+				config.provider === "codex-subscription" &&
+				!(await this.llmSubscriptionStatus(config.provider)).connected
+			) {
+				return { success: false, error: "Connect your ChatGPT subscription before selecting it." };
+			}
 			await this.llmConfig.setConfig(config);
 			return { success: true };
 		} catch (error) {
@@ -200,6 +222,8 @@ export class AiEditionService {
 
 	async llmSetApiKey(providerId: string, apiKey: string): Promise<AiEditionDocumentResult> {
 		try {
+			if (providerId === "codex-subscription")
+				return { success: false, error: "Use ChatGPT sign-in, not an API key." };
 			const entry: LlmCredential = { kind: "api-key", apiKey };
 			await this.llmConfig.setCredential(providerId, entry);
 			return { success: true };
@@ -218,6 +242,7 @@ export class AiEditionService {
 	}
 
 	async llmDisconnect(providerId: string): Promise<AiEditionLlmDisconnectResult> {
+		if (providerId === "codex-subscription") await (await getCodexAppServer()).logout();
 		await this.llmConfig.removeCredential(providerId);
 		const active = this.llmConfig.getConfig();
 		if (active?.provider === providerId) {
@@ -231,6 +256,11 @@ export class AiEditionService {
 
 	async llmListProviderModels(providerId: string): Promise<{ models: string[]; error?: string }> {
 		try {
+			if (providerId === "codex-subscription") {
+				const runtime = await getCodexAppServer();
+				if (!(await runtime.status()).connected) return { models: [], error: "Not connected" };
+				return { models: await runtime.models() };
+			}
 			const def = PROVIDER_DEFINITIONS.find((d) => d.id === providerId);
 			if (!def) return { models: [], error: `Unknown provider ${providerId}` };
 			const cred = this.llmConfig.getCredential(providerId, def.envKeys);
@@ -261,6 +291,46 @@ export class AiEditionService {
 		} catch (error) {
 			return { models: [], error: error instanceof Error ? error.message : String(error) };
 		}
+	}
+
+	async llmSubscriptionStatus(providerId: string): Promise<AiEditionSubscriptionStatus> {
+		if (providerId !== "codex-subscription")
+			return { available: false, connected: false, error: "Unknown subscription provider." };
+		try {
+			return await (await getCodexAppServer()).status();
+		} catch (error) {
+			return {
+				available: false,
+				connected: false,
+				error: error instanceof Error ? error.message : String(error),
+			};
+		}
+	}
+
+	async llmSubscriptionLogin(providerId: string): Promise<AiEditionDocumentResult> {
+		if (providerId !== "codex-subscription")
+			return { success: false, error: "Unknown subscription provider." };
+		try {
+			const runtime = await getCodexAppServer();
+			const { authUrl } = await runtime.login();
+			const { shell } = await import("electron");
+			try {
+				await shell.openExternal(authUrl);
+			} catch (error) {
+				await runtime.cancelLogin();
+				throw error;
+			}
+			return { success: true };
+		} catch (error) {
+			return { success: false, error: error instanceof Error ? error.message : String(error) };
+		}
+	}
+
+	async llmSubscriptionCancelLogin(providerId: string): Promise<AiEditionDocumentResult> {
+		if (providerId !== "codex-subscription")
+			return { success: false, error: "Unknown subscription provider." };
+		await (await getCodexAppServer()).cancelLogin();
+		return { success: true };
 	}
 
 	async chatRun(

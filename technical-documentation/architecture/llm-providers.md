@@ -1,5 +1,39 @@
 # LLM providers
 
+## ChatGPT subscription via the local Codex runtime
+
+`codex-subscription` uses the official `codex app-server` JSON-RPC protocol over
+stdio. It does not impersonate another client, call the ChatGPT backend directly,
+or turn a subscription token into an API key. Install the official Codex CLI,
+open **AI settings → ChatGPT subscription (Codex)**, sign in in the browser, then
+choose an account model and save. API-key providers remain available unchanged.
+
+The runtime lives in `electron/ai-edition/codex/app-server.ts`. Codex owns login,
+token refresh and logout in an OpenScreen-only profile beneath
+`app.getPath("userData")/codex-subscription`; existing Codex/graphOS logins are not
+read, copied or signed out. The renderer receives only account/connection metadata.
+The account must report the `chatgpt` auth type; API-key auth is not treated as a
+subscription, and inherited OpenAI API keys are removed from the child environment.
+
+The editor passes its existing validated tools as Codex dynamic tools. Their
+executors, edit-permission checks, cursor telemetry and document checkpoints are
+unchanged. Text-only requests (caption translation and compaction) use a small
+`BaseChatModel` adapter with no editor tools. Codex threads are ephemeral, have no
+environment access, run with a read-only sandbox, and do not enable shell,
+web-search or app tools. Unknown server requests are refused. Requests time out,
+unfinished turns are interrupted, and child processes close when the app quits.
+
+`OPENSCREEN_CODEX_EXECUTABLE` may name an absolute native executable when it is
+not discoverable on PATH or in the Windows npm install. Shell wrappers are not
+accepted for this override. No prompt or model name is interpolated into a shell.
+Model IDs are discovered from the local runtime; none are promised to every plan.
+An eligible plan, its usage limits, and a sufficiently recent Codex CLI are required.
+Protocol smoke-tested with the locally installed Codex; dynamic tools are an
+experimental API and should be retested when updating that runtime.
+
+Reference: [official Codex App Server documentation](https://learn.chatgpt.com/docs/app-server).
+Claude and Copilot subscription providers are not implemented by this change.
+
 The provider layer defines model metadata, protects credentials, discovers models, and builds the chat model every AI feature runs on. It lives in:
 
 | File | Role |

@@ -17,6 +17,8 @@
 // middlewares (they are in `REQUIRED_MIDDLEWARE_NAMES`), so the fix is to stop
 // going through it: `createAgent` is what it wrapped, minus the sandbox.
 
+import type { StructuredToolInterface } from "@langchain/core/tools";
+import { convertToOpenAIFunction } from "@langchain/core/utils/function_calling";
 import { anthropicPromptCachingMiddleware, createAgent, tool } from "langchain";
 import { z } from "zod";
 import type { AxcutDocument } from "../../../src/lib/ai-edition/schema";
@@ -449,12 +451,38 @@ export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeRes
 	// runtime side-effects (langgraph thread) are tied to the agent instance —
 	// checkpoint-based stateful threads can land later by passing a
 	// `checkpointer`; for v1 each turn is single-shot.
-	const chatModel = await createOpenScreenChatModel(model);
 	const availableByAssetId = await probeCursorTelemetry(document, args.cursor);
 	const tools = buildTools(holder, sink, editsAllowed, {
 		cursor: args.cursor,
 		availableByAssetId,
 	});
+	if (model.provider === "codex-subscription") {
+		const { getCodexAppServer } = await import("../codex/app-server");
+		const runtime = await getCodexAppServer();
+		const text = await runtime.run({
+			model: model.model,
+			effort: model.reasoningEffort,
+			instructions: buildSystemPrompt({ editsAllowed }),
+			input: JSON.stringify([...history, { role: "user", content: userMessage }]),
+			onText: (delta) => sink.text(delta),
+			tools: tools.map((editorTool) => {
+				const definition = convertToOpenAIFunction(editorTool);
+				return {
+					name: definition.name,
+					description: definition.description ?? "",
+					inputSchema: definition.parameters ?? {},
+					invoke: async (input) =>
+						String(await (editorTool as StructuredToolInterface).invoke(input)),
+				};
+			}),
+		});
+		return {
+			text,
+			document: holder.current,
+			mutated: JSON.stringify(holder.current) !== initialDocumentJSON,
+		};
+	}
+	const chatModel = await createOpenScreenChatModel(model);
 	const agent = createAgent({
 		model: chatModel,
 		tools,

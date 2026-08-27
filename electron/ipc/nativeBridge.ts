@@ -495,6 +495,21 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 							);
 						case "llm.getSnapshot":
 							return createSuccessResponse(requestId, await aiEditionService.llmGetSnapshot());
+						case "llm.subscriptionLogin":
+							return createSuccessResponse(
+								requestId,
+								await aiEditionService.llmSubscriptionLogin(request.payload.providerId),
+							);
+						case "llm.subscriptionCancelLogin":
+							return createSuccessResponse(
+								requestId,
+								await aiEditionService.llmSubscriptionCancelLogin(request.payload.providerId),
+							);
+						case "llm.subscriptionStatus":
+							return createSuccessResponse(
+								requestId,
+								await aiEditionService.llmSubscriptionStatus(request.payload.providerId),
+							);
 						case "llm.setConfig":
 							return createSuccessResponse(
 								requestId,

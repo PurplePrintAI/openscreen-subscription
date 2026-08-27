@@ -13,6 +13,7 @@ import {
 	type AiEditionLlmProviderModelsResult,
 	type AiEditionLlmSnapshot,
 	type AiEditionProjectSummary,
+	type AiEditionSubscriptionStatus,
 	type CursorCapabilities,
 	type CursorRecordingData,
 	type CursorTelemetryPoint,
@@ -197,6 +198,24 @@ export const nativeBridgeClient = {
 			requireNativeBridgeData<AiEditionLlmSnapshot>({
 				domain: "aiEdition",
 				action: "llm.getSnapshot",
+			}),
+		llmSubscriptionLogin: (providerId: string) =>
+			requireNativeBridgeData<AiEditionDocumentResult>({
+				domain: "aiEdition",
+				action: "llm.subscriptionLogin",
+				payload: { providerId },
+			}),
+		llmSubscriptionCancelLogin: (providerId: string) =>
+			requireNativeBridgeData<AiEditionDocumentResult>({
+				domain: "aiEdition",
+				action: "llm.subscriptionCancelLogin",
+				payload: { providerId },
+			}),
+		llmSubscriptionStatus: (providerId: string) =>
+			requireNativeBridgeData<AiEditionSubscriptionStatus>({
+				domain: "aiEdition",
+				action: "llm.subscriptionStatus",
+				payload: { providerId },
 			}),
 		llmSetConfig: (config: AiEditionLlmConfig) =>
 			requireNativeBridgeData<AiEditionDocumentResult>({

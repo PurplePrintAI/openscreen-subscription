@@ -10,10 +10,8 @@ export interface ProviderDefinition {
 	id: string;
 	label: string;
 	defaultModel: string;
-	/** Only API-key providers ship today — see the removal note in
-	 * PROVIDER_DEFINITIONS. Widen this again when the Copilot SDK / Codex
-	 * app-server providers land. */
-	authKind: "api-key";
+	/** Subscription auth is owned by the official local Codex app-server. */
+	authKind: "api-key" | "subscription";
 	supportsReasoningEffort: boolean;
 	/** True when this provider always requires the user to enter a base URL
 	 * (e.g. openai-compatible). False when the default is implicit. */
@@ -30,6 +28,15 @@ export interface ProviderDefinition {
 }
 
 export const PROVIDER_DEFINITIONS: ProviderDefinition[] = [
+	{
+		id: "codex-subscription",
+		label: "ChatGPT subscription (Codex)",
+		defaultModel: "",
+		authKind: "subscription",
+		supportsReasoningEffort: true,
+		envKeys: [],
+		setupHint: "Connect with the official Codex CLI. Uses your ChatGPT plan; no API key required.",
+	},
 	{
 		id: "anthropic",
 		label: "Claude API",
@@ -96,7 +103,8 @@ export const PROVIDER_DEFINITIONS: ProviderDefinition[] = [
 	// backend-api). Both vendors now offer a sanctioned surface — GitHub's
 	// Copilot SDK (register our own OAuth App) and `codex app-server` (drives
 	// the user's own `codex login`, no client ID shipped at all) — so these come
-	// back on those, not on borrowed credentials. Tracked in the follow-up PR.
+	// back on those, not on borrowed credentials. ChatGPT now uses the
+	// codex-subscription entry above; Copilot remains a separate integration.
 	{
 		id: "minimax",
 		label: "MiniMax API",
@@ -154,6 +162,7 @@ export type ReasoningEffort = (typeof REASONING_EFFORT_OPTIONS)[number];
  * "minimal" through "xhigh" all wire up identically.
  */
 export function getReasoningEffortOptions(providerId: string): readonly ReasoningEffort[] {
+	if (providerId === "codex-subscription") return ["low", "medium", "high", "xhigh"];
 	if (providerId === "minimax" || providerId === "minimax-token-plan") {
 		return ["none", "medium"];
 	}

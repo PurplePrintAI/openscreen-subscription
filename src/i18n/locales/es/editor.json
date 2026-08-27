@@ -408,7 +408,12 @@
 		"disconnect": "Desconectar",
 		"cancel": "Cancelar",
 		"save": "Guardar",
-		"saveAndUse": "Guardar y usar"
+		"saveAndUse": "Guardar y usar",
+		"pillSubscription": "Suscripción",
+		"signInChatGPT": "Iniciar sesión con ChatGPT",
+		"signInPending": "Completa el inicio de sesión en el navegador. El estado se actualiza automáticamente.",
+		"cancelSignIn": "Cancelar inicio de sesión",
+		"subscriptionHint": "Requiere Codex CLI y un plan de ChatGPT compatible. Codex gestiona la autenticación en un perfil exclusivo de OpenScreen, sin copiar claves API ni tokens. Se aplican los límites de tu plan."
 	},
 	"cpuCompositor": {
 		"notice": "Sin GPU compatible: el renderizado se hace en la CPU, por lo que la reproducción es más lenta.",

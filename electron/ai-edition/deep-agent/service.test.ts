@@ -17,7 +17,12 @@
 import { ChatAnthropic } from "@langchain/anthropic";
 import type { StructuredToolInterface } from "@langchain/core/tools";
 import { ChatOpenAI } from "@langchain/openai";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { CodexRun } from "../codex/app-server";
+
+const codexRun = vi.hoisted(() => vi.fn());
+vi.mock("../codex/app-server", () => ({ getCodexAppServer: async () => ({ run: codexRun }) }));
+
 import {
 	type AxcutDocument,
 	createEmptyDocument,
@@ -37,6 +42,7 @@ import {
 	anthropicCachingMiddleware,
 	buildSystemPrompt,
 	buildTools,
+	invokeOpenScreenAgent,
 	type OpenScreenAgentSink,
 	SYSTEM_PROMPT,
 	TOOL_DESCRIPTIONS,
@@ -174,6 +180,37 @@ function toolsFor(document: AxcutDocument) {
 	const tools: BuiltTool[] = buildTools(holder, sink);
 	return { tools, events, holder };
 }
+
+describe("Codex subscription editor integration", () => {
+	it.each([
+		true,
+		false,
+	])("retains the real editor-tool permission gate (editsAllowed=%s)", async (editsAllowed) => {
+		const document = fixtureDocument();
+		const before = JSON.stringify(document);
+		const { sink, events } = recordingSink();
+		codexRun.mockImplementationOnce(async (request: CodexRun) => {
+			expect(request.tools?.map((t) => t.name)).toEqual([...OPENSCREEN_TOOLS]);
+			const addTrim = request.tools?.find((t) => t.name === "addTrim");
+			expect(addTrim).toBeDefined();
+			await addTrim?.invoke({ startSec: 12, endSec: 13 });
+			request.onText?.("Finished");
+			return "Finished";
+		});
+		const result = await invokeOpenScreenAgent({
+			document,
+			model: { provider: "codex-subscription", model: "test-model" },
+			history: [],
+			userMessage: "Cut 12–13 seconds",
+			sink,
+			editsAllowed,
+		});
+		expect(result.mutated).toBe(editsAllowed);
+		expect(JSON.stringify(document)).toBe(before);
+		expect(events).toHaveLength(2);
+		expect(events[1]).toMatchObject({ kind: "toolEnd", name: "addTrim", ok: editsAllowed });
+	});
+});
 
 describe("the tool surface handed to the model", () => {
 	// No count in the title: the number moved twice without either copy of the

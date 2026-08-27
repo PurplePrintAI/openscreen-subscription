@@ -32,7 +32,7 @@ describe("ChatWelcome", () => {
 		renderIn("en", <ChatWelcome onOpenProviderSettings={onOpen} />);
 
 		expect(screen.getByRole("heading", { name: /bring your own ai/i })).toBeInTheDocument();
-		expect(screen.getByText(/talk.*language model/i)).toBeInTheDocument();
+		expect(screen.getByText(/API key or your ChatGPT subscription/i)).toBeInTheDocument();
 		// The 3 feature lines are inside a <ul>; query them by text so we know
 		// they actually reach the DOM, not just an unused i18n key.
 		expect(screen.getByText(/cut silences/i)).toBeInTheDocument();

@@ -2202,6 +2202,25 @@
   flex-direction: column;
   gap: 16px;
 }
+.providerForm .field {
+  grid-template-columns: 108px minmax(0, 1fr);
+  align-items: start;
+}
+.providerFieldControl {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 8px;
+}
+.providerFieldHint {
+  margin: 0;
+  font: 400 12px/1.5 var(--font-body);
+  color: var(--muted);
+}
+.providerForm input[type="checkbox"] {
+  width: auto;
+  flex: 0 0 auto;
+}
 .providerForm .title {
   display: flex;
   align-items: center;

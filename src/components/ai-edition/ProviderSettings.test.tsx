@@ -8,7 +8,7 @@
 // string rather than two that can drift apart.
 
 import "@testing-library/jest-dom";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorDialogsProvider, useEditorDialogActions } from "@/contexts/EditorDialogsContext";
 import { I18nProvider } from "@/contexts/I18nContext";
@@ -17,6 +17,8 @@ import { type EditorMode, EditorTopBar } from "./v4/EditorTopBar";
 
 // The dialog reads a provider snapshot over the native bridge the moment it opens. Answer with
 // an empty one: which providers exist is the registry's business, and this file's is the door.
+const subscriptionLogin = vi.hoisted(() => vi.fn(async () => ({ success: true })));
+const subscriptionCancel = vi.hoisted(() => vi.fn(async () => ({ success: true })));
 vi.mock("@/native/client", () => ({
 	nativeBridgeClient: {
 		aiEdition: {
@@ -28,6 +30,8 @@ vi.mock("@/native/client", () => ({
 					credentialSummary: [],
 				}),
 			llmListProviderModels: () => Promise.resolve({ models: [] }),
+			llmSubscriptionLogin: subscriptionLogin,
+			llmSubscriptionCancelLogin: subscriptionCancel,
 		},
 	},
 }));
@@ -87,6 +91,7 @@ function openAiSettingsFromAppMenu() {
 
 beforeEach(() => {
 	localStorage.clear();
+	vi.clearAllMocks();
 });
 
 afterEach(() => {
@@ -95,6 +100,15 @@ afterEach(() => {
 });
 
 describe("ProviderSettings, reached from the app menu", () => {
+	it("offers ChatGPT sign-in without an API-key field or premature save", async () => {
+		renderEditorChrome("en");
+		openAiSettingsFromAppMenu();
+		fireEvent.click(screen.getByRole("button", { name: /ChatGPT subscription/ }));
+		expect(screen.queryByText("API key", { selector: "label" })).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Save$/ })).toBeDisabled();
+		fireEvent.click(screen.getByRole("button", { name: "Sign in with ChatGPT" }));
+		await waitFor(() => expect(subscriptionLogin).toHaveBeenCalledWith("codex-subscription"));
+	});
 	it("is absent until the menu row is clicked, then mounted as a dialog", () => {
 		renderEditorChrome("en");
 		expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
