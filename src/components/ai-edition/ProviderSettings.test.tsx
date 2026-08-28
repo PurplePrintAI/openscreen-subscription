@@ -13,25 +13,34 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EditorDialogsProvider, useEditorDialogActions } from "@/contexts/EditorDialogsContext";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { LOCALE_STORAGE_KEY } from "@/i18n/config";
+import type { AiEditionLlmSnapshot } from "@/native/contracts";
 import { type EditorMode, EditorTopBar } from "./v4/EditorTopBar";
 
 // The dialog reads a provider snapshot over the native bridge the moment it opens. Answer with
 // an empty one: which providers exist is the registry's business, and this file's is the door.
 const subscriptionLogin = vi.hoisted(() => vi.fn(async () => ({ success: true })));
 const subscriptionCancel = vi.hoisted(() => vi.fn(async () => ({ success: true })));
+const cliStatus = vi.hoisted(() => vi.fn(async () => ({ available: true, connected: false })));
+const setConfig = vi.hoisted(() => vi.fn(async () => ({ success: true })));
+const getSnapshot = vi.hoisted(() =>
+	vi.fn(
+		async (): Promise<AiEditionLlmSnapshot> => ({
+			config: null,
+			connectedProviders: [],
+			availableProviders: [],
+			credentialSummary: [],
+		}),
+	),
+);
 vi.mock("@/native/client", () => ({
 	nativeBridgeClient: {
 		aiEdition: {
-			llmGetSnapshot: () =>
-				Promise.resolve({
-					config: null,
-					connectedProviders: [],
-					availableProviders: [],
-					credentialSummary: [],
-				}),
+			llmGetSnapshot: getSnapshot,
 			llmListProviderModels: () => Promise.resolve({ models: [] }),
 			llmSubscriptionLogin: subscriptionLogin,
 			llmSubscriptionCancelLogin: subscriptionCancel,
+			llmSubscriptionStatus: cliStatus,
+			llmSetConfig: setConfig,
 		},
 	},
 }));
@@ -100,9 +109,65 @@ afterEach(() => {
 });
 
 describe("ProviderSettings, reached from the app menu", () => {
+	it("checks externally managed CLI auth without an app login or token field", async () => {
+		renderEditorChrome("en");
+		openAiSettingsFromAppMenu();
+		// Do not allow an in-flight saved config to overwrite a newly selected provider.
+		expect(screen.getByRole("button", { name: /Claude \(local\)/ })).toBeDisabled();
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: /Claude \(local\)/ })).toBeEnabled(),
+		);
+		fireEvent.click(screen.getByRole("button", { name: /Claude \(local\)/ }));
+		expect(screen.getByText("claude auth login")).toBeInTheDocument();
+		expect(screen.queryByText("API key", { selector: "label" })).not.toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /^Save$/ })).toBeDisabled();
+		fireEvent.click(screen.getByRole("button", { name: "Check CLI connection" }));
+		await waitFor(() => expect(cliStatus).toHaveBeenCalledWith("claude-local"));
+		expect(subscriptionLogin).not.toHaveBeenCalled();
+	});
+
+	it("shows subscription billing and preserves edit permission and context settings when selecting Claude", async () => {
+		getSnapshot.mockResolvedValueOnce({
+			config: {
+				provider: "codex-subscription",
+				model: "account-model",
+				allowAgentEdits: false,
+				contextBudgetTokens: 200_000,
+			},
+			connectedProviders: ["claude-local"],
+			availableProviders: [],
+			credentialSummary: [],
+			subscriptions: {
+				"claude-local": { available: true, connected: true, plan: "max", billing: "subscription" },
+			},
+		});
+		renderEditorChrome("en");
+		openAiSettingsFromAppMenu();
+		await waitFor(() =>
+			expect(
+				screen.getByRole("button", { name: /Claude \(local\).*Connected/ }),
+			).toBeInTheDocument(),
+		);
+		fireEvent.click(screen.getByRole("button", { name: /Claude \(local\)/ }));
+		expect(screen.getByRole("status")).toHaveTextContent("Claude subscription: max");
+		fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+		await waitFor(() =>
+			expect(setConfig).toHaveBeenCalledWith(
+				expect.objectContaining({
+					provider: "claude-local",
+					model: "sonnet",
+					allowAgentEdits: false,
+					contextBudgetTokens: 200_000,
+				}),
+			),
+		);
+	});
 	it("offers ChatGPT sign-in without an API-key field or premature save", async () => {
 		renderEditorChrome("en");
 		openAiSettingsFromAppMenu();
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: /ChatGPT subscription/ })).toBeEnabled(),
+		);
 		fireEvent.click(screen.getByRole("button", { name: /ChatGPT subscription/ }));
 		expect(screen.queryByText("API key", { selector: "label" })).not.toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /^Save$/ })).toBeDisabled();

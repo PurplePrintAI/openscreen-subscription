@@ -22,6 +22,7 @@ import {
 	translateCaptionSegments,
 } from "../../ai-edition/caption-translate";
 import type { ChatEventSink } from "../../ai-edition/chat-service";
+import { CLAUDE_MODEL_ALIASES, getClaudeCli } from "../../ai-edition/claude/cli";
 import { getCodexAppServer } from "../../ai-edition/codex/app-server";
 import type { DocumentService } from "../../ai-edition/document-service";
 import type { LlmConfigStore, LlmCredential } from "../../ai-edition/llm-config-store";
@@ -171,15 +172,15 @@ export class AiEditionService {
 		const connectedProviders: string[] = [];
 		const subscriptions: Record<string, AiEditionSubscriptionStatus> = {};
 		for (const def of PROVIDER_DEFINITIONS) {
-			if (def.authKind === "subscription") {
-				const status = await this.llmSubscriptionStatus(def.id);
+			if (def.authKind === "subscription" || def.authKind === "cli") {
+				const status = await this.llmSubscriptionStatus(def.id, false);
 				subscriptions[def.id] = status;
 				if (status.connected) connectedProviders.push(def.id);
 				credentialSummary.push({
 					providerId: def.id,
 					connected: status.connected,
 					authKind: def.authKind,
-					credentialKind: status.connected ? "subscription" : null,
+					credentialKind: status.connected ? def.authKind : null,
 				});
 				continue;
 			}
@@ -208,6 +209,14 @@ export class AiEditionService {
 
 	async llmSetConfig(config: AiEditionLlmConfig): Promise<AiEditionDocumentResult> {
 		try {
+			if (config.provider === "claude-local") {
+				const status = await (await getClaudeCli()).status(true);
+				if (!status.connected)
+					return {
+						success: false,
+						error: status.error ?? "Sign in through the official Claude Code CLI first.",
+					};
+			}
 			if (
 				config.provider === "codex-subscription" &&
 				!(await this.llmSubscriptionStatus(config.provider)).connected
@@ -223,6 +232,12 @@ export class AiEditionService {
 
 	async llmSetApiKey(providerId: string, apiKey: string): Promise<AiEditionDocumentResult> {
 		try {
+			if (providerId === "claude-local")
+				return {
+					success: false,
+					error:
+						"Manage Claude authentication in the official CLI. OpenScreen does not store its credentials.",
+				};
 			if (providerId === "codex-subscription")
 				return { success: false, error: "Use ChatGPT sign-in, not an API key." };
 			const entry: LlmCredential = { kind: "api-key", apiKey };
@@ -243,6 +258,7 @@ export class AiEditionService {
 	}
 
 	async llmDisconnect(providerId: string): Promise<AiEditionLlmDisconnectResult> {
+		// A local CLI is shared with the user's other apps. Deselect it without logging it out.
 		if (providerId === "codex-subscription") await (await getCodexAppServer()).logout();
 		await this.llmConfig.removeCredential(providerId);
 		const active = this.llmConfig.getConfig();
@@ -257,6 +273,7 @@ export class AiEditionService {
 
 	async llmListProviderModels(providerId: string): Promise<{ models: string[]; error?: string }> {
 		try {
+			if (providerId === "claude-local") return { models: [...CLAUDE_MODEL_ALIASES] };
 			if (providerId === "codex-subscription") {
 				const runtime = await getCodexAppServer();
 				if (!(await runtime.status()).connected) return { models: [], error: "Not connected" };
@@ -294,7 +311,11 @@ export class AiEditionService {
 		}
 	}
 
-	async llmSubscriptionStatus(providerId: string): Promise<AiEditionSubscriptionStatus> {
+	async llmSubscriptionStatus(
+		providerId: string,
+		force = true,
+	): Promise<AiEditionSubscriptionStatus> {
+		if (providerId === "claude-local") return (await getClaudeCli()).status(force);
 		if (providerId !== "codex-subscription")
 			return { available: false, connected: false, error: "Unknown subscription provider." };
 		try {

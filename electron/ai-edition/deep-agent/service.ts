@@ -456,15 +456,18 @@ export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeRes
 		cursor: args.cursor,
 		availableByAssetId,
 	});
-	if (model.provider === "codex-subscription") {
-		const { getCodexAppServer } = await import("../codex/app-server");
-		const runtime = await getCodexAppServer();
+	if (model.provider === "codex-subscription" || model.provider === "claude-local") {
+		const runtime =
+			model.provider === "claude-local"
+				? await (await import("../claude/cli")).getClaudeCli()
+				: await (await import("../codex/app-server")).getCodexAppServer();
 		const text = await runtime.run({
 			model: model.model,
 			effort: model.reasoningEffort,
 			instructions: buildSystemPrompt({ editsAllowed }),
 			input: JSON.stringify([...history, { role: "user", content: userMessage }]),
 			onText: (delta) => sink.text(delta),
+			onThinking: (delta: string) => sink.thinking(delta),
 			tools: tools.map((editorTool) => {
 				const definition = convertToOpenAIFunction(editorTool);
 				return {

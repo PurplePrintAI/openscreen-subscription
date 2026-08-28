@@ -15,7 +15,7 @@
 // `open` / `onClose` component above it. Internal state is local-only.
 
 import { AlertCircle, Check, Loader2, Unplug, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useEditorDialogActions, useEditorDialogSection } from "@/contexts/EditorDialogsContext";
 import { useScopedT } from "@/contexts/I18nContext";
@@ -50,11 +50,14 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 	const [apiKey, setApiKey] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const snapshotRequest = useRef(0);
 
 	const refreshSnapshot = useCallback(
 		async (loadConfig = true): Promise<AiEditionLlmSnapshot> => {
+			const requestId = ++snapshotRequest.current;
 			try {
 				const snap = await nativeBridgeClient.aiEdition.llmGetSnapshot();
+				if (requestId !== snapshotRequest.current) return snap;
 				setSnapshot(snap);
 				if (loadConfig && snap.config) setConfig(snap.config);
 				return snap;
@@ -92,6 +95,9 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 
 	useEffect(() => {
 		if (!open) {
+			snapshotRequest.current++;
+			setSnapshot(null);
+			setConfig(null);
 			setMode("list");
 			setActive(null);
 			setApiKey("");
@@ -134,8 +140,8 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 				model: existing?.model ?? def.defaultModel,
 				baseUrl: existing?.baseUrl ?? def.baseUrl,
 				reasoningEffort:
-					existing?.reasoningEffort ?? (def.authKind === "subscription" ? "medium" : undefined),
-				allowAgentEdits: existing?.allowAgentEdits,
+					existing?.reasoningEffort ?? (def.authKind !== "api-key" ? "medium" : undefined),
+				allowAgentEdits: existing?.allowAgentEdits ?? prev?.allowAgentEdits,
 				contextBudgetTokens: existing?.contextBudgetTokens ?? prev?.contextBudgetTokens,
 			};
 		});
@@ -185,7 +191,11 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 			// form and the grid behind it went on showing the provider as CONNECTED until the
 			// dialog was closed and reopened.
 			setSnapshot(result.snapshot);
-			toast.success(te("providerSettings.disconnected", { provider: active.label }));
+			toast.success(
+				active.authKind === "cli"
+					? te("providerSettings.localCliDeselected")
+					: te("providerSettings.disconnected", { provider: active.label }),
+			);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		} finally {
@@ -209,6 +219,19 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 			setBusy(false);
 		}
 	};
+	const checkCliConnection = async () => {
+		if (!active) return;
+		setBusy(true);
+		setError(null);
+		try {
+			await nativeBridgeClient.aiEdition.llmSubscriptionStatus(active.id);
+			await refreshSnapshot(false);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setBusy(false);
+		}
+	};
 
 	return (
 		<ModalShell
@@ -221,6 +244,7 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 		>
 			{mode === "list" ? (
 				<ProviderList
+					loading={snapshot === null}
 					connected={new Set(snapshot?.connectedProviders ?? [])}
 					activeProvider={snapshot?.config?.provider ?? null}
 					onPick={openForm}
@@ -229,6 +253,7 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 				<ProviderForm
 					def={active}
 					isConnected={(snapshot?.connectedProviders ?? []).includes(active.id)}
+					isSelected={snapshot?.config?.provider === active.id}
 					credentialKind={
 						snapshot?.credentialSummary.find((c) => c.providerId === active.id)?.credentialKind ??
 						null
@@ -246,6 +271,7 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 					subscriptionStatus={snapshot?.subscriptions?.[active.id]}
 					onSignIn={() => void signIn()}
 					onCancelSignIn={() => void signIn(true)}
+					onCheckCliConnection={() => void checkCliConnection()}
 				/>
 			) : null}
 		</ModalShell>
@@ -268,17 +294,19 @@ export function ProviderSettingsDialog() {
 }
 
 function ProviderList({
+	loading,
 	connected,
 	activeProvider,
 	onPick,
 }: {
+	loading: boolean;
 	connected: Set<string>;
 	activeProvider: string | null;
 	onPick: (def: ProviderDefinition) => void;
 }) {
 	const te = useScopedT("editor");
 	return (
-		<div className={styles.providerGrid}>
+		<div className={styles.providerGrid} aria-busy={loading}>
 			{PROVIDER_DEFINITIONS.map((def) => {
 				const isConnected = connected.has(def.id);
 				const isActive = def.id === activeProvider;
@@ -288,6 +316,7 @@ function ProviderList({
 						type="button"
 						className={`${styles.providerCard} ${isActive ? styles.active : ""}`}
 						onClick={() => onPick(def)}
+						disabled={loading}
 					>
 						<div className={styles.head}>
 							<span className={styles.label}>{def.label}</span>
@@ -302,7 +331,9 @@ function ProviderList({
 									{te(
 										def.authKind === "subscription"
 											? "providerSettings.pillSubscription"
-											: "providerSettings.pillApiKey",
+											: def.authKind === "cli"
+												? "providerSettings.pillLocalCli"
+												: "providerSettings.pillApiKey",
 									)}
 								</span>
 							)}
@@ -335,6 +366,7 @@ function KeyIcon() {
 function ProviderForm({
 	def,
 	isConnected,
+	isSelected,
 	credentialKind,
 	apiKey,
 	setApiKey,
@@ -349,9 +381,11 @@ function ProviderForm({
 	subscriptionStatus,
 	onSignIn,
 	onCancelSignIn,
+	onCheckCliConnection,
 }: {
 	def: ProviderDefinition;
 	isConnected: boolean;
+	isSelected: boolean;
 	credentialKind: string | null;
 	apiKey: string;
 	setApiKey: (v: string) => void;
@@ -366,6 +400,7 @@ function ProviderForm({
 	subscriptionStatus?: AiEditionSubscriptionStatus;
 	onSignIn: () => void;
 	onCancelSignIn: () => void;
+	onCheckCliConnection: () => void;
 }) {
 	const te = useScopedT("editor");
 	const showBaseUrl = def.id === "openai-compatible" || Boolean(def.baseUrl);
@@ -410,7 +445,7 @@ function ProviderForm({
 		};
 	}, [def.id, def.authKind, isConnected, listProviderModels, setConfig]);
 
-	const modelSelectable = modelOptions.length > 0;
+	const modelSelectable = modelOptions.length > 0 && def.authKind !== "cli";
 
 	return (
 		<div className={styles.providerForm}>
@@ -443,13 +478,15 @@ function ProviderForm({
 			<Field
 				label={te("providerSettings.modelLabel")}
 				hint={
-					modelSelectable
-						? te("providerSettings.modelHintLive")
-						: modelsError
-							? te("providerSettings.modelHintError", { error: modelsError })
-							: isConnected
-								? te("providerSettings.modelHintLoading")
-								: undefined
+					def.authKind === "cli"
+						? te("providerSettings.modelHintCli")
+						: modelSelectable
+							? te("providerSettings.modelHintLive")
+							: modelsError
+								? te("providerSettings.modelHintError", { error: modelsError })
+								: isConnected
+									? te("providerSettings.modelHintLoading")
+									: undefined
 				}
 			>
 				{modelSelectable ? (
@@ -479,6 +516,7 @@ function ProviderForm({
 				) : (
 					<input
 						type="text"
+						list={def.authKind === "cli" ? "claude-local-models" : undefined}
 						value={config?.model ?? def.defaultModel}
 						placeholder={def.defaultModel}
 						onChange={(e) =>
@@ -490,6 +528,13 @@ function ProviderForm({
 						disabled={busy}
 					/>
 				)}
+				{def.authKind === "cli" ? (
+					<datalist id="claude-local-models">
+						{modelOptions.map((model) => (
+							<option key={model} value={model} />
+						))}
+					</datalist>
+				) : null}
 				{modelsLoading ? (
 					<span
 						style={{
@@ -550,7 +595,41 @@ function ProviderForm({
 				</Field>
 			) : null}
 
-			{def.authKind === "subscription" ? (
+			{def.authKind === "cli" ? (
+				<Field
+					label={te("providerSettings.pillLocalCli")}
+					hint={te("providerSettings.localCliHint")}
+				>
+					<p>
+						<code>claude auth login</code>
+					</p>
+					{subscriptionStatus?.connected ? (
+						<p role="status">
+							{te(
+								subscriptionStatus.billing === "subscription"
+									? "providerSettings.cliAccountSubscription"
+									: subscriptionStatus.billing === "api"
+										? "providerSettings.cliAccountApi"
+										: "providerSettings.cliAccountRuntime",
+								{ plan: subscriptionStatus.plan ?? "" },
+							)}
+						</p>
+					) : null}
+					<button
+						type="button"
+						className={`${styles.btn} ${styles.btnSecondary}`}
+						onClick={onCheckCliConnection}
+						disabled={busy}
+					>
+						{te("providerSettings.checkCliConnection")}
+					</button>
+					{subscriptionStatus?.error ? (
+						<p role="alert" className={styles.errorRow}>
+							{subscriptionStatus.error}
+						</p>
+					) : null}
+				</Field>
+			) : def.authKind === "subscription" ? (
 				<Field
 					label={te("providerSettings.pillSubscription")}
 					hint={te("providerSettings.subscriptionHint")}
@@ -636,7 +715,7 @@ function ProviderForm({
 
 			<div className={styles.actions}>
 				<div className={styles.actionsLeft}>
-					{isConnected ? (
+					{isConnected && (def.authKind !== "cli" || isSelected) ? (
 						<button
 							type="button"
 							className={`${styles.btn} ${styles.dangerBtn}`}
@@ -644,7 +723,11 @@ function ProviderForm({
 							disabled={busy}
 						>
 							<Unplug size={14} />
-							{te("providerSettings.disconnect")}
+							{te(
+								def.authKind === "cli"
+									? "providerSettings.disconnectLocalCli"
+									: "providerSettings.disconnect",
+							)}
 						</button>
 					) : null}
 				</div>

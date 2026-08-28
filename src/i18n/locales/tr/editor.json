@@ -390,6 +390,15 @@
 		"noArrowData": "Ok verisi yok"
 	},
 	"providerSettings": {
+		"pillLocalCli": "Yerel CLI",
+		"localCliHint": "Resmî Claude Code CLI üzerinden giriş yapın. Kimlik doğrulama ve kullanım, etkin abonelik, API anahtarı veya sağlayıcı hesabına bağlıdır. OpenScreen bu kimlik bilgilerini saklamaz veya değiştirmez.",
+		"cliAccountSubscription": "Claude aboneliği: {{plan}}. Planınızın sınırları kullanılır.",
+		"cliAccountApi": "API kimlik doğrulaması etkin. Abonelik sınırları değil, API ücretleri geçerlidir.",
+		"cliAccountRuntime": "CLI kimlik doğrulaması etkin. Kullanım ve faturalandırma mevcut yapılandırmaya bağlıdır.",
+		"checkCliConnection": "CLI bağlantısını denetle",
+		"disconnectLocalCli": "OpenScreen'de kullanmayı bırak",
+		"localCliDeselected": "Claude seçimi kaldırıldı. CLI hesabı açık kalır.",
+		"modelHintCli": "CLI takma adı (sonnet, opus, haiku, fable) veya tam model kimliği girin. Öneriler hesap erişimini doğrulamaz.",
 		"title": "Yapay zekâ ayarları",
 		"subtitle": "Bir sağlayıcı seçin. Kimlik bilgileri işletim sisteminin anahtar zincirinde (safeStorage) saklanır.",
 		"loadFailed": "Yapay zekâ ayarları yüklenemedi",

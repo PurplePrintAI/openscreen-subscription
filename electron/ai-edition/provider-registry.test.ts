@@ -19,7 +19,7 @@ const FIRST_PARTY_ONLY_HOSTS = [
 describe("PROVIDER_DEFINITIONS", () => {
 	it("routes subscriptions only through the implemented official local runtime", () => {
 		const others = PROVIDER_DEFINITIONS.filter((def) => def.authKind !== "api-key");
-		expect(others.map((d) => d.id)).toEqual(["codex-subscription"]);
+		expect(others.map((d) => d.id)).toEqual(["codex-subscription", "claude-local"]);
 		expect(others[0].baseUrl).toBeUndefined();
 		expect(others[0].envKeys).toEqual([]);
 	});

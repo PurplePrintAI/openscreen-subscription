@@ -245,6 +245,7 @@ export type AiEditionLlmCredentialKind =
 	| "codex"
 	| "github-device"
 	| "github-pat"
+	| "cli"
 	| "subscription";
 
 export interface AiEditionSubscriptionStatus {
@@ -253,6 +254,8 @@ export interface AiEditionSubscriptionStatus {
 	email?: string;
 	plan?: string;
 	loginPending?: boolean;
+	authMethod?: string;
+	billing?: "subscription" | "api" | "runtime";
 	error?: string;
 }
 
@@ -267,6 +270,7 @@ export interface AiEditionLlmSnapshot {
 		authKind: string;
 		credentialKind: AiEditionLlmCredentialKind | null;
 	}>;
+	/** Public connection metadata for local runtimes, including externally managed CLI auth. */
 	subscriptions?: Record<string, AiEditionSubscriptionStatus>;
 }
 

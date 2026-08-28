@@ -117,3 +117,12 @@ SOFTWARE.
 
 To report an omission or request source for this fork, open an issue
 at <https://github.com/PurplePrintAI/openscreen-subscription/issues>.
+
+## Local editor tool transport (independent fork)
+
+**@modelcontextprotocol/sdk 1.30.0** — https://github.com/modelcontextprotocol/typescript-sdk
+
+MIT License. Copyright (c) 2024 Anthropic, PBC.
+The full MIT permission and warranty notice reproduced above applies to this component too.
+The official Claude Code CLI is a separately installed, unmodified user dependency;
+it is not bundled or relicensed by this fork.

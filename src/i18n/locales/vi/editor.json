@@ -390,6 +390,15 @@
 		"noArrowData": "Không có dữ liệu mũi tên"
 	},
 	"providerSettings": {
+		"pillLocalCli": "CLI cục bộ",
+		"localCliHint": "Đăng nhập qua CLI Claude Code chính thức. CLI quản lý xác thực và dùng gói đăng ký, khóa API hoặc tài khoản nhà cung cấp hiện tại. OpenScreen không lưu hay thay đổi thông tin xác thực này.",
+		"cliAccountSubscription": "Gói Claude: {{plan}}. Áp dụng giới hạn của gói.",
+		"cliAccountApi": "Đang xác thực bằng API. Áp dụng phí API, không dùng hạn mức đăng ký.",
+		"cliAccountRuntime": "CLI đã xác thực. Mức sử dụng và thanh toán theo cấu hình hiện tại.",
+		"checkCliConnection": "Kiểm tra kết nối CLI",
+		"disconnectLocalCli": "Ngừng sử dụng trong OpenScreen",
+		"localCliDeselected": "Đã bỏ chọn Claude. Tài khoản CLI vẫn đăng nhập.",
+		"modelHintCli": "Nhập bí danh CLI (sonnet, opus, haiku, fable) hoặc ID mô hình đầy đủ. Gợi ý không xác nhận quyền truy cập của tài khoản.",
 		"title": "Cài đặt AI",
 		"subtitle": "Chọn một nhà cung cấp. Thông tin đăng nhập được lưu trong kho khóa của hệ điều hành (safeStorage).",
 		"loadFailed": "Không thể tải cài đặt AI",

@@ -10,8 +10,8 @@ export interface ProviderDefinition {
 	id: string;
 	label: string;
 	defaultModel: string;
-	/** Subscription auth is owned by the official local Codex app-server. */
-	authKind: "api-key" | "subscription";
+	/** CLI credentials stay with the official local runtime, never in our key store. */
+	authKind: "api-key" | "subscription" | "cli";
 	supportsReasoningEffort: boolean;
 	/** True when this provider always requires the user to enter a base URL
 	 * (e.g. openai-compatible). False when the default is implicit. */
@@ -36,6 +36,16 @@ export const PROVIDER_DEFINITIONS: ProviderDefinition[] = [
 		supportsReasoningEffort: true,
 		envKeys: [],
 		setupHint: "Connect with the official Codex CLI. Uses your ChatGPT plan; no API key required.",
+	},
+	{
+		id: "claude-local",
+		label: "Claude (local)",
+		defaultModel: "sonnet",
+		authKind: "cli",
+		supportsReasoningEffort: true,
+		envKeys: [],
+		setupHint:
+			"Runs your installed Claude Code CLI. Sign in through the official CLI; billing follows its active account.",
 	},
 	{
 		id: "anthropic",
@@ -162,7 +172,8 @@ export type ReasoningEffort = (typeof REASONING_EFFORT_OPTIONS)[number];
  * "minimal" through "xhigh" all wire up identically.
  */
 export function getReasoningEffortOptions(providerId: string): readonly ReasoningEffort[] {
-	if (providerId === "codex-subscription") return ["low", "medium", "high", "xhigh"];
+	if (providerId === "codex-subscription" || providerId === "claude-local")
+		return ["low", "medium", "high", "xhigh"];
 	if (providerId === "minimax" || providerId === "minimax-token-plan") {
 		return ["none", "medium"];
 	}

@@ -101,6 +101,7 @@
 		"@langchain/core": "^1.1.44",
 		"@langchain/mistralai": "^1.0.8",
 		"@langchain/openai": "^1.4.2",
+		"@modelcontextprotocol/sdk": "1.30.0",
 		"@radix-ui/react-accordion": "^1.2.12",
 		"@radix-ui/react-dialog": "^1.1.15",
 		"@radix-ui/react-dropdown-menu": "^2.1.16",

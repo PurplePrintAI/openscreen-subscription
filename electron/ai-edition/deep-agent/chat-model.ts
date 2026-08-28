@@ -366,6 +366,10 @@ export function messageContentToThinking(content: unknown): string {
 export async function createOpenScreenChatModel(
 	input: OpenScreenChatModelConfig,
 ): Promise<BaseChatModel> {
+	if (input.provider === "claude-local") {
+		const { ClaudeChatModel } = await import("../claude/chat-model");
+		return new ClaudeChatModel(input.model, input.reasoningEffort);
+	}
 	if (input.provider === "codex-subscription") {
 		const { CodexChatModel } = await import("../codex/chat-model");
 		return new CodexChatModel(input.model, input.reasoningEffort);

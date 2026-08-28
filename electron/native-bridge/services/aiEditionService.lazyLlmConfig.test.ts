@@ -8,6 +8,18 @@ const runtime = vi.hoisted(() => ({
 	models: vi.fn(async () => ["account-model"]),
 }));
 vi.mock("../../ai-edition/codex/app-server", () => ({ getCodexAppServer: async () => runtime }));
+const claudeRuntime = vi.hoisted(() => ({
+	status: vi.fn(async () => ({
+		available: true,
+		connected: true,
+		billing: "subscription",
+		plan: "max",
+	})),
+}));
+vi.mock("../../ai-edition/claude/cli", () => ({
+	getClaudeCli: async () => claudeRuntime,
+	CLAUDE_MODEL_ALIASES: ["sonnet", "opus"],
+}));
 beforeEach(() => {
 	vi.clearAllMocks();
 });
@@ -50,6 +62,51 @@ function serviceWithCountingFactory(): { service: AiEditionService; builds: () =
 }
 
 describe("AiEditionService — LLM store resolution is deferred", () => {
+	it("reads local CLI readiness without collecting credentials or offering an app login", async () => {
+		const { service } = serviceWithCountingFactory();
+		const snapshot = await service.llmGetSnapshot();
+		expect(snapshot.connectedProviders).toContain("claude-local");
+		expect(snapshot.subscriptions?.["claude-local"]).toMatchObject({
+			plan: "max",
+			billing: "subscription",
+		});
+		expect(await service.llmSetApiKey("claude-local", "never-store-this")).toMatchObject({
+			success: false,
+		});
+		expect(await service.llmSubscriptionLogin("claude-local")).toMatchObject({ success: false });
+		await service.llmSubscriptionStatus("claude-local");
+		expect(claudeRuntime.status).toHaveBeenLastCalledWith(true);
+	});
+
+	it("deselects the shared CLI without logging out any account", async () => {
+		const setConfig = vi.fn(async () => undefined);
+		const removeCredential = vi.fn(async () => undefined);
+		const store = {
+			getConfig: () => ({ provider: "claude-local", model: "sonnet" }),
+			getCredential: () => null,
+			setConfig,
+			removeCredential,
+		};
+		const service = new AiEditionService({
+			llmConfig: () => store,
+		} as unknown as AiEditionServiceOptions);
+		await service.llmDisconnect("claude-local");
+		expect(setConfig).toHaveBeenCalledWith({ provider: "", model: "" });
+		expect(runtime.logout).not.toHaveBeenCalled();
+	});
+
+	it("refuses selecting an unauthenticated CLI", async () => {
+		const { service } = serviceWithCountingFactory();
+		claudeRuntime.status.mockResolvedValueOnce({
+			available: true,
+			connected: false,
+			billing: "runtime",
+			plan: "",
+		});
+		expect(await service.llmSetConfig({ provider: "claude-local", model: "sonnet" })).toMatchObject(
+			{ success: false },
+		);
+	});
 	it("uses the saved context reference on both usage routes without changing the native token estimate", () => {
 		const store = { getConfig: () => ({ contextBudgetTokens: 200_000 }) } as LlmConfigStore;
 		const getContextUsage = vi.fn(() => ({

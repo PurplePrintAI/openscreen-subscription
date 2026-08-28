@@ -22,6 +22,8 @@ import type { CodexRun } from "../codex/app-server";
 
 const codexRun = vi.hoisted(() => vi.fn());
 vi.mock("../codex/app-server", () => ({ getCodexAppServer: async () => ({ run: codexRun }) }));
+const claudeRun = vi.hoisted(() => vi.fn());
+vi.mock("../claude/cli", () => ({ getClaudeCli: async () => ({ run: claudeRun }) }));
 
 import {
 	type AxcutDocument,
@@ -181,7 +183,7 @@ function toolsFor(document: AxcutDocument) {
 	return { tools, events, holder };
 }
 
-describe("Codex subscription editor integration", () => {
+describe.each(["codex-subscription", "claude-local"])("%s editor integration", (provider) => {
 	it.each([
 		true,
 		false,
@@ -189,7 +191,8 @@ describe("Codex subscription editor integration", () => {
 		const document = fixtureDocument();
 		const before = JSON.stringify(document);
 		const { sink, events } = recordingSink();
-		codexRun.mockImplementationOnce(async (request: CodexRun) => {
+		const run = provider === "claude-local" ? claudeRun : codexRun;
+		run.mockImplementationOnce(async (request: CodexRun) => {
 			expect(request.tools?.map((t) => t.name)).toEqual([...OPENSCREEN_TOOLS]);
 			const addTrim = request.tools?.find((t) => t.name === "addTrim");
 			expect(addTrim).toBeDefined();
@@ -199,7 +202,7 @@ describe("Codex subscription editor integration", () => {
 		});
 		const result = await invokeOpenScreenAgent({
 			document,
-			model: { provider: "codex-subscription", model: "test-model" },
+			model: { provider, model: "test-model" },
 			history: [],
 			userMessage: "Cut 12–13 seconds",
 			sink,
