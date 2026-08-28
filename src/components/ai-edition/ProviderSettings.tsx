@@ -22,6 +22,8 @@ import { useScopedT } from "@/contexts/I18nContext";
 import { nativeBridgeClient } from "@/native/client";
 import type {
 	AiEditionLlmConfig,
+	AiEditionLlmModelOption,
+	AiEditionLlmProviderModelsResult,
 	AiEditionLlmSnapshot,
 	AiEditionSubscriptionStatus,
 } from "@/native/contracts";
@@ -396,7 +398,7 @@ function ProviderForm({
 	onBack: () => void;
 	onSave: () => void;
 	onDisconnect: () => void;
-	listProviderModels: (providerId: string) => Promise<{ models: string[]; error?: string }>;
+	listProviderModels: (providerId: string) => Promise<AiEditionLlmProviderModelsResult>;
 	subscriptionStatus?: AiEditionSubscriptionStatus;
 	onSignIn: () => void;
 	onCancelSignIn: () => void;
@@ -404,15 +406,19 @@ function ProviderForm({
 }) {
 	const te = useScopedT("editor");
 	const showBaseUrl = def.id === "openai-compatible" || Boolean(def.baseUrl);
-	// Every provider exposes a live model list once connected: each hits its own
-	// /models endpoint, or a probe call for MiniMax.
+	// API providers expose IDs; local runtimes may also supply display metadata.
 	const [modelOptions, setModelOptions] = useState<string[]>([]);
+	const [catalog, setCatalog] = useState<AiEditionLlmModelOption[]>([]);
+	const [customModel, setCustomModel] = useState(false);
+	const [catalogRefresh, setCatalogRefresh] = useState(0);
 	const [modelsLoading, setModelsLoading] = useState(false);
 	const [modelsError, setModelsError] = useState<string | null>(null);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: catalogRefresh explicitly reruns discovery on user request.
 	useEffect(() => {
 		if (!isConnected) {
 			setModelOptions([]);
+			setCatalog([]);
 			setModelsError(null);
 			return;
 		}
@@ -423,6 +429,7 @@ function ProviderForm({
 			.then((result) => {
 				if (cancelled) return;
 				setModelOptions(result.models);
+				setCatalog(result.catalog ?? []);
 				if (def.authKind === "subscription" && result.models[0]) {
 					setConfig((current) =>
 						current?.provider === def.id && !current.model
@@ -435,6 +442,7 @@ function ProviderForm({
 			.catch((err) => {
 				if (cancelled) return;
 				setModelOptions([]);
+				setCatalog([]);
 				setModelsError(err instanceof Error ? err.message : String(err));
 			})
 			.finally(() => {
@@ -443,9 +451,10 @@ function ProviderForm({
 		return () => {
 			cancelled = true;
 		};
-	}, [def.id, def.authKind, isConnected, listProviderModels, setConfig]);
+	}, [def.id, def.authKind, isConnected, listProviderModels, setConfig, catalogRefresh]);
 
-	const modelSelectable = modelOptions.length > 0 && def.authKind !== "cli";
+	const modelSelectable = modelOptions.length > 0 && !(def.authKind === "cli" && customModel);
+	const selectedModelInfo = catalog.find((model) => model.id === config?.model);
 
 	return (
 		<div className={styles.providerForm}>
@@ -479,7 +488,9 @@ function ProviderForm({
 				label={te("providerSettings.modelLabel")}
 				hint={
 					def.authKind === "cli"
-						? te("providerSettings.modelHintCli")
+						? modelsError
+							? te("providerSettings.modelHintError", { error: modelsError })
+							: te("providerSettings.modelHintCli")
 						: modelSelectable
 							? te("providerSettings.modelHintLive")
 							: modelsError
@@ -491,6 +502,7 @@ function ProviderForm({
 			>
 				{modelSelectable ? (
 					<select
+						aria-label={te("providerSettings.modelLabel")}
 						value={config?.model ?? def.defaultModel}
 						onChange={(e) =>
 							setConfig({
@@ -498,7 +510,7 @@ function ProviderForm({
 								model: e.target.value,
 							})
 						}
-						disabled={busy}
+						disabled={busy || modelsLoading}
 					>
 						{!modelOptions.includes(config?.model ?? def.defaultModel) ? (
 							<option value={config?.model ?? def.defaultModel}>
@@ -509,14 +521,14 @@ function ProviderForm({
 						) : null}
 						{modelOptions.map((modelSlug) => (
 							<option key={modelSlug} value={modelSlug}>
-								{modelSlug}
+								{catalog.find((model) => model.id === modelSlug)?.label ?? modelSlug}
 							</option>
 						))}
 					</select>
 				) : (
 					<input
 						type="text"
-						list={def.authKind === "cli" ? "claude-local-models" : undefined}
+						aria-label={te("providerSettings.modelLabel")}
 						value={config?.model ?? def.defaultModel}
 						placeholder={def.defaultModel}
 						onChange={(e) =>
@@ -528,12 +540,39 @@ function ProviderForm({
 						disabled={busy}
 					/>
 				)}
-				{def.authKind === "cli" ? (
-					<datalist id="claude-local-models">
-						{modelOptions.map((model) => (
-							<option key={model} value={model} />
-						))}
-					</datalist>
+				{selectedModelInfo ? (
+					<p
+						style={{ fontSize: 11, color: "var(--muted)", margin: "6px 0" }}
+						title={selectedModelInfo.resolvedModel ?? selectedModelInfo.id}
+					>
+						{selectedModelInfo.description}
+					</p>
+				) : null}
+				{def.authKind === "cli" && isConnected ? (
+					<div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
+						<button
+							type="button"
+							className={`${styles.btn} ${styles.btnSecondary}`}
+							disabled={busy || modelsLoading}
+							onClick={() => setCatalogRefresh((value) => value + 1)}
+						>
+							{te("providerSettings.refreshModels")}
+						</button>
+						{modelOptions.length > 0 ? (
+							<button
+								type="button"
+								className={`${styles.btn} ${styles.btnSecondary}`}
+								disabled={busy}
+								onClick={() => setCustomModel((value) => !value)}
+							>
+								{te(
+									customModel
+										? "providerSettings.chooseCatalogModel"
+										: "providerSettings.enterCustomModel",
+								)}
+							</button>
+						) : null}
+					</div>
 				) : null}
 				{modelsLoading ? (
 					<span

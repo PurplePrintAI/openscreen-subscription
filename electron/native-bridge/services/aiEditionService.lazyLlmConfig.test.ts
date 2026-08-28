@@ -9,6 +9,13 @@ const runtime = vi.hoisted(() => ({
 }));
 vi.mock("../../ai-edition/codex/app-server", () => ({ getCodexAppServer: async () => runtime }));
 const claudeRuntime = vi.hoisted(() => ({
+	models: vi.fn(async () => [
+		{
+			id: "claude-opus-4-8[1m]",
+			label: "Opus 4.8 (1M context)",
+			resolvedModel: "claude-opus-4-8[1m]",
+		},
+	]),
 	status: vi.fn(async () => ({
 		available: true,
 		connected: true,
@@ -18,7 +25,6 @@ const claudeRuntime = vi.hoisted(() => ({
 }));
 vi.mock("../../ai-edition/claude/cli", () => ({
 	getClaudeCli: async () => claudeRuntime,
-	CLAUDE_MODEL_ALIASES: ["sonnet", "opus"],
 }));
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -76,6 +82,16 @@ describe("AiEditionService — LLM store resolution is deferred", () => {
 		expect(await service.llmSubscriptionLogin("claude-local")).toMatchObject({ success: false });
 		await service.llmSubscriptionStatus("claude-local");
 		expect(claudeRuntime.status).toHaveBeenLastCalledWith(true);
+		expect(await service.llmListProviderModels("claude-local")).toEqual({
+			models: ["claude-opus-4-8[1m]"],
+			catalog: [
+				{
+					id: "claude-opus-4-8[1m]",
+					label: "Opus 4.8 (1M context)",
+					resolvedModel: "claude-opus-4-8[1m]",
+				},
+			],
+		});
 	});
 
 	it("deselects the shared CLI without logging out any account", async () => {

@@ -279,8 +279,18 @@ export interface AiEditionLlmDisconnectResult {
 	snapshot: AiEditionLlmSnapshot;
 }
 
+export interface AiEditionLlmModelOption {
+	/** Exact selection value supplied by the provider/runtime, including context suffixes. */
+	id: string;
+	label: string;
+	description?: string;
+	resolvedModel?: string;
+}
+
 export interface AiEditionLlmProviderModelsResult {
 	models: string[];
+	/** Optional display metadata; string-only API-provider responses remain compatible. */
+	catalog?: AiEditionLlmModelOption[];
 	error?: string;
 }
 

@@ -121,8 +121,9 @@ OpenScreen does not implement Claude OAuth, read/copy credential files, request
 setup tokens, or change the CLI's auth profile or authentication environment.
 Only sanitized `claude auth status` metadata is returned to the renderer.
 Subscription, API-key and other provider authentication are distinguished; actual
-billing follows the CLI's active account. Model aliases are suggestions, not a
-verified account model catalog. Deselecting this provider does not log out the
+billing follows the CLI's active account. Model choices are retrieved from the
+official CLI; model access and billing still depend on the account and plan.
+Deselecting this provider does not log out the
 shared CLI or affect other applications.
 
 The official CLI runs in print mode with JSONL streaming. Built-in filesystem and
@@ -162,3 +163,24 @@ Version `1.10.0-subscription.3` packages this feature with the existing fork app
 installation directory and user-data identity. This authorizes local packaging
 and installation, not a GitHub release, upstream PR or public announcement.
 The user-installed Claude Code binary and its account remain outside the package.
+
+### Runtime model catalog
+
+The model picker reads `ModelInfo[]` from the official CLI's streaming control
+`initialize` response, the same metadata exposed by the public Agent SDK's
+`supportedModels()` method. Discovery sends no user prompt and starts no model
+completion. It runs with customizations disabled and no tools, while preserving
+the CLI's authentication and managed policy. No subscription credential file or
+private model-list endpoint is read by OpenScreen.
+
+Both AI settings and the chat model picker show resolved version names, including
+1M variants returned by the CLI. The original selection value is passed through
+unchanged: aliases remain aliases, and explicit versions/context suffixes stay
+intact. The list is not hardcoded, does not promise remaining quota, and does not
+override the configured context-meter reference. Refresh and direct model-ID
+entry remain available; errors never silently replace the saved model.
+
+Some models and context options may use usage credits. The UI points this out
+rather than promising every selection is covered by the subscription limit.
+See the [official model configuration](https://code.claude.com/docs/en/model-config)
+and [SDK TypeScript reference](https://code.claude.com/docs/en/agent-sdk/typescript).

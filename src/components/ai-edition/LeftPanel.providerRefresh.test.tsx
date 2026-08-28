@@ -16,6 +16,8 @@ import { useProjectStore } from "@/lib/ai-edition/store/projectStore";
 import type {
 	AiEditionChatEvent,
 	AiEditionChatResult,
+	AiEditionLlmConfig,
+	AiEditionLlmProviderModelsResult,
 	AiEditionLlmSnapshot,
 } from "@/native/contracts";
 
@@ -41,6 +43,8 @@ const chatSelectSession = vi.fn();
 const chatCreateSession = vi.fn();
 const chatRewind = vi.fn();
 const chatRun = vi.fn<() => Promise<AiEditionChatResult>>();
+const modelList = vi.fn<() => Promise<AiEditionLlmProviderModelsResult>>();
+const saveModel = vi.fn(async (_config: AiEditionLlmConfig) => ({ success: true }));
 let chatEvent: ((event: AiEditionChatEvent) => void) | undefined;
 
 vi.mock("@/native/client", () => ({
@@ -53,7 +57,8 @@ vi.mock("@/native/client", () => ({
 			chatRun: () => chatRun(),
 			chatRewind: (...args: unknown[]) => chatRewind(...args),
 			chatBudget: () => Promise.resolve(null),
-			llmListProviderModels: () => Promise.resolve({ models: [] }),
+			llmListProviderModels: () => modelList(),
+			llmSetConfig: (config: AiEditionLlmConfig) => saveModel(config),
 		},
 	},
 }));
@@ -88,6 +93,8 @@ beforeEach(() => {
 	chatCreateSession.mockReset();
 	chatRewind.mockReset().mockResolvedValue({ success: false, error: "test refused" });
 	chatRun.mockReset();
+	modelList.mockReset().mockResolvedValue({ models: [] });
+	saveModel.mockClear();
 	useProjectStore.setState({ projectId: null, document: null });
 	dialogActions = null;
 	// The panel subscribes to streamed chat events on mount; there is no preload in jsdom.
@@ -265,6 +272,45 @@ describe("ChatStripPanel streaming", () => {
 });
 
 describe("ChatStripPanel, against the lifted provider dialog", () => {
+	it("shows and searches runtime model labels while saving the exact CLI selection value", async () => {
+		const config = {
+			provider: "claude-local",
+			model: "sonnet",
+			allowAgentEdits: false,
+			contextBudgetTokens: 200_000,
+		};
+		llmGetSnapshot.mockResolvedValue({
+			config,
+			connectedProviders: ["claude-local"],
+			availableProviders: [],
+			credentialSummary: [],
+		});
+		modelList.mockResolvedValue({
+			models: ["sonnet", "claude-opus-4-8[1m]"],
+			catalog: [
+				{ id: "sonnet", label: "Sonnet 5" },
+				{ id: "claude-opus-4-8[1m]", label: "Opus 4.8 (1M context)" },
+			],
+		});
+		render(
+			<EditorDialogsProvider>
+				<LeftPanel active="chat" />
+			</EditorDialogsProvider>,
+		);
+		await waitFor(() =>
+			expect(screen.getByRole("button", { name: "chat.modelLabel" })).toHaveTextContent("Sonnet 5"),
+		);
+		fireEvent.click(screen.getByRole("button", { name: "chat.modelLabel" }));
+		const option = await screen.findByRole("button", { name: "Opus 4.8 (1M context)" });
+		fireEvent.change(screen.getByPlaceholderText("chat.searchModels"), {
+			target: { value: "Opus 4.8" },
+		});
+		expect(screen.queryByRole("button", { name: "Sonnet 5" })).toBeNull();
+		fireEvent.click(option);
+		await waitFor(() =>
+			expect(saveModel).toHaveBeenCalledWith({ ...config, model: "claude-opus-4-8[1m]" }),
+		);
+	});
 	it("re-reads the LLM snapshot when the dialog closes, and not when it opens", async () => {
 		render(
 			<EditorDialogsProvider>

@@ -5,7 +5,13 @@ import os from "node:os";
 import path from "node:path";
 import { PassThrough } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ClaudeCli, findClaudeExecutable, parseClaudeStatus, safeCliError } from "./cli";
+import {
+	ClaudeCli,
+	findClaudeExecutable,
+	parseClaudeModels,
+	parseClaudeStatus,
+	safeCliError,
+} from "./cli";
 
 const directories: string[] = [];
 afterEach(async () => {
@@ -62,6 +68,94 @@ const request = {
 };
 
 describe("Claude local runtime", () => {
+	it("labels real model versions while preserving native aliases, pinned IDs, and 1M suffixes", () => {
+		const catalog = parseClaudeModels([
+			{
+				value: "default",
+				resolvedModel: "claude-opus-5[1m]",
+				displayName: "Default (recommended)",
+			},
+			{ value: "opus[1m]", resolvedModel: "claude-opus-5[1m]", displayName: "Opus (1M context)" },
+			{
+				value: "sonnet",
+				resolvedModel: "claude-sonnet-5",
+				displayName: "Sonnet",
+				description: "Routine tasks",
+				accessToken: "not-public",
+			},
+			{ value: "haiku", resolvedModel: "claude-haiku-4-5-20251001", displayName: "Haiku" },
+			{
+				value: "claude-opus-4-8[1m]",
+				resolvedModel: "claude-opus-4-8[1m]",
+				displayName: "Opus 4.8 (1M context)",
+			},
+			{ value: "my-deployment", displayName: "Private deployment" },
+			{ value: "sonnet", displayName: "duplicate" },
+			null,
+			{ value: "invalid\nmodel" },
+		]);
+		expect(catalog.map((model) => model.label)).toEqual([
+			"Default (recommended) · Opus 5 (1M context)",
+			"Opus 5 (1M context)",
+			"Sonnet 5",
+			"Haiku 4.5",
+			"Opus 4.8 (1M context)",
+			"Private deployment",
+		]);
+		expect(catalog.map((model) => model.id)).toEqual([
+			"default",
+			"opus[1m]",
+			"sonnet",
+			"haiku",
+			"claude-opus-4-8[1m]",
+			"my-deployment",
+		]);
+		expect(catalog[2]).not.toHaveProperty("accessToken");
+		expect(() => parseClaudeModels([])).toThrow("empty model catalog");
+	});
+
+	it("discovers models using initialization only and coalesces concurrent discovery", async () => {
+		const requests: unknown[] = [];
+		const launched = launcher((child) => {
+			const input = JSON.parse(String(child.stdin.read()));
+			requests.push(input);
+			child.stdin.once("finish", () => child.emit("close", 0));
+			child.stdout.write(
+				`${JSON.stringify({ type: "control_response", response: { subtype: "success", request_id: input.request_id, response: { models: [{ value: "sonnet", displayName: "Sonnet", resolvedModel: "claude-sonnet-5" }] } } })}\n`,
+			);
+		});
+		const runtime = new ClaudeCli(await directory(), launched.launch, () => "claude-native");
+		const [first, second] = await Promise.all([runtime.models(), runtime.models()]);
+		expect(first).toEqual(second);
+		expect(first[0]).toMatchObject({ id: "sonnet", label: "Sonnet 5" });
+		expect(requests).toEqual([
+			{
+				type: "control_request",
+				request_id: "openscreen-model-catalog",
+				request: { subtype: "initialize", hooks: null, sdkMcpServers: [], skills: [] },
+			},
+		]);
+		const queryArgs = launched.spy.mock.calls.filter((call) => call[1].includes("--input-format"));
+		expect(queryArgs).toHaveLength(1);
+		expect(queryArgs[0][1]).toContain("--safe-mode");
+	});
+
+	it.each([
+		"refused",
+		"empty",
+		"timeout",
+	])("reports %s discovery without inventing a catalog", async (mode) => {
+		const launched = launcher((child) => {
+			if (mode === "timeout") return;
+			const input = JSON.parse(String(child.stdin.read()));
+			child.stdout.write(
+				`${JSON.stringify({ type: "control_response", response: { subtype: mode === "refused" ? "error" : "success", request_id: input.request_id, error: "Access refused", response: { models: [] } } })}\n`,
+			);
+		});
+		const runtime = new ClaudeCli(await directory(), launched.launch, () => "claude-native", 30);
+		await expect(runtime.models()).rejects.toThrow();
+		expect(launched.children.at(-1)?.kill).toHaveBeenCalled();
+	});
 	it("keeps credential-like fields out of connection metadata and distinguishes API billing", () => {
 		expect(
 			parseClaudeStatus({

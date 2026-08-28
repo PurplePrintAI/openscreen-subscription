@@ -13,6 +13,7 @@ import type {
 	AiEditionDocumentResult,
 	AiEditionLlmConfig,
 	AiEditionLlmDisconnectResult,
+	AiEditionLlmProviderModelsResult,
 	AiEditionLlmSnapshot,
 	AiEditionProjectSummary,
 	AiEditionSubscriptionStatus,
@@ -22,7 +23,7 @@ import {
 	translateCaptionSegments,
 } from "../../ai-edition/caption-translate";
 import type { ChatEventSink } from "../../ai-edition/chat-service";
-import { CLAUDE_MODEL_ALIASES, getClaudeCli } from "../../ai-edition/claude/cli";
+import { getClaudeCli } from "../../ai-edition/claude/cli";
 import { getCodexAppServer } from "../../ai-edition/codex/app-server";
 import type { DocumentService } from "../../ai-edition/document-service";
 import type { LlmConfigStore, LlmCredential } from "../../ai-edition/llm-config-store";
@@ -271,9 +272,12 @@ export class AiEditionService {
 		return { success: true, snapshot: await this.llmGetSnapshot() };
 	}
 
-	async llmListProviderModels(providerId: string): Promise<{ models: string[]; error?: string }> {
+	async llmListProviderModels(providerId: string): Promise<AiEditionLlmProviderModelsResult> {
 		try {
-			if (providerId === "claude-local") return { models: [...CLAUDE_MODEL_ALIASES] };
+			if (providerId === "claude-local") {
+				const catalog = await (await getClaudeCli()).models();
+				return { models: catalog.map((model) => model.id), catalog };
+			}
 			if (providerId === "codex-subscription") {
 				const runtime = await getCodexAppServer();
 				if (!(await runtime.status()).connected) return { models: [], error: "Not connected" };

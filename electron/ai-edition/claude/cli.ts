@@ -2,13 +2,15 @@ import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { statSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { AiEditionSubscriptionStatus } from "../../../src/native/contracts";
+import type {
+	AiEditionLlmModelOption,
+	AiEditionSubscriptionStatus,
+} from "../../../src/native/contracts";
 import { type EditorRuntimeTool, startEditorToolServer } from "./editor-tool-server";
 
 type JsonObject = Record<string, unknown>;
 const MINIMUM_VERSION = "2.1.238";
 const MAX_OUTPUT_BYTES = 16 * 1024 * 1024;
-export const CLAUDE_MODEL_ALIASES = ["sonnet", "opus", "haiku", "fable"];
 
 export interface ClaudeRun {
 	model?: string;
@@ -25,6 +27,49 @@ function object(value: unknown): JsonObject {
 	return value !== null && typeof value === "object" && !Array.isArray(value)
 		? (value as JsonObject)
 		: {};
+}
+
+/** Display the resolved version while retaining the CLI's exact model-selection value. */
+export function parseClaudeModels(value: unknown): AiEditionLlmModelOption[] {
+	if (!Array.isArray(value)) throw new Error("Claude Code returned no model catalog.");
+	const models = new Map<string, AiEditionLlmModelOption>();
+	for (const entry of value.slice(0, 256)) {
+		const item = object(entry);
+		const id = typeof item.value === "string" ? item.value.trim() : "";
+		const hasControlCharacter = [...id].some((character) => {
+			const code = character.charCodeAt(0);
+			return code < 32 || code === 127;
+		});
+		if (!id || id.length > 512 || hasControlCharacter || models.has(id)) continue;
+		const nativeLabel = typeof item.displayName === "string" ? item.displayName.slice(0, 300) : id;
+		const resolvedModel =
+			typeof item.resolvedModel === "string" ? item.resolvedModel.slice(0, 512) : undefined;
+		const version =
+			/^claude-(opus|sonnet|haiku|fable)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?(?:\[1m\])?$/i.exec(
+				resolvedModel ?? id,
+			);
+		let label = nativeLabel;
+		if (version) {
+			const family = version[1][0].toUpperCase() + version[1].slice(1);
+			const name = `${family} ${version[2]}${version[3] ? `.${version[3]}` : ""}`;
+			const context =
+				/\[1m\]$/i.test(id) || /\[1m\]$/i.test(resolvedModel ?? "") ? " (1M context)" : "";
+			label = id === "default" ? `${nativeLabel} · ${name}${context}` : `${name}${context}`;
+		}
+		models.set(id, {
+			id,
+			label,
+			resolvedModel,
+			...(typeof item.description === "string"
+				? { description: item.description.slice(0, 2000) }
+				: {}),
+		});
+	}
+	if (!models.size)
+		throw new Error(
+			"Claude Code returned an empty model catalog. Check the CLI connection and model policy.",
+		);
+	return [...models.values()];
 }
 
 export function safeCliError(value: unknown): string {
@@ -107,6 +152,7 @@ export class ClaudeCli {
 	private children = new Set<ChildProcessWithoutNullStreams>();
 	private cachedStatus?: { time: number; status: AiEditionSubscriptionStatus };
 	private statusInFlight?: Promise<AiEditionSubscriptionStatus>;
+	private modelsInFlight?: Promise<AiEditionLlmModelOption[]>;
 
 	constructor(
 		readonly workingDirectory: string,
@@ -169,6 +215,63 @@ export class ClaudeCli {
 		} catch (error) {
 			return { available: false, connected: false, error: safeCliError(error) };
 		}
+	}
+
+	models(): Promise<AiEditionLlmModelOption[]> {
+		if (!this.modelsInFlight)
+			this.modelsInFlight = this.readModels().finally(() => {
+				this.modelsInFlight = undefined;
+			});
+		return this.modelsInFlight;
+	}
+
+	private async readModels(): Promise<AiEditionLlmModelOption[]> {
+		const status = await this.status();
+		if (!status.connected) throw new Error(status.error ?? "Claude Code is not signed in.");
+		const requestId = "openscreen-model-catalog";
+		let catalog: AiEditionLlmModelOption[] | undefined;
+		// The public SDK's initialize response includes ModelInfo[]. No user prompt,
+		// completion, token extraction, or private provider endpoint is involved.
+		const result = await this.capture(
+			this.executable(),
+			[
+				"--print",
+				"--input-format",
+				"stream-json",
+				"--output-format",
+				"stream-json",
+				"--verbose",
+				"--safe-mode",
+				"--tools",
+				"",
+				"--permission-mode",
+				"dontAsk",
+				"--no-session-persistence",
+			],
+			this.workingDirectory,
+			`${JSON.stringify({
+				type: "control_request",
+				request_id: requestId,
+				request: { subtype: "initialize", hooks: null, sdkMcpServers: [], skills: [] },
+			})}\n`,
+			Math.min(this.timeoutMs, 20_000),
+			undefined,
+			(event) => {
+				if (event.type !== "control_response") return;
+				const response = object(event.response);
+				if (response.request_id !== requestId) return;
+				if (response.subtype !== "success")
+					throw new Error(
+						`Claude model discovery failed: ${safeCliError(response.error ?? "initialization was refused")}`,
+					);
+				catalog = parseClaudeModels(object(response.response).models);
+				return true;
+			},
+			true,
+		);
+		if (result.code !== 0 || !catalog)
+			throw new Error("Claude Code did not finish model discovery. Retry the connection.");
+		return catalog;
 	}
 
 	async run(request: ClaudeRun): Promise<string> {
@@ -285,7 +388,8 @@ export class ClaudeCli {
 		input: string,
 		timeoutMs: number,
 		signal?: AbortSignal,
-		onEvent?: (event: JsonObject) => void,
+		onEvent?: (event: JsonObject) => void | boolean,
+		keepInputOpen = false,
 	): Promise<{ stdout: string; stderr: string; code: number | null }> {
 		return new Promise((resolve, reject) => {
 			signal?.throwIfAborted();
@@ -318,7 +422,7 @@ export class ClaudeCli {
 			const timer = setTimeout(() => fail(new Error("Claude request timed out.")), timeoutMs);
 			const parse = (line: string) => {
 				if (!line.trim()) return;
-				onEvent?.(object(JSON.parse(line)));
+				if (onEvent?.(object(JSON.parse(line))) === true) child.stdin.end();
 			};
 			child.stdout.setEncoding("utf8");
 			child.stderr.setEncoding("utf8");
@@ -363,6 +467,7 @@ export class ClaudeCli {
 			});
 			signal?.addEventListener("abort", abort, { once: true });
 			if (signal?.aborted) abort();
+			else if (keepInputOpen) child.stdin.write(input);
 			else child.stdin.end(input);
 		});
 	}

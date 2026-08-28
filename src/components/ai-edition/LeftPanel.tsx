@@ -18,7 +18,11 @@ import { useChatPromptBus } from "@/lib/ai-edition/store/useChatPromptBus";
 import { splitRoundedTime } from "@/lib/ai-edition/timeline/format";
 import type { AssetTranscriptionView } from "@/lib/ai-edition/transcription/status";
 import { nativeBridgeClient } from "@/native/client";
-import type { AiEditionChatEvent, AiEditionLlmConfig } from "@/native/contracts";
+import type {
+	AiEditionChatEvent,
+	AiEditionLlmConfig,
+	AiEditionLlmModelOption,
+} from "@/native/contracts";
 import { formatBytes } from "@/utils/formatBytes";
 import {
 	getReasoningEffortLabel,
@@ -335,6 +339,7 @@ function ModelQuickPopover({
 	const [screen, setScreen] = useState<"models" | "providers">("models");
 	const [browseProviderId, setBrowseProviderId] = useState(llmConfig.provider);
 	const [models, setModels] = useState<string[]>([]);
+	const [catalog, setCatalog] = useState<AiEditionLlmModelOption[]>([]);
 	const [modelsLoading, setModelsLoading] = useState(false);
 	const [modelsError, setModelsError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
@@ -347,11 +352,14 @@ function ModelQuickPopover({
 		let cancelled = false;
 		setModelsLoading(true);
 		setModelsError(null);
+		setModels([]);
+		setCatalog([]);
 		void nativeBridgeClient.aiEdition
 			.llmListProviderModels(browseProviderId)
 			.then((result) => {
 				if (cancelled) return;
 				setModels(result.models);
+				setCatalog(result.catalog ?? []);
 				setModelsError(result.error ?? null);
 			})
 			.catch((err) => {
@@ -386,8 +394,13 @@ function ModelQuickPopover({
 		}
 	};
 
+	const modelInfo = new Map(catalog.map((model) => [model.id, model]));
 	const filteredModels = search.trim()
-		? models.filter((candidate) => candidate.toLowerCase().includes(search.trim().toLowerCase()))
+		? models.filter((candidate) =>
+				[candidate, modelInfo.get(candidate)?.label, modelInfo.get(candidate)?.resolvedModel].some(
+					(value) => value?.toLowerCase().includes(search.trim().toLowerCase()),
+				),
+			)
 		: models;
 
 	return createPortal(
@@ -468,7 +481,7 @@ function ModelQuickPopover({
 								<div style={{ fontSize: 11.5, color: "var(--muted)" }}>
 									{t("chat.currentModel")}{" "}
 									{browseProviderId === llmConfig.provider
-										? llmConfig.model
+										? (modelInfo.get(llmConfig.model)?.label ?? llmConfig.model)
 										: (browseDef?.defaultModel ?? t("chat.notSelected"))}
 								</div>
 							</div>
@@ -501,7 +514,8 @@ function ModelQuickPopover({
 										<button
 											key={candidate}
 											type="button"
-											disabled={busy}
+											disabled={busy || modelsLoading}
+											title={modelInfo.get(candidate)?.description}
 											onClick={() => void selectModel(candidate)}
 											style={{
 												display: "flex",
@@ -521,7 +535,7 @@ function ModelQuickPopover({
 												marginBottom: 2,
 											}}
 										>
-											{candidate}
+											{modelInfo.get(candidate)?.label ?? candidate}
 											{candidate === llmConfig.model && browseProviderId === llmConfig.provider ? (
 												<Check size={12} />
 											) : null}
@@ -662,6 +676,7 @@ function ChatStripPanel() {
 	const [reasoningBusy, setReasoningBusy] = useState(false);
 	// null until the first llmGetSnapshot() lands: "unknown", not "none".
 	const [connectedProviders, setConnectedProviders] = useState<string[] | null>(null);
+	const [activeModelCatalog, setActiveModelCatalog] = useState<AiEditionLlmModelOption[]>([]);
 	// unknown ≠ none; see chatAvailability.ts.
 	const canChat = canSendChat(llmConfig, connectedProviders);
 	const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
@@ -707,6 +722,23 @@ function ChatStripPanel() {
 	useEffect(() => {
 		if (!providerSettingsOpen) void refreshLlm();
 	}, [providerSettingsOpen, refreshLlm]);
+
+	useEffect(() => {
+		setActiveModelCatalog([]);
+		if (providerSettingsOpen || llmConfig?.provider !== "claude-local") return;
+		let cancelled = false;
+		void nativeBridgeClient.aiEdition
+			.llmListProviderModels(llmConfig.provider)
+			.then((result) => {
+				if (!cancelled) setActiveModelCatalog(result.catalog ?? []);
+			})
+			.catch(() => {
+				/* Keep the saved model ID visible when discovery is unavailable. */
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [llmConfig?.provider, providerSettingsOpen]);
 
 	// Coalesce IPC chunks into one visual update per frame. The final RPC response
 	// replaces the live row; refs keep the final text/reasoning out of stale closures.
@@ -1032,7 +1064,9 @@ function ChatStripPanel() {
 		};
 	}, [rewindFor]);
 
-	const modelLabel = llmConfig ? llmConfig.model : t("chat.configureModel");
+	const modelLabel = llmConfig
+		? (activeModelCatalog.find((model) => model.id === llmConfig.model)?.label ?? llmConfig.model)
+		: t("chat.configureModel");
 	const providerSupportsReasoning = Boolean(
 		llmConfig &&
 			PROVIDER_DEFINITIONS.find((d) => d.id === llmConfig.provider)?.supportsReasoningEffort,
