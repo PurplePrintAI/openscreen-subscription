@@ -109,7 +109,7 @@ It is a UI/IPC test, not evidence of a new live subscription inference test.
 
 Fork support: https://github.com/PurplePrintAI/openscreen-subscription/issues
 
-## Claude local runtime (development branch, 2026-08-28)
+## Claude local runtime (subscription.3 local build, 2026-08-28)
 
 `Claude (local)` runs the user's official native Claude Code executable, version
 2.1.238 or later. Install and sign in through the official CLI (`claude auth login`),
@@ -156,3 +156,9 @@ subscription OAuth flow. This is an engineering interpretation, not individualiz
 Anthropic approval or legal clearance. Public promotion/release of this feature
 remains separate and requires owner review of these conditions. No GitHub Release,
 upstream PR, or public feature announcement is implied by local validation.
+
+On 2026-08-28 the fork owner requested a local release build for personal testing.
+Version `1.10.0-subscription.3` packages this feature with the existing fork app ID,
+installation directory and user-data identity. This authorizes local packaging
+and installation, not a GitHub release, upstream PR or public announcement.
+The user-installed Claude Code binary and its account remain outside the package.
