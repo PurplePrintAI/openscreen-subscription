@@ -1,4 +1,4 @@
-> **Unofficial fork: OpenScreen Subscription.** Adds local ChatGPT/Codex subscription routing and a Windows Unicode recording-path fix. This is not an upstream release or endorsement. See [FORK.md](FORK.md) for attribution, the policy review and the fork's release/contribution procedure. Use this fork's release artifacts, not the upstream installers linked in the original documentation below.
+> **Unofficial fork: OpenScreen Subscription.** Adds local ChatGPT/Codex and Claude Code subscription routing, AI-session UI improvements, and a Windows Unicode recording-path fix. This is not an upstream release or endorsement. See [FORK.md](FORK.md) for attribution, policy and publication boundaries, and [FORK-CHANGELOG.md](FORK-CHANGELOG.md) for the versioned differences from upstream v1.10.0. Use this fork's release artifacts, not the upstream installers linked in the original documentation below.
 
 <p align="center">
   <img src="public/openscreen.png" alt="OpenScreen Logo" width="64" />

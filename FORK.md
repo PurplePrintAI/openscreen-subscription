@@ -6,6 +6,10 @@ based on upstream **v1.10.0** (`dbdadb7d27fe3287d994fb741d6f264a31066648`).
 It is not an official OpenScreen release and is not endorsed by the upstream
 maintainers or by OpenAI. Upstream copyright notices are retained.
 
+For the concise, version-by-version delta from upstream v1.10.0, see
+[FORK-CHANGELOG.md](FORK-CHANGELOG.md). This document retains the detailed
+architecture, policy and release notes behind those changes.
+
 ## Scope
 
 - Fix Windows recording paths containing non-ASCII characters.
