@@ -304,7 +304,15 @@
 		"contextReferenceScope": "Tüm sohbetler için AI ayarlarına kaydedilir. Yalnızca geçmiş metni tahmin edilir; sistem istemleri, araçlar ve proje verileri dahil değildir. Sıkıştırma elle yapılır.",
 		"contextReferenceInvalid": "1.000 ile 2.000.000 arasında bir tam sayı girin.",
 		"contextReferenceReset": "80.000 olarak sıfırla",
-		"contextReferenceSaveFailed": "Bağlam referansı kaydedilemedi."
+		"contextReferenceSaveFailed": "Bağlam referansı kaydedilemedi.",
+		"contextTooltipWithLimit": "Tahmini geçmiş {{usedTokens}} · model penceresi {{modelLimit}} token · referans {{budgetTokens}}",
+		"contextPercentWithLimit": "~%{{percent}} / {{limit}}",
+		"contextModelLimitLabel": "Model bağlam penceresi",
+		"contextModelLimitValue": "{{limit}} ({{tokens}} token)",
+		"contextModelLimitUnknown": "Kullanılamıyor",
+		"contextModelLimitRuntime": "Etkin yerel çalışma zamanı veya seçilen bağlam varyantı tarafından bildirildi.",
+		"contextModelLimitOfficial": "Bu model kimliğinin güncel resmi belirtimiyle eşleşir.",
+		"contextModelLimitUnavailable": "Sağlayıcı bir sınır bildirmedi ve bu model kimliği için doğrulanmış bir belirtim yok. Özel ağ geçitleri farklı olabilir."
 	},
 	"newProjectDialog": {
 		"title": "Yeni proje",

@@ -68,9 +68,8 @@ describe("compaction", () => {
 	it("NEVER runs on its own, however big the history gets", async () => {
 		// The headline rule. A turn used to measure the history against a
 		// guessed 80k-token budget and, past 70% of it, block on a whole extra
-		// summarizer call before the user's request was even sent. The app has
-		// no way to ask a provider how big its context window is, so that number
-		// could not be right for anything — it threw away context at 5% fill on
+		// summarizer call before the user's request was even sent. That global
+		// reference could not be right for every model — it threw away context at 5% fill on
 		// a 1M-token Gemini. Six turns here estimate at ~90k tokens, comfortably
 		// past the old trip point.
 		const summarizer = stubSummarizer("EARLIER CONTEXT");

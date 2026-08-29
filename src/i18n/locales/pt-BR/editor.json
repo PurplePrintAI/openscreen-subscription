@@ -304,7 +304,15 @@
 		"contextReferenceScope": "Salvo nas configurações de IA para todas as conversas. Estima apenas o texto do histórico, sem instruções do sistema, ferramentas ou dados do projeto. A compactação continua manual.",
 		"contextReferenceInvalid": "Digite um inteiro entre 1.000 e 2.000.000.",
 		"contextReferenceReset": "Redefinir para 80.000",
-		"contextReferenceSaveFailed": "Não foi possível salvar a referência de contexto."
+		"contextReferenceSaveFailed": "Não foi possível salvar a referência de contexto.",
+		"contextTooltipWithLimit": "Histórico estimado {{usedTokens}} · janela do modelo {{modelLimit}} tokens · referência {{budgetTokens}}",
+		"contextPercentWithLimit": "~{{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "Janela de contexto do modelo",
+		"contextModelLimitValue": "{{limit}} ({{tokens}} tokens)",
+		"contextModelLimitUnknown": "Indisponível",
+		"contextModelLimitRuntime": "Informado pelo runtime local ativo ou pela variante de contexto selecionada.",
+		"contextModelLimitOfficial": "Corresponde à especificação oficial atual deste ID de modelo.",
+		"contextModelLimitUnavailable": "O provedor não informou um limite e este ID de modelo não tem uma especificação verificada. Gateways personalizados podem variar."
 	},
 	"newProjectDialog": {
 		"title": "Novo projeto",

@@ -304,7 +304,15 @@
 		"contextReferenceScope": "Salvato nelle impostazioni IA per tutte le conversazioni. Stima solo il testo della cronologia, escluse istruzioni di sistema, strumenti e dati del progetto. La compressione resta manuale.",
 		"contextReferenceInvalid": "Inserisci un intero tra 1.000 e 2.000.000.",
 		"contextReferenceReset": "Ripristina 80.000",
-		"contextReferenceSaveFailed": "Impossibile salvare il riferimento del contesto."
+		"contextReferenceSaveFailed": "Impossibile salvare il riferimento del contesto.",
+		"contextTooltipWithLimit": "Cronologia stimata {{usedTokens}} · finestra modello {{modelLimit}} token · riferimento {{budgetTokens}}",
+		"contextPercentWithLimit": "~{{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "Finestra di contesto del modello",
+		"contextModelLimitValue": "{{limit}} ({{tokens}} token)",
+		"contextModelLimitUnknown": "Non disponibile",
+		"contextModelLimitRuntime": "Segnalato dal runtime locale attivo o dalla variante di contesto selezionata.",
+		"contextModelLimitOfficial": "Corrisponde alla specifica ufficiale corrente per questo ID modello.",
+		"contextModelLimitUnavailable": "Il provider non ha segnalato un limite e questo ID modello non ha una specifica verificata. I gateway personalizzati possono differire."
 	},
 	"newProjectDialog": {
 		"title": "Nuovo progetto",

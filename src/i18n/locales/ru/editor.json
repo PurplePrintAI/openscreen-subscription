@@ -304,7 +304,15 @@
 		"contextReferenceScope": "Сохраняется в настройках ИИ для всех бесед. Оценивается только текст истории, без системных инструкций, инструментов и данных проекта. Сжатие остаётся ручным.",
 		"contextReferenceInvalid": "Введите целое число от 1 000 до 2 000 000.",
 		"contextReferenceReset": "Сбросить до 80 000",
-		"contextReferenceSaveFailed": "Не удалось сохранить ориентир контекста."
+		"contextReferenceSaveFailed": "Не удалось сохранить ориентир контекста.",
+		"contextTooltipWithLimit": "Оценка истории {{usedTokens}} · окно модели {{modelLimit}} токенов · ориентир {{budgetTokens}}",
+		"contextPercentWithLimit": "~{{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "Контекстное окно модели",
+		"contextModelLimitValue": "{{limit}} ({{tokens}} токенов)",
+		"contextModelLimitUnknown": "Недоступно",
+		"contextModelLimitRuntime": "Сообщено активной локальной средой или выбранным вариантом контекста.",
+		"contextModelLimitOfficial": "Соответствует текущей официальной спецификации этого ID модели.",
+		"contextModelLimitUnavailable": "Провайдер не сообщил лимит, а для этого ID модели нет проверенной спецификации. Пользовательские шлюзы могут отличаться."
 	},
 	"newProjectDialog": {
 		"title": "Новый проект",

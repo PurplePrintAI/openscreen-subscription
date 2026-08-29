@@ -2,6 +2,7 @@ import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { statSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { resolveClaudeContextWindow } from "../../../src/lib/ai-edition/modelContextWindow";
 import type {
 	AiEditionLlmModelOption,
 	AiEditionSubscriptionStatus,
@@ -30,7 +31,10 @@ function object(value: unknown): JsonObject {
 }
 
 /** Display the resolved version while retaining the CLI's exact model-selection value. */
-export function parseClaudeModels(value: unknown): AiEditionLlmModelOption[] {
+export function parseClaudeModels(
+	value: unknown,
+	options: { disableOneMillion?: boolean; usesGateway?: boolean } = {},
+): AiEditionLlmModelOption[] {
 	if (!Array.isArray(value)) throw new Error("Claude Code returned no model catalog.");
 	const models = new Map<string, AiEditionLlmModelOption>();
 	for (const entry of value.slice(0, 256)) {
@@ -56,12 +60,22 @@ export function parseClaudeModels(value: unknown): AiEditionLlmModelOption[] {
 				/\[1m\]$/i.test(id) || /\[1m\]$/i.test(resolvedModel ?? "") ? " (1M context)" : "";
 			label = id === "default" ? `${nativeLabel} · ${name}${context}` : `${name}${context}`;
 		}
+		const description =
+			typeof item.description === "string" ? item.description.slice(0, 2000) : undefined;
+		const context = resolveClaudeContextWindow({
+			id,
+			resolvedModel,
+			description,
+			disableOneMillion: options.disableOneMillion,
+			usesGateway: options.usesGateway,
+		});
 		models.set(id, {
 			id,
 			label,
 			resolvedModel,
-			...(typeof item.description === "string"
-				? { description: item.description.slice(0, 2000) }
+			...(description ? { description } : {}),
+			...(context
+				? { contextWindowTokens: context.tokens, contextWindowSource: context.source }
 				: {}),
 		});
 	}
@@ -264,7 +278,10 @@ export class ClaudeCli {
 					throw new Error(
 						`Claude model discovery failed: ${safeCliError(response.error ?? "initialization was refused")}`,
 					);
-				catalog = parseClaudeModels(object(response.response).models);
+				catalog = parseClaudeModels(object(response.response).models, {
+					disableOneMillion: process.env.CLAUDE_CODE_DISABLE_1M_CONTEXT === "1",
+					usesGateway: Boolean(process.env.ANTHROPIC_BASE_URL?.trim()),
+				});
 				return true;
 			},
 			true,

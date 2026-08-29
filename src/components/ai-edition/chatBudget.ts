@@ -6,12 +6,10 @@
 // of the windowed history it actually sends, which understands compaction.
 //
 // Either way it feeds the pill and NOTHING else -- no code decides anything from it.
-// `DEFAULT_CHAT_BUDGET_TOKENS` is a made-up denominator (the app has no way to ask a
-// provider how big its context window is), which is exactly why the automatic
-// compaction that used to branch on the main-process twin is gone. Read the pill as
-// "the conversation is about this big", never as "you are this close to a limit",
-// and do not let this number regain a decision. Understanding compaction does not
-// make the denominator any less invented.
+// `DEFAULT_CHAT_BUDGET_TOKENS` remains a user-selected reference fallback. The UI can
+// separately show a verified model context window, but the estimate still excludes
+// system prompts, tools and project data, so neither denominator may drive automatic
+// compaction or other runtime decisions.
 
 import { DEFAULT_CONTEXT_BUDGET_TOKENS } from "@/lib/ai-edition/contextBudget";
 

@@ -281,7 +281,8 @@ export class AiEditionService {
 			if (providerId === "codex-subscription") {
 				const runtime = await getCodexAppServer();
 				if (!(await runtime.status()).connected) return { models: [], error: "Not connected" };
-				return { models: await runtime.models() };
+				const catalog = await runtime.models();
+				return { models: catalog.map((model) => model.id), catalog };
 			}
 			const def = PROVIDER_DEFINITIONS.find((d) => d.id === providerId);
 			if (!def) return { models: [], error: `Unknown provider ${providerId}` };

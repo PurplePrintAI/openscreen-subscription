@@ -288,7 +288,12 @@ describe("ChatStripPanel, against the lifted provider dialog", () => {
 		modelList.mockResolvedValue({
 			models: ["sonnet", "claude-opus-4-8[1m]"],
 			catalog: [
-				{ id: "sonnet", label: "Sonnet 5" },
+				{
+					id: "sonnet",
+					label: "Sonnet 5",
+					contextWindowTokens: 1_000_000,
+					contextWindowSource: "official",
+				},
 				{ id: "claude-opus-4-8[1m]", label: "Opus 4.8 (1M context)" },
 			],
 		});
@@ -300,6 +305,9 @@ describe("ChatStripPanel, against the lifted provider dialog", () => {
 		await waitFor(() =>
 			expect(screen.getByRole("button", { name: "chat.modelLabel" })).toHaveTextContent("Sonnet 5"),
 		);
+		expect(screen.getByRole("button", { name: "chat.contextSettings" })).toHaveTextContent(
+			"chat.contextPercentWithLimit",
+		);
 		fireEvent.click(screen.getByRole("button", { name: "chat.modelLabel" }));
 		const option = await screen.findByRole("button", { name: "Opus 4.8 (1M context)" });
 		fireEvent.change(screen.getByPlaceholderText("chat.searchModels"), {
@@ -310,6 +318,40 @@ describe("ChatStripPanel, against the lifted provider dialog", () => {
 		await waitFor(() =>
 			expect(saveModel).toHaveBeenCalledWith({ ...config, model: "claude-opus-4-8[1m]" }),
 		);
+	});
+	it("loads Codex model metadata and shows its verified context window", async () => {
+		llmGetSnapshot.mockResolvedValue({
+			config: {
+				provider: "codex-subscription",
+				model: "gpt-5.6-sol",
+				contextBudgetTokens: 80_000,
+			},
+			connectedProviders: ["codex-subscription"],
+			availableProviders: [],
+			credentialSummary: [],
+		});
+		modelList.mockResolvedValue({
+			models: ["gpt-5.6-sol"],
+			catalog: [
+				{
+					id: "gpt-5.6-sol",
+					label: "GPT-5.6-Sol",
+					contextWindowTokens: 1_050_000,
+					contextWindowSource: "official",
+				},
+			],
+		});
+		render(
+			<EditorDialogsProvider>
+				<LeftPanel active="chat" />
+			</EditorDialogsProvider>,
+		);
+		await waitFor(() => expect(modelList).toHaveBeenCalledOnce());
+		expect(screen.getByRole("button", { name: "chat.contextSettings" })).toHaveTextContent(
+			"chat.contextPercentWithLimit",
+		);
+		fireEvent.click(screen.getByRole("button", { name: "chat.contextSettings" }));
+		expect(screen.getByText("ChatGPT subscription (Codex) · GPT-5.6-Sol")).toBeVisible();
 	});
 	it("re-reads the LLM snapshot when the dialog closes, and not when it opens", async () => {
 		render(

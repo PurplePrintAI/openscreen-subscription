@@ -304,7 +304,15 @@
 		"contextReferenceScope": "يُحفظ في إعدادات الذكاء الاصطناعي لجميع المحادثات. يقدّر نص السجل فقط دون تعليمات النظام والأدوات وبيانات المشروع. يظل الاختصار يدويًا.",
 		"contextReferenceInvalid": "أدخل عددًا صحيحًا من 1,000 إلى 2,000,000.",
 		"contextReferenceReset": "إعادة الضبط إلى 80,000",
-		"contextReferenceSaveFailed": "تعذر حفظ القيمة المرجعية للسياق."
+		"contextReferenceSaveFailed": "تعذر حفظ القيمة المرجعية للسياق.",
+		"contextTooltipWithLimit": "السجل التقديري {{usedTokens}} · نافذة النموذج {{modelLimit}} رمزًا · المرجع {{budgetTokens}}",
+		"contextPercentWithLimit": "~{{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "نافذة سياق النموذج",
+		"contextModelLimitValue": "{{limit}} ({{tokens}} رمزًا)",
+		"contextModelLimitUnknown": "غير متاح",
+		"contextModelLimitRuntime": "أبلغت به بيئة التشغيل المحلية النشطة أو صيغة السياق المحددة.",
+		"contextModelLimitOfficial": "يطابق المواصفات الرسمية الحالية لمعرّف النموذج هذا.",
+		"contextModelLimitUnavailable": "لم يبلّغ المزوّد عن حد، ولا توجد مواصفات موثقة لمعرّف النموذج هذا. قد تختلف البوابات المخصصة."
 	},
 	"newProjectDialog": {
 		"title": "مشروع جديد",

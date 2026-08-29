@@ -6,6 +6,8 @@ import {
 	MAX_CONTEXT_BUDGET_TOKENS,
 	MIN_CONTEXT_BUDGET_TOKENS,
 } from "@/lib/ai-edition/contextBudget";
+import { formatContextWindow } from "@/lib/ai-edition/modelContextWindow";
+import type { AiEditionLlmModelOption } from "@/native/contracts";
 import { ModalShell } from "./Modals";
 import styles from "./NewEditorShell.module.css";
 
@@ -14,10 +16,12 @@ export function ContextBudgetDialog({
 	value,
 	onSave,
 	onClose,
+	model,
 }: {
 	value: number;
 	onSave: (tokens: number) => Promise<void>;
 	onClose: () => void;
+	model?: AiEditionLlmModelOption & { providerLabel?: string };
 }) {
 	const t = useScopedT("editor");
 	const tc = useScopedT("common");
@@ -52,6 +56,27 @@ export function ContextBudgetDialog({
 					}
 				}}
 			>
+				<section className={styles.contextModelLimit} aria-label={t("chat.contextModelLimitLabel")}>
+					<span>{t("chat.contextModelLimitLabel")}</span>
+					<strong>
+						{model?.contextWindowTokens
+							? t("chat.contextModelLimitValue", {
+									limit: formatContextWindow(model.contextWindowTokens),
+									tokens: model.contextWindowTokens.toLocaleString(),
+								})
+							: t("chat.contextModelLimitUnknown")}
+					</strong>
+					{model ? (
+						<small>{[model.providerLabel, model.label].filter(Boolean).join(" · ")}</small>
+					) : null}
+					<p>
+						{model?.contextWindowSource === "runtime"
+							? t("chat.contextModelLimitRuntime")
+							: model?.contextWindowSource === "official"
+								? t("chat.contextModelLimitOfficial")
+								: t("chat.contextModelLimitUnavailable")}
+					</p>
+				</section>
 				<label htmlFor="chat-context-budget">{t("chat.contextReferenceLabel")}</label>
 				<input
 					id="chat-context-budget"

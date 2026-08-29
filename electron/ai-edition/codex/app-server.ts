@@ -4,6 +4,8 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import { version } from "../../../package.json";
+import { resolveCodexContextWindow } from "../../../src/lib/ai-edition/modelContextWindow";
+import type { AiEditionLlmModelOption } from "../../../src/native/contracts";
 
 type ObjectValue = Record<string, unknown>;
 export interface CodexStatus {
@@ -320,9 +322,9 @@ export class CodexAppServer {
 		await this.request("account/logout");
 		this.loginError = undefined;
 	}
-	async models(): Promise<string[]> {
+	async models(): Promise<AiEditionLlmModelOption[]> {
 		await this.start();
-		const models: Array<{ name: string; default: boolean }> = [];
+		const models: Array<AiEditionLlmModelOption & { default: boolean }> = [];
 		const seen = new Set<string>();
 		let cursor: string | undefined;
 		do {
@@ -332,8 +334,30 @@ export class CodexAppServer {
 			});
 			for (const entry of Array.isArray(response.data) ? response.data : []) {
 				const model = object(entry);
-				if (!model.hidden && typeof model.model === "string")
-					models.push({ name: model.model, default: model.isDefault === true });
+				if (!model.hidden && typeof model.model === "string") {
+					const id = model.model;
+					const reportedContext = [
+						model.contextWindow,
+						model.context_window,
+						model.maxInputTokens,
+						model.max_input_tokens,
+					].find((value) => typeof value === "number" && Number.isSafeInteger(value) && value > 0);
+					const context =
+						typeof reportedContext === "number"
+							? { tokens: reportedContext, source: "runtime" as const }
+							: resolveCodexContextWindow(id);
+					models.push({
+						id,
+						label: typeof model.displayName === "string" ? model.displayName.slice(0, 300) : id,
+						...(typeof model.description === "string"
+							? { description: model.description.slice(0, 2000) }
+							: {}),
+						...(context
+							? { contextWindowTokens: context.tokens, contextWindowSource: context.source }
+							: {}),
+						default: model.isDefault === true,
+					});
+				}
 			}
 			cursor = typeof response.nextCursor === "string" ? response.nextCursor : undefined;
 			if (cursor) {
@@ -342,7 +366,9 @@ export class CodexAppServer {
 				seen.add(cursor);
 			}
 		} while (cursor);
-		return models.sort((a, b) => Number(b.default) - Number(a.default)).map((model) => model.name);
+		return models
+			.sort((a, b) => Number(b.default) - Number(a.default))
+			.map(({ default: _default, ...model }) => model);
 	}
 
 	async run(input: CodexRun): Promise<string> {

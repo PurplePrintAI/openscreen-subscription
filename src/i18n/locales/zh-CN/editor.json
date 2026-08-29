@@ -304,7 +304,15 @@
 		"contextReferenceScope": "保存在 AI 设置中并用于所有对话。仅估算历史文本，不含系统提示、工具和项目数据。压缩仍需手动执行。",
 		"contextReferenceInvalid": "请输入 1,000 到 2,000,000 之间的整数。",
 		"contextReferenceReset": "重置为 80,000",
-		"contextReferenceSaveFailed": "无法保存上下文参考值。"
+		"contextReferenceSaveFailed": "无法保存上下文参考值。",
+		"contextTooltipWithLimit": "估算历史 {{usedTokens}} · 模型窗口 {{modelLimit}} 个令牌 · 参考值 {{budgetTokens}}",
+		"contextPercentWithLimit": "约 {{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "模型上下文窗口",
+		"contextModelLimitValue": "{{limit}}（{{tokens}} 个令牌）",
+		"contextModelLimitUnknown": "无法获取",
+		"contextModelLimitRuntime": "由当前本地运行时或所选上下文变体报告。",
+		"contextModelLimitOfficial": "与此模型 ID 当前的官方规格相符。",
+		"contextModelLimitUnavailable": "提供商未报告限制，此模型 ID 也没有已验证的规格。自定义网关可能有所不同。"
 	},
 	"newProjectDialog": {
 		"title": "新建项目",

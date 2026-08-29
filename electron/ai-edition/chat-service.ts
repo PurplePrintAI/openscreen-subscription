@@ -367,11 +367,11 @@ export async function runChat(
 	// ponytail: NO automatic compaction here. A turn used to first check the
 	// history against a guessed 80k-token budget and, past 70% of it, block on
 	// a whole extra summarizer call before the user's request was even sent.
-	// The app cannot ask a provider how big its context window is, so that
-	// budget was a number someone picked — wrong by an order of magnitude for a
+	// That budget was a number someone picked — wrong by an order of magnitude for a
 	// 1M-token Gemini, and silently discarding context the model could have
-	// held. Compaction is now only ever what the user asked for by pressing the
-	// button. See chat-compaction.ts.
+	// held. Verified model metadata is now display-only because the estimate omits
+	// other request material. Compaction is only what the user asked for by pressing
+	// the button. See chat-compaction.ts.
 
 	const history = modelHistory(session).map((m) => ({
 		role: m.role as "user" | "assistant" | "system",
@@ -620,9 +620,9 @@ export async function compactSessionNow(
 }
 
 // ponytail: port of axcut's getContextUsage. Returns the current session's
-// token estimate + window budget so the renderer can fill the "% context"
-// pill with real numbers (no probe — char-based heuristic matching the
-// in-call compaction one).
+// selected-history estimate + user reference. The renderer may separately combine
+// this numerator with verified model-window metadata for display (no token probe —
+// char-based heuristic matching the in-call compaction one).
 export function getSessionContextUsage(
 	projectId: string,
 	sessionId: string,
@@ -631,8 +631,8 @@ export function getSessionContextUsage(
 	const session = sessionsByProject.get(projectId)?.get(sessionId);
 	if (!session) return null;
 	// Measured on what the model is given, not on the transcript -- after a
-	// compaction those differ, and the number that matters is the one that
-	// fills the context window.
+	// compaction those differ. The model-window/reference denominator is selected
+	// separately in the renderer.
 	//
 	// `modelHistory`, NOT `modelMessages`: the model gets a 20-message window, so on
 	// a 40-message session `modelMessages` reports double what is sent, and pressing

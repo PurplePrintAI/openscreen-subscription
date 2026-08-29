@@ -304,7 +304,15 @@
 		"contextReferenceScope": "AI 설정에 저장되어 모든 대화에 적용됩니다. 대화 텍스트만 추정하며 시스템 프롬프트·도구·프로젝트 데이터는 제외합니다. 압축은 수동으로 실행됩니다.",
 		"contextReferenceInvalid": "1,000부터 2,000,000까지의 정수를 입력하세요.",
 		"contextReferenceReset": "80,000으로 초기화",
-		"contextReferenceSaveFailed": "컨텍스트 기준을 저장하지 못했습니다."
+		"contextReferenceSaveFailed": "컨텍스트 기준을 저장하지 못했습니다.",
+		"contextTooltipWithLimit": "예상 대화 기록 {{usedTokens}} · 모델 한도 {{modelLimit}}토큰 · 사용자 기준 {{budgetTokens}}",
+		"contextPercentWithLimit": "약 {{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "모델 컨텍스트 한도",
+		"contextModelLimitValue": "{{limit}} ({{tokens}}토큰)",
+		"contextModelLimitUnknown": "확인할 수 없음",
+		"contextModelLimitRuntime": "현재 로컬 런타임 또는 선택한 컨텍스트 변형이 보고한 값입니다.",
+		"contextModelLimitOfficial": "이 모델 ID의 현재 공식 사양과 일치하는 값입니다.",
+		"contextModelLimitUnavailable": "공급자가 한도를 보고하지 않았고 이 모델 ID에 확인된 공식 사양이 없습니다. 커스텀 게이트웨이는 다를 수 있습니다."
 	},
 	"newProjectDialog": {
 		"title": "새 프로젝트",

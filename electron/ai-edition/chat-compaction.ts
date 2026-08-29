@@ -4,14 +4,15 @@
 //
 // ponytail: compaction is MANUAL ONLY, and there is no overflow heuristic.
 // There used to be one — compact automatically once the history passed 70% of
-// `DEFAULT_BUDGET_TOKENS = 80_000`. That 80k was invented: the app has no
-// per-model context window, so the number could not be right for anything. It
+// `DEFAULT_BUDGET_TOKENS = 80_000`. That 80k was invented and applied to every
+// model, so the number could not be right for anything. It
 // was far too small for Gemini's 1M window (throwing away context at 5% fill,
 // and paying a blocking summarizer call to do it) and would be too large for
 // something small. It is the same mistake `getTranscript` made with its 800
 // segments, and it gets the same answer: a guessed limit is deleted, not
-// retuned. Until the app can ask a provider for the real window, the only
-// honest trigger is a person deciding they want it, which is the button.
+// retuned. The UI may now show a verified model window, but its history estimate
+// omits system prompts, tools and project data, so the only honest compaction
+// trigger remains a person deciding they want it, which is the button.
 
 import { DEFAULT_CONTEXT_BUDGET_TOKENS } from "../../src/lib/ai-edition/contextBudget";
 import type { AiEditionChatMessage } from "../../src/native/contracts";
@@ -30,9 +31,8 @@ export interface CompactionBudget {
 
 /**
  * The denominator of the context pill in the chat panel, and nothing else —
- * no code branches on it any more. It is still a made-up number, so it must
- * never regain a decision: read it as "the conversation is about this big",
- * not as "you are this close to a limit".
+ * no code branches on it any more. It remains a user-selected reference, so it
+ * must never regain a runtime decision.
  */
 export const DEFAULT_BUDGET_TOKENS = DEFAULT_CONTEXT_BUDGET_TOKENS;
 

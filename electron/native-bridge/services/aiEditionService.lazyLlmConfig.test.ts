@@ -5,7 +5,14 @@ import { AiEditionService, type AiEditionServiceOptions } from "./aiEditionServi
 const runtime = vi.hoisted(() => ({
 	status: vi.fn(async () => ({ available: true, connected: true, plan: "plus" })),
 	logout: vi.fn(async () => undefined),
-	models: vi.fn(async () => ["account-model"]),
+	models: vi.fn(async () => [
+		{
+			id: "account-model",
+			label: "Account model",
+			contextWindowTokens: 1_050_000,
+			contextWindowSource: "official" as const,
+		},
+	]),
 }));
 vi.mock("../../ai-edition/codex/app-server", () => ({ getCodexAppServer: async () => runtime }));
 const claudeRuntime = vi.hoisted(() => ({
@@ -14,6 +21,8 @@ const claudeRuntime = vi.hoisted(() => ({
 			id: "claude-opus-4-8[1m]",
 			label: "Opus 4.8 (1M context)",
 			resolvedModel: "claude-opus-4-8[1m]",
+			contextWindowTokens: 1_000_000,
+			contextWindowSource: "runtime" as const,
 		},
 	]),
 	status: vi.fn(async () => ({
@@ -89,6 +98,8 @@ describe("AiEditionService — LLM store resolution is deferred", () => {
 					id: "claude-opus-4-8[1m]",
 					label: "Opus 4.8 (1M context)",
 					resolvedModel: "claude-opus-4-8[1m]",
+					contextWindowTokens: 1_000_000,
+					contextWindowSource: "runtime",
 				},
 			],
 		});
@@ -156,6 +167,14 @@ describe("AiEditionService — LLM store resolution is deferred", () => {
 		});
 		expect(await service.llmListProviderModels("codex-subscription")).toEqual({
 			models: ["account-model"],
+			catalog: [
+				{
+					id: "account-model",
+					label: "Account model",
+					contextWindowTokens: 1_050_000,
+					contextWindowSource: "official",
+				},
+			],
 		});
 	});
 

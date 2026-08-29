@@ -304,7 +304,15 @@
 		"contextReferenceScope": "Lưu trong cài đặt AI cho mọi hội thoại. Chỉ ước tính văn bản lịch sử, không gồm chỉ dẫn hệ thống, công cụ và dữ liệu dự án. Việc nén vẫn thực hiện thủ công.",
 		"contextReferenceInvalid": "Nhập số nguyên từ 1.000 đến 2.000.000.",
 		"contextReferenceReset": "Đặt lại thành 80.000",
-		"contextReferenceSaveFailed": "Không thể lưu mốc tham chiếu ngữ cảnh."
+		"contextReferenceSaveFailed": "Không thể lưu mốc tham chiếu ngữ cảnh.",
+		"contextTooltipWithLimit": "Lịch sử ước tính {{usedTokens}} · cửa sổ mô hình {{modelLimit}} token · mốc {{budgetTokens}}",
+		"contextPercentWithLimit": "~{{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "Cửa sổ ngữ cảnh của mô hình",
+		"contextModelLimitValue": "{{limit}} ({{tokens}} token)",
+		"contextModelLimitUnknown": "Không khả dụng",
+		"contextModelLimitRuntime": "Do runtime cục bộ đang hoạt động hoặc biến thể ngữ cảnh đã chọn báo cáo.",
+		"contextModelLimitOfficial": "Khớp với thông số chính thức hiện tại của ID mô hình này.",
+		"contextModelLimitUnavailable": "Nhà cung cấp không báo cáo giới hạn và ID mô hình này chưa có thông số được xác minh. Cổng tùy chỉnh có thể khác."
 	},
 	"newProjectDialog": {
 		"title": "Dự án mới",

@@ -1425,6 +1425,11 @@
 @media (hover: none) { .msgMeta { opacity: 1; pointer-events: auto; } }
 @media (prefers-reduced-motion: reduce) { .msgMeta { transition: none; } .messageSpinner { animation: none; } }
 .contextForm { display: flex; flex-direction: column; gap: 12px; }
+.contextModelLimit { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px; border: 1px solid var(--border-soft); border-radius: 9px; background: var(--surface-2); }
+.contextModelLimit > span { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.contextModelLimit > strong { color: var(--fg); font: 600 13px var(--font-mono); text-align: right; }
+.contextModelLimit > small { grid-column: 1 / -1; color: var(--fg-2); font: 11px var(--font-mono); }
+.contextModelLimit > p { grid-column: 1 / -1; }
 .contextForm label { font-size: 13px; font-weight: 600; }
 .contextForm input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--fg); font: 14px var(--font-mono); }
 .contextForm input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

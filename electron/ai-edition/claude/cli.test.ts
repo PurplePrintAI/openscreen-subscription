@@ -111,7 +111,29 @@ describe("Claude local runtime", () => {
 			"my-deployment",
 		]);
 		expect(catalog[2]).not.toHaveProperty("accessToken");
+		expect(catalog.map((model) => model.contextWindowTokens)).toEqual([
+			1_000_000,
+			1_000_000,
+			1_000_000,
+			200_000,
+			1_000_000,
+			undefined,
+		]);
+		expect(catalog[0].contextWindowSource).toBe("runtime");
+		expect(catalog[2].contextWindowSource).toBe("official");
 		expect(() => parseClaudeModels([])).toThrow("empty model catalog");
+	});
+
+	it("reflects a Claude gateway or disabled 1M runtime instead of overstating the limit", () => {
+		const model = [{ value: "sonnet", resolvedModel: "claude-sonnet-5", displayName: "Sonnet" }];
+		expect(parseClaudeModels(model, { usesGateway: true })[0]).toMatchObject({
+			contextWindowTokens: 200_000,
+			contextWindowSource: "runtime",
+		});
+		expect(parseClaudeModels(model, { disableOneMillion: true })[0]).toMatchObject({
+			contextWindowTokens: 200_000,
+			contextWindowSource: "runtime",
+		});
 	});
 
 	it("discovers models using initialization only and coalesces concurrent discovery", async () => {
@@ -127,7 +149,11 @@ describe("Claude local runtime", () => {
 		const runtime = new ClaudeCli(await directory(), launched.launch, () => "claude-native");
 		const [first, second] = await Promise.all([runtime.models(), runtime.models()]);
 		expect(first).toEqual(second);
-		expect(first[0]).toMatchObject({ id: "sonnet", label: "Sonnet 5" });
+		expect(first[0]).toMatchObject({
+			id: "sonnet",
+			label: "Sonnet 5",
+			contextWindowTokens: 1_000_000,
+		});
 		expect(requests).toEqual([
 			{
 				type: "control_request",

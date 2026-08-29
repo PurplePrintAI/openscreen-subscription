@@ -106,6 +106,48 @@ describe("Codex app-server subscription transport", () => {
 		expect(f.sent.some((packet) => packet.method === "turn/start")).toBe(false);
 	});
 
+	it("returns model display metadata and verified context windows without starting a turn", async () => {
+		const f = fixture((packet, emit) => {
+			if (packet.method !== "model/list") return false;
+			emit({
+				id: packet.id,
+				result: {
+					data: [
+						{
+							model: "gpt-5.6-sol",
+							displayName: "GPT-5.6 Sol",
+							description: "Frontier model",
+							isDefault: true,
+						},
+						{
+							model: "runtime-model",
+							displayName: "Runtime model",
+							contextWindow: 321_000,
+						},
+						{ model: "hidden-model", hidden: true },
+					],
+				},
+			});
+			return true;
+		});
+		expect(await f.runtime.models()).toEqual([
+			{
+				id: "gpt-5.6-sol",
+				label: "GPT-5.6 Sol",
+				description: "Frontier model",
+				contextWindowTokens: 1_050_000,
+				contextWindowSource: "official",
+			},
+			{
+				id: "runtime-model",
+				label: "Runtime model",
+				contextWindowTokens: 321_000,
+				contextWindowSource: "runtime",
+			},
+		]);
+		expect(f.sent.some((packet) => packet.method === "thread/start")).toBe(false);
+	});
+
 	it("cancels untrusted login URLs instead of opening them", async () => {
 		const f = fixture((packet, emit) => {
 			if (packet.method !== "account/login/start") return false;

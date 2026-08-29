@@ -285,6 +285,9 @@ export interface AiEditionLlmModelOption {
 	label: string;
 	description?: string;
 	resolvedModel?: string;
+	/** Actual model context window when reported by the runtime or matched to an official spec. */
+	contextWindowTokens?: number;
+	contextWindowSource?: "runtime" | "official";
 }
 
 export interface AiEditionLlmProviderModelsResult {

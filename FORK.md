@@ -90,10 +90,17 @@ licenses; this document does not replace them.
 The context badge opens a configurable **reference**, saved as
 `contextBudgetTokens` in the existing AI configuration. It applies across
 conversations; valid values are whole numbers from 1,000 to 2,000,000, with an
-80,000 default for existing configurations. This is not the provider's actual
-context limit. It estimates history text only, excludes system prompts, tool
-schemas and project data, and changes neither history selection nor manual
-compaction behavior.
+80,000 default for existing configurations. When the active runtime reports a
+context window, or the exact model ID matches a maintained official specification,
+the badge and dialog show that model limit separately and use it as the display
+denominator. Unknown/custom gateway models keep the reference denominator rather
+than receiving a guessed limit.
+
+The numerator estimates selected history text only; it excludes system prompts,
+tool schemas, project data, reasoning and output tokens. The displayed percentage
+is therefore approximate and changes neither history selection nor manual-only
+compaction behavior. The dialog labels whether a context limit came from the
+runtime/context variant or an official model specification.
 
 User messages align right; assistant Markdown aligns left. Timestamps, copy and
 rewind appear on hover or keyboard focus (always visible on touch devices).

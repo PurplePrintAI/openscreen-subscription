@@ -40,4 +40,38 @@ describe("context reference settings", () => {
 		expect(save).toHaveBeenCalledOnce();
 		expect(close).toHaveBeenCalledOnce();
 	});
+
+	it("distinguishes a verified model limit from the editable history reference", () => {
+		render(
+			<ContextBudgetDialog
+				value={80_000}
+				onSave={vi.fn()}
+				onClose={vi.fn()}
+				model={{
+					id: "gpt-5.6-sol",
+					label: "GPT-5.6 Sol",
+					providerLabel: "ChatGPT subscription (Codex)",
+					contextWindowTokens: 1_050_000,
+					contextWindowSource: "official",
+				}}
+			/>,
+		);
+		expect(screen.getByLabelText("chat.contextModelLimitLabel")).toBeVisible();
+		expect(screen.getByText("ChatGPT subscription (Codex) · GPT-5.6 Sol")).toBeVisible();
+		expect(screen.getByText("chat.contextModelLimitOfficial")).toBeVisible();
+		expect(screen.getByRole("spinbutton")).toHaveValue(80_000);
+	});
+
+	it("states when a custom model has no verified context window", () => {
+		render(
+			<ContextBudgetDialog
+				value={80_000}
+				onSave={vi.fn()}
+				onClose={vi.fn()}
+				model={{ id: "private-model", label: "Private model", providerLabel: "Gateway" }}
+			/>,
+		);
+		expect(screen.getByText("chat.contextModelLimitUnknown")).toBeVisible();
+		expect(screen.getByText("chat.contextModelLimitUnavailable")).toBeVisible();
+	});
 });

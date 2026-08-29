@@ -23,8 +23,37 @@ see [FORK.md](FORK.md).
 | Claude subscription | Uses the user's installed, unmodified Claude Code CLI and its externally managed authentication. |
 | Claude models | Discovers the current model catalog from the local CLI and shows friendly resolved names, including returned 1M-context variants. |
 | AI chat | Aligns user and assistant messages, renders safe Markdown, improves streaming, and exposes time/copy/rewind actions on hover or keyboard focus. |
-| Context display | Makes the token-meter reference configurable without presenting it as the provider's actual context limit. |
+| Context display | Separates estimated selected history, the user's reference value, and a verified context window for the active provider/model when available. |
 | Distribution | Uses a separate app identity, user-data directory, installer name, update origin and release configuration from upstream. |
+
+## Unreleased — provider context-window display
+
+### Added and changed
+
+- Shows the selected model's verified context window in the context pill and
+  settings dialog when the local runtime reports it or the exact model ID matches
+  a current official specification.
+- Uses that window as the display denominator while keeping the existing
+  user-configured history reference visible and editable.
+- Labels whether the value came from the active runtime/context variant or an
+  official model specification. Unknown and custom gateway models display
+  **Not available** instead of receiving a guessed limit.
+- Accounts for Claude `[1m]` selections, `CLAUDE_CODE_DISABLE_1M_CONTEXT=1`, and
+  gateway behavior. A runtime-reported numeric limit takes priority over the
+  maintained specification table.
+
+### Scope
+
+The numerator remains an estimate of the selected conversation history. It does
+not include system instructions, tool schemas, project data, reasoning tokens or
+the model's response, so the percentage is approximate and never triggers
+automatic compaction.
+
+Validation: 2,241 unit tests passed and 4 were skipped across 189 files; app and
+test TypeScript checks, 13-locale i18n, documentation and Biome completed
+successfully. The live local Codex and Claude catalogs were read without sending
+an inference prompt, and an isolated Electron UI pass verified the 1M Sonnet 5
+badge and context dialog.
 
 ## 1.10.0-subscription.4 — 2026-08-28
 

@@ -4,6 +4,10 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { useEditorDialogActions, useEditorDialogSection } from "@/contexts/EditorDialogsContext";
 import { useScopedT } from "@/contexts/I18nContext";
+import {
+	formatContextWindow,
+	resolveConfiguredContextWindow,
+} from "@/lib/ai-edition/modelContextWindow";
 import type { AxcutAsset } from "@/lib/ai-edition/schema";
 import {
 	applyAgentDocumentIfCurrent,
@@ -725,7 +729,12 @@ function ChatStripPanel() {
 
 	useEffect(() => {
 		setActiveModelCatalog([]);
-		if (providerSettingsOpen || llmConfig?.provider !== "claude-local") return;
+		if (
+			providerSettingsOpen ||
+			!llmConfig?.provider ||
+			!["claude-local", "codex-subscription"].includes(llmConfig.provider)
+		)
+			return;
 		let cancelled = false;
 		void nativeBridgeClient.aiEdition
 			.llmListProviderModels(llmConfig.provider)
@@ -1155,6 +1164,12 @@ function ChatStripPanel() {
 		messages,
 		budgetTokens: llmConfig?.contextBudgetTokens,
 	});
+	const activeModel = activeModelCatalog.find((model) => model.id === llmConfig?.model);
+	const configuredContext = llmConfig ? resolveConfiguredContextWindow(llmConfig) : undefined;
+	const contextWindowTokens = activeModel?.contextWindowTokens ?? configuredContext?.tokens;
+	const contextWindowSource = activeModel?.contextWindowSource ?? configuredContext?.source;
+	const contextRatio = budget.usedTokens / (contextWindowTokens ?? budget.budgetTokens);
+	const contextPercent = Math.min(100, Math.round(contextRatio * 100));
 
 	const [compactNowPending, setCompactNowPending] = useState(false);
 	const compactNow = useCallback(async () => {
@@ -1284,13 +1299,26 @@ function ChatStripPanel() {
 							aria-label={t("chat.contextSettings")}
 							onClick={() => (llmConfig ? setContextBudgetOpen(true) : openProviderSettings())}
 							className={styles.ctxPill}
-							title={t("chat.contextTooltip", {
-								usedTokens: budget.usedTokens.toLocaleString(),
-								budgetTokens: budget.budgetTokens.toLocaleString(),
-							})}
+							title={
+								contextWindowTokens
+									? t("chat.contextTooltipWithLimit", {
+											usedTokens: budget.usedTokens.toLocaleString(),
+											budgetTokens: budget.budgetTokens.toLocaleString(),
+											modelLimit: contextWindowTokens.toLocaleString(),
+										})
+									: t("chat.contextTooltip", {
+											usedTokens: budget.usedTokens.toLocaleString(),
+											budgetTokens: budget.budgetTokens.toLocaleString(),
+										})
+							}
 						>
 							<span className={styles.d} aria-hidden />
-							{t("chat.contextPercent", { percent: Math.min(100, Math.round(budget.ratio * 100)) })}
+							{contextWindowTokens
+								? t("chat.contextPercentWithLimit", {
+										percent: contextPercent,
+										limit: formatContextWindow(contextWindowTokens),
+									})
+								: t("chat.contextPercent", { percent: contextPercent })}
 						</button>
 						<span className={styles.stripActions}>
 							<button
@@ -1566,6 +1594,13 @@ function ChatStripPanel() {
 			{contextBudgetOpen && llmConfig ? (
 				<ContextBudgetDialog
 					value={budget.budgetTokens}
+					model={{
+						...(activeModel ?? { id: llmConfig.model, label: llmConfig.model }),
+						...(contextWindowTokens ? { contextWindowTokens, contextWindowSource } : {}),
+						providerLabel:
+							PROVIDER_DEFINITIONS.find((provider) => provider.id === llmConfig.provider)?.label ??
+							llmConfig.provider,
+					}}
 					onClose={() => setContextBudgetOpen(false)}
 					onSave={async (tokens) => {
 						const snapshot = await nativeBridgeClient.aiEdition.llmGetSnapshot();

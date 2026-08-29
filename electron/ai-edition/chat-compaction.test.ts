@@ -73,8 +73,8 @@ describe("compactionSplitIndex", () => {
 		// The regression this pins: compaction used to refuse below 70% of a
 		// guessed 80k-token budget, which gated the manual button too, so
 		// pressing Compact on a short conversation did nothing at all and said
-		// nothing about why. The app cannot know a model's context window, so
-		// there is no threshold left to be wrong about.
+		// nothing about why. Displaying a verified model window still cannot make
+		// this incomplete estimate safe as an automatic threshold.
 		const tiny = Array.from({ length: 6 }, (_, i) => msg(i % 2 ? "assistant" : "user", "hi"));
 		expect(estimateHistoryTokens(tiny)).toBeLessThan(100);
 		expect(compactionSplitIndex(tiny)).not.toBeNull();

@@ -142,6 +142,8 @@ MiniMax's `thinking` block is binary (`{type: "adaptive"}` or absent), so `getRe
 
 | Provider | Source |
 |---|---|
+| `codex-subscription` | Official local Codex `app-server` `model/list`; display metadata is preserved. Current exact model IDs are matched to official context-window specifications because the response does not currently include a numeric window. |
+| `claude-local` | Official Claude Code CLI streaming initialize response (`ModelInfo[]`), with original aliases/resolved IDs and context variants preserved. |
 | `anthropic` | `GET /v1/models` with `x-api-key` |
 | `google` | `GET /v1beta/openai/models`, filtered to `gemini-*` |
 | `mistral` | `GET /v1/models` |
@@ -150,6 +152,14 @@ MiniMax's `thinking` block is binary (`{type: "adaptive"}` or absent), so `getRe
 | `minimax`, `minimax-token-plan` | No list endpoint exists: probes nine known slugs with a `max_tokens: 1` completion and keeps the ones that answer |
 
 Everything returns `{models, error?}` rather than throwing, so the settings UI can show a reason instead of an empty list. When every MiniMax probe fails, the first failure's status is surfaced in the message.
+
+Runtime catalogs may also return `catalog` entries with `label`, `resolvedModel`,
+`contextWindowTokens` and a `contextWindowSource`. The context display prefers a
+runtime-reported number, then an explicit CLI context variant such as `[1m]`, then
+a maintained official specification for an exact recognized model ID. It never
+assigns a guessed limit to custom IDs or third-party gateways. This metadata is
+display-only: estimated selected history omits other request tokens, so it does
+not reintroduce automatic compaction thresholds.
 
 ## Adding a provider
 

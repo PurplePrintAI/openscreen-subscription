@@ -304,7 +304,15 @@
 		"contextReferenceScope": "Saved in AI settings for all conversations. Estimates history text only, excluding system prompts, tools and project data. Compaction remains manual.",
 		"contextReferenceInvalid": "Enter a whole number from 1,000 to 2,000,000.",
 		"contextReferenceReset": "Reset to 80,000",
-		"contextReferenceSaveFailed": "Could not save the context reference."
+		"contextReferenceSaveFailed": "Could not save the context reference.",
+		"contextTooltipWithLimit": "Estimated history {{usedTokens}} · model window {{modelLimit}} tokens · reference {{budgetTokens}}",
+		"contextPercentWithLimit": "~{{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "Model context window",
+		"contextModelLimitValue": "{{limit}} ({{tokens}} tokens)",
+		"contextModelLimitUnknown": "Not available",
+		"contextModelLimitRuntime": "Reported by the active local runtime or selected context variant.",
+		"contextModelLimitOfficial": "Matched to the current official specification for this exact model ID.",
+		"contextModelLimitUnavailable": "The provider did not report a limit and this model ID has no verified specification. Custom gateways may differ."
 	},
 	"newProjectDialog": {
 		"title": "New project",

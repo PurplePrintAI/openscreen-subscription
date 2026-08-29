@@ -304,7 +304,15 @@
 		"contextReferenceScope": "AI設定に保存され、すべての会話に適用されます。履歴テキストのみを推定し、システムプロンプト、ツール、プロジェクトデータは含みません。圧縮は手動です。",
 		"contextReferenceInvalid": "1,000～2,000,000の整数を入力してください。",
 		"contextReferenceReset": "80,000に戻す",
-		"contextReferenceSaveFailed": "コンテキスト基準を保存できませんでした。"
+		"contextReferenceSaveFailed": "コンテキスト基準を保存できませんでした。",
+		"contextTooltipWithLimit": "推定履歴 {{usedTokens}} · モデル上限 {{modelLimit}} トークン · 基準 {{budgetTokens}}",
+		"contextPercentWithLimit": "約{{percent}}% / {{limit}}",
+		"contextModelLimitLabel": "モデルのコンテキスト上限",
+		"contextModelLimitValue": "{{limit}}（{{tokens}}トークン）",
+		"contextModelLimitUnknown": "確認できません",
+		"contextModelLimitRuntime": "現在のローカルランタイムまたは選択したコンテキスト形式が報告した値です。",
+		"contextModelLimitOfficial": "このモデル ID の現在の公式仕様と一致する値です。",
+		"contextModelLimitUnavailable": "プロバイダーから上限が報告されず、このモデル ID に確認済みの仕様もありません。カスタムゲートウェイでは異なる場合があります。"
 	},
 	"newProjectDialog": {
 		"title": "新規プロジェクト",
