@@ -175,6 +175,14 @@ installation directory and user-data identity. This authorizes local packaging
 and installation, not a GitHub release, upstream PR or public announcement.
 The user-installed Claude Code binary and its account remain outside the package.
 
+On 2026-08-30 the fork owner approved publishing the accumulated fork work as an
+unsigned Windows prerelease. Version `1.10.0-subscription.5` is the first GitHub
+prerelease under the fork's own identity and update origin. The approval does not
+represent upstream, OpenAI or Anthropic endorsement, does not authorize borrowed
+publisher credentials, and does not turn local CLI authentication into an
+OpenScreen-managed account service. Release notes must retain the unsigned status,
+test scope, external-CLI requirements and known limitations.
+
 ### Runtime model catalog
 
 The model picker reads `ModelInfo[]` from the official CLI's streaming control

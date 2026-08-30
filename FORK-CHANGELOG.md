@@ -26,7 +26,7 @@ see [FORK.md](FORK.md).
 | Context display | Separates estimated selected history, the user's reference value, and a verified context window for the active provider/model when available. |
 | Distribution | Uses a separate app identity, user-data directory, installer name, update origin and release configuration from upstream. |
 
-## Unreleased — provider context-window display
+## 1.10.0-subscription.5 — 2026-08-30
 
 ### Added and changed
 
@@ -54,6 +54,15 @@ test TypeScript checks, 13-locale i18n, documentation and Biome completed
 successfully. The live local Codex and Claude catalogs were read without sending
 an inference prompt, and an isolated Electron UI pass verified the 1M Sonnet 5
 badge and context dialog.
+
+### Distribution status
+
+- Prepared as the fork's first public GitHub prerelease after the owner approved
+  publication on 2026-08-30.
+- Windows x64 only. The installer remains unsigned and is published with SHA-256
+  checksums, package verification and explicit validation limitations.
+- GitHub Actions is enabled for `fork/main`, `feat/**` and `release/**` so future
+  fork branches do not rely only on local validation.
 
 ## 1.10.0-subscription.4 — 2026-08-28
 

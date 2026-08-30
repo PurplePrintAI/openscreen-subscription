@@ -24,5 +24,8 @@
 		"createDesktopShortcut": false,
 		"shortcutName": "OpenScreen Subscription"
 	},
-	"extraResources": [{ "from": "FORK.md", "to": "FORK.md" }]
+	"extraResources": [
+		{ "from": "FORK.md", "to": "FORK.md" },
+		{ "from": "FORK-CHANGELOG.md", "to": "FORK-CHANGELOG.md" }
+	]
 }
