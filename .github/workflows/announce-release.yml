@@ -51,6 +51,7 @@ permissions:
 jobs:
   announce:
     name: Announce ${{ inputs.tag || github.event.release.tag_name }}
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.release.tag_name, '-subscription.')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

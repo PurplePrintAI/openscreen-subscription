@@ -1,5 +1,5 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { statSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { createInterface } from "node:readline";
@@ -56,33 +56,57 @@ function message(error: unknown): string {
 
 /** Resolve an actual executable; never pass prompts, JSON or model names through a shell. */
 export function findCodexExecutable(
-	env: NodeJS.ProcessEnv = process.env,
+	env: Record<string, string | undefined> = process.env,
 	platform = process.platform,
 	arch = process.arch,
 ): string {
+	const paths = platform === "win32" ? path.win32 : path.posix;
+	const isFile = (candidate: string) => {
+		try {
+			return statSync(candidate).isFile();
+		} catch {
+			return false;
+		}
+	};
 	const override = env.OPENSCREEN_CODEX_EXECUTABLE?.trim();
 	if (override) {
-		if (!path.isAbsolute(override) || /\.(cmd|bat|ps1)$/i.test(override)) {
+		if (!paths.isAbsolute(override) || /\.(cmd|bat|ps1)$/i.test(override)) {
 			throw new Error("OPENSCREEN_CODEX_EXECUTABLE must point to the native Codex executable.");
 		}
-		if (!existsSync(override)) throw new Error("The configured Codex executable does not exist.");
+		if (!isFile(override)) throw new Error("The configured Codex executable does not exist.");
 		return override;
 	}
 	const filename = platform === "win32" ? "codex.exe" : "codex";
 	const candidates = (env.PATH ?? env.Path ?? "")
-		.split(path.delimiter)
+		.split(platform === "win32" ? ";" : ":")
 		.filter(Boolean)
-		.map((dir) => path.join(dir.replace(/^"|"$/g, ""), filename));
+		.map((directory) => paths.join(directory.replace(/^"|"$/g, ""), filename));
+	const userDirectory = env.USERPROFILE ?? env.HOME;
+	if (platform !== "win32") {
+		if (userDirectory) {
+			for (const directory of [
+				[".local", "bin"],
+				[".npm-global", "bin"],
+				[".volta", "bin"],
+				["Library", "pnpm"],
+			])
+				candidates.push(paths.join(userDirectory, ...directory, filename));
+		}
+		// Apps opened from Finder do not inherit the user's interactive shell PATH.
+		// These are the standard Apple Silicon and Intel Homebrew/global npm prefixes.
+		candidates.push(paths.join("/opt/homebrew/bin", filename));
+		candidates.push(paths.join("/usr/local/bin", filename));
+	}
 	if (platform === "win32" && env.APPDATA) {
 		const triple = arch === "arm64" ? "aarch64-pc-windows-msvc" : "x86_64-pc-windows-msvc";
-		const root = path.join(env.APPDATA, "npm", "node_modules", "@openai", "codex");
-		for (const base of [root, path.join(root, "node_modules", "@openai", `codex-win32-${arch}`)]) {
+		const root = paths.join(env.APPDATA, "npm", "node_modules", "@openai", "codex");
+		for (const base of [root, paths.join(root, "node_modules", "@openai", `codex-win32-${arch}`)]) {
 			for (const binDir of ["bin", "codex"]) {
-				candidates.push(path.join(base, "vendor", triple, binDir, filename));
+				candidates.push(paths.join(base, "vendor", triple, binDir, filename));
 			}
 		}
 	}
-	const found = candidates.find((candidate) => existsSync(candidate));
+	const found = candidates.find(isFile);
 	if (!found)
 		throw new Error("Codex CLI was not found. Install Codex CLI, then retry the connection.");
 	return found;

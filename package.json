@@ -1,7 +1,7 @@
 {
 	"name": "openscreen",
 	"private": true,
-	"version": "1.10.0-subscription.5",
+	"version": "1.10.0-subscription.6",
 	"description": "Record your screen and polish the demo",
 	"homepage": "https://getopenscreen.com/",
 	"license": "MIT",
@@ -93,7 +93,8 @@
 		"fetch:ffmpeg": "node scripts/fetch-ffmpeg.mjs",
 		"fetch:ffmpeg:mac": "node scripts/fetch-ffmpeg-macos.mjs",
 		"fetch:ffmpeg:sdk": "node scripts/fetch-ffmpeg.mjs --sdk-only",
-		"build:win:fork": "npm run build:native:win && npm run fetch:ffmpeg && node scripts/stage-fork-speech.mjs && npm run stage:vcomp && npm run build:native:compositor && tsc && vite build && electron-builder --win nsis --x64 --config electron-builder.fork.json --config.npmRebuild=false --publish never"
+		"build:win:fork": "npm run build:native:win && npm run fetch:ffmpeg && node scripts/stage-fork-speech.mjs && npm run stage:vcomp && npm run build:native:compositor && tsc && vite build && electron-builder --win nsis --x64 --config electron-builder.fork.json --config.npmRebuild=false --publish never",
+		"build:mac:fork": "npm run build:native:mac && npm run fetch:ffmpeg:mac && npm run build:native:compositor:mac && tsc && vite build && electron-builder --mac --config electron-builder.fork.json --publish never"
 	},
 	"dependencies": {
 		"@fix-webm-duration/fix": "^1.0.1",

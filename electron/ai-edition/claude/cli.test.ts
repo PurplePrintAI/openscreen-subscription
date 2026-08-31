@@ -1,6 +1,6 @@
 import { type ChildProcessWithoutNullStreams, type spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { PassThrough } from "node:stream";
@@ -213,6 +213,18 @@ describe("Claude local runtime", () => {
 		).toThrow("native");
 		expect(() => findClaudeExecutable({ OPENSCREEN_CLAUDE_EXECUTABLE: "relative/claude" })).toThrow(
 			"native",
+		);
+	});
+
+	it("finds a user-installed CLI when a Finder launch has an empty PATH", async () => {
+		const base = await directory();
+		const executable = path.join(base, ".local", "bin", "claude");
+		await mkdir(path.dirname(executable), { recursive: true });
+		await writeFile(executable, "fixture");
+		const posixHome = base.replace(/\\/g, "/");
+
+		expect(findClaudeExecutable({ HOME: posixHome, PATH: "" }, "darwin", "arm64")).toBe(
+			`${posixHome}/.local/bin/claude`,
 		);
 	});
 

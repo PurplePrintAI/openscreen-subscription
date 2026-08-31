@@ -79,18 +79,35 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "${TMP}"' EXIT
 
-echo "Fetching ${ARTIFACT} from the latest successful build-whisper-stt run..."
-# No run id: gh resolves the most recent run that published this artifact.
-# Artifacts expire (retention-days in build-whisper-stt.yml), so a stale branch
-# can legitimately find nothing — say so in terms someone can act on.
-if ! gh run download --repo "${REPO}" --name "${ARTIFACT}" --dir "${TMP}" 2>"${TMP}/err"; then
+echo "Resolving ${ARTIFACT} from a successful build-whisper-stt run..."
+# `gh run download` without an ID resolves the current workflow run under Actions,
+# not the latest run that produced the named artifact. The release workflow and
+# the speech build start together on a tag, so the old command deterministically
+# inspected the release run before it had artifacts and failed every platform.
+# Resolve the completed producer explicitly. A release may pin a reviewed run ID
+# through OPENSCREEN_WHISPER_RUN_ID; otherwise use the newest successful producer.
+RUN_ID="${OPENSCREEN_WHISPER_RUN_ID:-}"
+if [ -z "${RUN_ID}" ]; then
+  RUN_ID="$(gh run list --repo "${REPO}" --workflow build-whisper-stt.yml --status success \
+    --limit 1 --json databaseId --jq '.[0].databaseId' 2>"${TMP}/list-err" || true)"
+fi
+if [ -z "${RUN_ID}" ]; then
+  cat "${TMP}/list-err" >&2 2>/dev/null || true
+  echo "FATAL: no successful build-whisper-stt run is available in ${REPO}." >&2
+  exit 1
+fi
+echo "Using build-whisper-stt run ${RUN_ID}."
+# Artifacts expire (retention-days in build-whisper-stt.yml), so a stale run can
+# legitimately have no downloadable files — say so in terms someone can act on.
+if ! gh run download "${RUN_ID}" --repo "${REPO}" --name "${ARTIFACT}" --dir "${TMP}" 2>"${TMP}/err"; then
   cat "${TMP}/err" >&2
   cat >&2 <<EOF
 
 FATAL: could not fetch ${ARTIFACT}.
 
 The binaries come from the "Build whisper-stt binaries" workflow, and its
-artifacts expire. Re-run it against this branch, then re-run this build:
+artifacts expire. Run ${RUN_ID} did not provide ${ARTIFACT}. Re-run the workflow
+against this branch, then re-run this build:
 
   gh workflow run build-whisper-stt.yml --repo ${REPO}
 

@@ -1,0 +1,282 @@
+name: Build OpenScreen Subscription for macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      whisper_run_id:
+        description: "Successful Build whisper-stt binaries run ID to package"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-macos-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: macOS ${{ matrix.label }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            label: Apple Silicon
+            runner: macos-latest
+            binary_arch: arm64
+          - arch: x64
+            label: Intel
+            runner: macos-15-intel
+            binary_arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Keep sharp on its prebuilt binary
+        run: npm rebuild sharp
+        env:
+          npm_config_build_from_source: "false"
+
+      - name: Stage reviewed speech runtime
+        run: bash scripts/stage-whisper-stt.sh darwin-${{ matrix.arch }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENSCREEN_WHISPER_RUN_ID: ${{ inputs.whisper_run_id }}
+
+      - name: Test ScreenCaptureKit package
+        run: npm run test:swift:mac
+
+      - name: Build ScreenCaptureKit helper
+        run: npm run build:native:mac
+        env:
+          OPENSCREEN_MAC_HELPER_ARCHS: ${{ matrix.arch }}
+
+      - name: Cache LGPL FFmpeg tree
+        uses: actions/cache@v6
+        with:
+          path: crates/thirdparty
+          key: fork-ffmpeg-macos-${{ matrix.arch }}-${{ hashFiles('scripts/fetch-ffmpeg-macos.mjs') }}
+
+      - name: Vendor pinned LGPL FFmpeg
+        run: npm run fetch:ffmpeg:mac
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            crates/target
+          key: fork-cargo-macos-${{ matrix.arch }}-${{ hashFiles('crates/Cargo.lock') }}
+          restore-keys: |
+            fork-cargo-macos-${{ matrix.arch }}-
+
+      - name: Build Metal compositor
+        run: npm run build:native:compositor:mac
+
+      - name: Build renderer and Electron main process
+        run: npm run build-vite
+
+      - name: Package fork app bundle
+        run: npx electron-builder --mac --${{ matrix.arch }} --dir --config electron-builder.fork.json --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Locate app bundle
+        id: app
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p 'require("./package.json").version')"
+          APP="$(find "release/${VERSION}" -maxdepth 3 -name 'OpenScreen Subscription.app' -type d -print -quit)"
+          [ -n "$APP" ] || { echo "::error::OpenScreen Subscription.app was not packaged"; exit 1; }
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "path=${APP}" >> "$GITHUB_OUTPUT"
+
+      - name: Apply ad-hoc hardened-runtime signature
+        run: |
+          codesign --force --deep --sign - \
+            --options runtime \
+            --entitlements macos.entitlements \
+            "${{ steps.app.outputs.path }}"
+
+      - name: Verify bundle identity, architecture and payload
+        run: |
+          set -euo pipefail
+          APP="${{ steps.app.outputs.path }}"
+          BIN="${APP}/Contents/MacOS/OpenScreen Subscription"
+          RESOURCES="${APP}/Contents/Resources"
+          NATIVE="${RESOURCES}/electron/native/bin/darwin-${{ matrix.arch }}"
+
+          test -x "$BIN"
+          test -x "${NATIVE}/openscreen-screencapturekit-helper"
+          test -f "${NATIVE}/compositor_view.node"
+          test -x "${NATIVE}/whisper-stt-server"
+          test -f "${RESOURCES}/FORK.md"
+          test -f "${RESOURCES}/FORK-CHANGELOG.md"
+          test -f "${RESOURCES}/MACOS-INSTALLATION.md"
+          test -f "${RESOURCES}/LICENSE"
+          test -f "${RESOURCES}/THIRD-PARTY-NOTICES.md"
+
+          BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${APP}/Contents/Info.plist")"
+          [ "$BUNDLE_ID" = "io.github.purpleprintai.openscreen-subscription" ] \
+            || { echo "::error::Unexpected bundle ID ${BUNDLE_ID}"; exit 1; }
+
+          ACTUAL_ARCHS="$(lipo -archs "$BIN")"
+          case " ${ACTUAL_ARCHS} " in
+            *" ${{ matrix.binary_arch }} "*) ;;
+            *) echo "::error::Expected ${{ matrix.binary_arch }}, got ${ACTUAL_ARCHS}"; exit 1 ;;
+          esac
+
+          codesign --verify --deep --strict "$APP"
+          SIGNING_ID="$(codesign -dv --verbose=2 "$APP" 2>&1 | sed -n 's/^Identifier=//p')"
+          [ "$SIGNING_ID" = "$BUNDLE_ID" ] \
+            || { echo "::error::Signature identifier ${SIGNING_ID} does not match ${BUNDLE_ID}"; exit 1; }
+
+      - name: Smoke-test packaged CLI boot
+        run: |
+          set -euo pipefail
+          BIN="${{ steps.app.outputs.path }}/Contents/MacOS/OpenScreen Subscription"
+          "$BIN" help > cli-help.txt
+          grep -q "OpenScreen CLI" cli-help.txt
+
+      - name: Create DMG
+        id: dmg
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.app.outputs.version }}"
+          case "${{ matrix.arch }}" in
+            arm64) LABEL="Apple-Silicon" ;;
+            x64) LABEL="Intel" ;;
+          esac
+          OUT="release/${VERSION}/OpenScreen-Subscription-${VERSION}-macOS-${LABEL}.dmg"
+          STAGING="release/${VERSION}/dmg-${{ matrix.arch }}"
+          rm -rf "$STAGING" "$OUT"
+          mkdir -p "$STAGING"
+          cp -R "${{ steps.app.outputs.path }}" "$STAGING/"
+          ln -s /Applications "$STAGING/Applications"
+          hdiutil create \
+            -srcfolder "$STAGING" \
+            -volname "OpenScreen Subscription" \
+            -fs HFS+ \
+            -format UDBZ \
+            "$OUT"
+          rm -rf "$STAGING"
+          echo "path=${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Mount and verify DMG
+        run: |
+          set -euo pipefail
+          MOUNT="$(mktemp -d)"
+          cleanup() {
+            hdiutil detach "$MOUNT" -quiet 2>/dev/null || true
+            rmdir "$MOUNT" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT" "${{ steps.dmg.outputs.path }}" >/dev/null
+          APP="${MOUNT}/OpenScreen Subscription.app"
+          test -d "$APP"
+          test -L "${MOUNT}/Applications"
+          codesign --verify --deep --strict "$APP"
+          [ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "${APP}/Contents/Info.plist")" \
+            = "io.github.purpleprintai.openscreen-subscription" ]
+
+      - name: Write validation metadata
+        run: |
+          DMG="${{ steps.dmg.outputs.path }}" \
+          ARCH="${{ matrix.arch }}" \
+          VERSION="${{ steps.app.outputs.version }}" \
+          WHISPER_RUN_ID="${{ inputs.whisper_run_id }}" \
+          SOURCE_COMMIT="${{ github.sha }}" \
+          node --input-type=module <<'NODE'
+          import { createHash } from "node:crypto";
+          import { readFileSync, writeFileSync } from "node:fs";
+          const bytes = readFileSync(process.env.DMG);
+          const report = {
+            product: "OpenScreen Subscription",
+            version: process.env.VERSION,
+            architecture: process.env.ARCH,
+            bundleId: "io.github.purpleprintai.openscreen-subscription",
+            sourceCommit: process.env.SOURCE_COMMIT,
+            whisperBuildRunId: Number(process.env.WHISPER_RUN_ID),
+            signature: "ad-hoc hardened runtime",
+            notarized: false,
+            checks: {
+              nativePayloadPresent: true,
+              bundleIdentity: true,
+              architecture: true,
+              codeSignatureStructure: true,
+              packagedCliBoot: true,
+              dmgMount: true
+            },
+            dmg: {
+              name: process.env.DMG.split("/").at(-1),
+              bytes: bytes.length,
+              sha256: createHash("sha256").update(bytes).digest("hex")
+            }
+          };
+          writeFileSync(`macos-validation-${process.env.ARCH}.json`, `${JSON.stringify(report, null, 2)}\n`);
+          NODE
+          shasum -a 256 "${{ steps.dmg.outputs.path }}" > "SHA256-${{ matrix.arch }}.txt"
+
+      - name: Upload architecture package
+        uses: actions/upload-artifact@v7
+        with:
+          name: openscreen-subscription-macos-${{ matrix.arch }}
+          path: |
+            ${{ steps.dmg.outputs.path }}
+            macos-validation-${{ matrix.arch }}.json
+            SHA256-${{ matrix.arch }}.txt
+            cli-help.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  collect:
+    name: Collect macOS release assets
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release documentation
+        uses: actions/checkout@v7
+
+      - name: Download Apple Silicon package
+        uses: actions/download-artifact@v8
+        with:
+          name: openscreen-subscription-macos-arm64
+          path: artifacts/arm64
+
+      - name: Download Intel package
+        uses: actions/download-artifact@v8
+        with:
+          name: openscreen-subscription-macos-x64
+          path: artifacts/x64
+
+      - name: Flatten and checksum release files
+        run: |
+          set -euo pipefail
+          mkdir release-assets
+          find artifacts -type f -name '*.dmg' -exec cp {} release-assets/ \;
+          find artifacts -type f -name 'macos-validation-*.json' -exec cp {} release-assets/ \;
+          cp MACOS-INSTALLATION.md release-assets/
+          (
+            cd release-assets
+            sha256sum *.dmg > SHA256SUMS-macOS.txt
+          )
+
+      - name: Upload combined release assets
+        uses: actions/upload-artifact@v7
+        with:
+          name: openscreen-subscription-macos-release
+          path: release-assets
+          if-no-files-found: error
+          retention-days: 30

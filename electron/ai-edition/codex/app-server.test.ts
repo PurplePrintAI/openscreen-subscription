@@ -1,11 +1,11 @@
 import type { spawn } from "node:child_process";
 import { EventEmitter } from "node:events";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { PassThrough, Writable } from "node:stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CodexAppServer } from "./app-server";
+import { CodexAppServer, findCodexExecutable } from "./app-server";
 
 type Packet = {
 	id?: number;
@@ -74,6 +74,19 @@ function fixture(
 }
 
 describe("Codex app-server subscription transport", () => {
+	it("finds a user-installed CLI when a Finder launch has an empty PATH", () => {
+		const home = mkdtempSync(path.join(os.tmpdir(), "openscreen-codex-home-"));
+		cleanups.push(() => rmSync(home, { recursive: true, force: true }));
+		const executable = path.join(home, ".local", "bin", "codex");
+		mkdirSync(path.dirname(executable), { recursive: true });
+		writeFileSync(executable, "fixture");
+		const posixHome = home.replace(/\\/g, "/");
+
+		expect(findCodexExecutable({ HOME: posixHome, PATH: "" }, "darwin", "arm64")).toBe(
+			`${posixHome}/.local/bin/codex`,
+		);
+	});
+
 	it("isolates the profile, strips API billing credentials and initializes once", async () => {
 		vi.stubEnv("OPENAI_API_KEY", "should-not-reach-subscription");
 		vi.stubEnv("CODEX_API_KEY", "also-not-subscription");

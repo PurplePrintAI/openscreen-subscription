@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+      - "!v*-subscription.*"
   workflow_dispatch:
     inputs:
       arch:
