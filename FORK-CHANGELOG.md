@@ -26,6 +26,39 @@ see [FORK.md](FORK.md).
 | Context display | Separates estimated selected history, the user's reference value, and a verified context window for the active provider/model when available. |
 | Distribution | Uses a separate app identity, user-data directory, installer name, update origin and release configuration from upstream. |
 
+## 1.10.0-subscription.6 — 2026-08-31
+
+### macOS validation prerelease
+
+- Adds fork-branded DMG builds for both Apple Silicon and Intel Macs, preserving the
+  fork bundle identifier, product name, user-data separation and GitHub update origin.
+- Verifies the ScreenCaptureKit helper, Metal compositor, speech runtime, executable
+  architecture, bundle identity, ad-hoc hardened-runtime signature, packaged CLI boot
+  and mounted DMG before collecting release assets.
+- Pins speech-runtime staging to an explicit successful producer run. The previous
+  release workflow asked `gh run download` to inspect its own still-running job and
+  failed before either macOS package could be built.
+- Prevents subscription tags and releases from entering the upstream-oriented build
+  and Discord announcement paths.
+
+### Local AI compatibility
+
+- Finds Codex CLI and Claude Code when OpenScreen is launched from Finder, whose PATH
+  normally omits Homebrew and user package-manager directories.
+- Checks `~/.local/bin`, `~/.npm-global/bin`, `~/.volta/bin`, `~/Library/pnpm`,
+  `/opt/homebrew/bin` and `/usr/local/bin` without invoking a shell or copying CLI
+  credentials.
+
+### Distribution status
+
+- macOS packages remain prerelease-only until a real Mac completes the manual
+  record → edit → export checklist.
+- The initial packages are ad-hoc signed and not notarized by Apple. Installation and
+  privacy-permission guidance is recorded in [MACOS-INSTALLATION.md](MACOS-INSTALLATION.md).
+- Local validation passed 2,243 unit tests with 4 skipped across 189 files, both
+  application and test TypeScript checks, documentation, i18n and Biome. Biome
+  retained 14 pre-existing warnings.
+
 ## 1.10.0-subscription.5 — 2026-08-30
 
 ### Added and changed

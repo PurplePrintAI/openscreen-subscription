@@ -78,6 +78,30 @@ The installer is unsigned unless an independently authorized signing identity is
 configured. No upstream publisher identity is borrowed. Windows security prompts
 must be handled by the user, not disabled by this fork or its build scripts.
 
+## macOS prerelease procedure
+
+macOS packages must be built natively on the matching GitHub-hosted architecture:
+Apple Silicon on `macos-latest` and Intel on `macos-15-intel`. Cross-packaging an
+Intel app from an Apple Silicon runner is not accepted because the capture helper,
+FFmpeg and Metal compositor are host-architecture builds.
+
+1. Run **Build whisper-stt binaries** against the release source and retain its
+   successful run ID.
+2. Dispatch **Build OpenScreen Subscription for macOS** with that exact run ID.
+   This prevents a release/tag workflow from racing a still-running dependency build.
+3. Package with `electron-builder.fork.json`; never inherit the upstream bundle ID,
+   product name or update repository.
+4. Require both architecture jobs to verify the native payload, bundle ID, executable
+   architecture, code-signature structure, packaged CLI boot and mounted DMG.
+5. Publish the combined DMGs, validation JSON and SHA-256 file only as a prerelease
+   until a real Mac completes the manual record → edit → export checklist.
+
+Without independently authorized Apple Developer credentials, the workflow applies
+an ad-hoc hardened-runtime signature so macOS privacy grants attach to the fork bundle
+identifier. This is not Apple notarization. The release notes and
+[MACOS-INSTALLATION.md](MACOS-INSTALLATION.md) must retain the Gatekeeper limitation;
+never borrow upstream credentials or advise users to disable Gatekeeper globally.
+
 ## Attribution and redistribution
 
 Keep `LICENSE` and `THIRD-PARTY-NOTICES.md` in source and installed resources.

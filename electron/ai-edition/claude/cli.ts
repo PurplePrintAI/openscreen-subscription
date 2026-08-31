@@ -126,7 +126,20 @@ export function findClaudeExecutable(
 		.filter(Boolean)
 		.map((directory) => paths.join(directory.replace(/^"|"$/g, ""), filename));
 	const userDirectory = env.USERPROFILE ?? env.HOME;
-	if (userDirectory) candidates.push(paths.join(userDirectory, ".local", "bin", filename));
+	if (platform !== "win32") {
+		if (userDirectory) {
+			for (const directory of [
+				[".local", "bin"],
+				[".npm-global", "bin"],
+				[".volta", "bin"],
+				["Library", "pnpm"],
+			])
+				candidates.push(paths.join(userDirectory, ...directory, filename));
+		}
+		// Finder-launched apps normally miss both Homebrew prefixes in PATH.
+		candidates.push(paths.join("/opt/homebrew/bin", filename));
+		candidates.push(paths.join("/usr/local/bin", filename));
+	}
 	if (platform === "win32" && env.APPDATA) {
 		const root = paths.join(env.APPDATA, "npm", "node_modules", "@anthropic-ai", "claude-code");
 		candidates.push(paths.join(root, "bin", filename));

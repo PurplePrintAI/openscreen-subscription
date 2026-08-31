@@ -17,6 +17,10 @@
 		"target": ["nsis"],
 		"artifactName": "OpenScreen-Subscription-${version}-Windows-x64-Setup.${ext}"
 	},
+	"mac": {
+		"target": ["dmg"],
+		"artifactName": "OpenScreen-Subscription-${version}-macOS-${arch}.${ext}"
+	},
 	"nsis": {
 		"oneClick": false,
 		"allowToChangeInstallationDirectory": true,
@@ -26,6 +30,7 @@
 	},
 	"extraResources": [
 		{ "from": "FORK.md", "to": "FORK.md" },
-		{ "from": "FORK-CHANGELOG.md", "to": "FORK-CHANGELOG.md" }
+		{ "from": "FORK-CHANGELOG.md", "to": "FORK-CHANGELOG.md" },
+		{ "from": "MACOS-INSTALLATION.md", "to": "MACOS-INSTALLATION.md" }
 	]
 }
