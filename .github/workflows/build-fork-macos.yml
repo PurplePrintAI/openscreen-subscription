@@ -124,6 +124,7 @@ jobs:
           test -x "${NATIVE}/whisper-stt-server"
           test -f "${RESOURCES}/FORK.md"
           test -f "${RESOURCES}/FORK-CHANGELOG.md"
+          test -f "${RESOURCES}/FORK-UPSTREAM-REVIEW.md"
           test -f "${RESOURCES}/MACOS-INSTALLATION.md"
           test -f "${RESOURCES}/LICENSE"
           test -f "${RESOURCES}/THIRD-PARTY-NOTICES.md"

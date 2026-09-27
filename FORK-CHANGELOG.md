@@ -17,7 +17,9 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
-## Unreleased
+## 1.10.0-subscription.7 — 2026-09-27
+
+### GPT-6 model catalog
 
 - Adds GPT-6 Sol, Astra and Luna to the preferred OpenAI model catalog, using
   each model's published 1,050,000-token context window where the active
@@ -34,6 +36,16 @@ For the dated review of newer upstream changes, see
 - The existing effort selector still tops out at Extra high; the official
   GPT-6 `max` effort is not exposed by this catalog update.
 
+### Release and maintenance
+
+- Refreshes the Tiptap editor packages, Electron 41 runtime, Vitest and affected
+  transitive dependencies. A clean install and npm audit report zero known
+  advisories at release preparation time.
+- Makes the branch-protection-required Nix dependency hash check run on every
+  pull request, including changes that do not touch the lockfile.
+- Includes the dated upstream review in the fork package alongside this log.
+  The upstream fixes identified there are **not** integrated in this version.
+
 ## Cumulative differences from upstream v1.10.0
 
 | Area | Fork improvement |
@@ -42,6 +54,7 @@ For the dated review of newer upstream changes, see
 | ChatGPT subscription | Routes through a user-installed official Codex CLI `app-server`, using an OpenScreen-owned CLI profile instead of copying credentials or inheriting API keys. |
 | Claude subscription | Uses the user's installed, unmodified Claude Code CLI and its externally managed authentication. |
 | Claude models | Discovers the current model catalog from the local CLI and shows friendly resolved names, including returned 1M-context variants. |
+| GPT-6 models | Prefers Sol, Astra and Luna when available through the connected Codex runtime or OpenAI API, with verified context limits and model-specific reasoning options. |
 | AI chat | Aligns user and assistant messages, renders safe Markdown, improves streaming, and exposes time/copy/rewind actions on hover or keyboard focus. |
 | Context display | Separates estimated selected history, the user's reference value, and a verified context window for the active provider/model when available. |
 | Distribution | Uses a separate app identity, user-data directory, installer name, update origin and release configuration from upstream. |
