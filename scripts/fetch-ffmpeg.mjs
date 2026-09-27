@@ -385,9 +385,7 @@ function copySdkTree(source, dest) {
 }
 
 function samePath(left, right) {
-	return process.platform === "win32"
-		? left.toLowerCase() === right.toLowerCase()
-		: left === right;
+	return process.platform === "win32" ? left.toLowerCase() === right.toLowerCase() : left === right;
 }
 
 function cleanupFfmpegExtraction(tmp) {
