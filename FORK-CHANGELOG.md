@@ -37,11 +37,12 @@ For the dated review of newer upstream changes, see
   This exercised native capture with automated control, not the physical HUD
   click-through path or an in-place installer upgrade.
 - Builds Apple Silicon and Intel macOS DMGs in
-  [the fork's validation workflow](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36317659063).
+  [the fork's validation workflow](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36320426373).
   Both passed architecture, native payload, bundle ID, ad-hoc signature, CLI
-  boot and mounted-DMG checks. A real Mac record → edit → export pass, Developer
-  ID signing and notarization remain release gates. No Studio release has been
-  published.
+  boot and mounted-DMG checks. The bundled installation guide uses the Studio
+  name and links Apple's current per-app security procedure. A real Mac record →
+  edit → export pass, Developer ID signing and notarization remain release
+  gates. No Studio release has been published.
 - Advances the unpublished candidate to `1.10.0-subscription.8`, refreshes the
   Nix dependency hash and checks the rebranded CLI banner in macOS packaging.
 
