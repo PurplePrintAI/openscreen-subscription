@@ -1,4 +1,5 @@
 import { resolveContextBudget } from "../../../src/lib/ai-edition/contextBudget";
+import { resolveCodexContextWindow } from "../../../src/lib/ai-edition/modelContextWindow";
 import { documentSchema } from "../../../src/lib/ai-edition/schema";
 import type {
 	AiEditionAssetResult,
@@ -13,6 +14,7 @@ import type {
 	AiEditionDocumentResult,
 	AiEditionLlmConfig,
 	AiEditionLlmDisconnectResult,
+	AiEditionLlmModelOption,
 	AiEditionLlmProviderModelsResult,
 	AiEditionLlmSnapshot,
 	AiEditionProjectSummary,
@@ -35,7 +37,11 @@ import {
 	listOpenRouterModels,
 	probeMiniMaxModels,
 } from "../../ai-edition/llm-provider-auth";
-import { PROVIDER_DEFINITIONS } from "../../ai-edition/provider-registry";
+import {
+	GPT6_MODELS,
+	gpt6ModelOrder,
+	PROVIDER_DEFINITIONS,
+} from "../../ai-edition/provider-registry";
 
 export interface AiEditionServiceOptions {
 	documents: DocumentService;
@@ -308,7 +314,21 @@ export class AiEditionService {
 			}
 			if (providerId === "openai" || providerId === "openai-compatible") {
 				if (!baseUrl) return { models: [], error: "Missing base URL" };
-				return { models: await listOpenAiCompatibleModels(baseUrl, cred.value) };
+				const models = await listOpenAiCompatibleModels(baseUrl, cred.value);
+				if (
+					providerId !== "openai" ||
+					baseUrl.trim().replace(/\/+$/, "") !== "https://api.openai.com/v1"
+				)
+					return { models };
+				models.sort((a, b) => gpt6ModelOrder(a) - gpt6ModelOrder(b));
+				const catalog: AiEditionLlmModelOption[] = GPT6_MODELS.filter((preferred) =>
+					models.includes(preferred.id),
+				).map((preferred) => ({
+					...preferred,
+					contextWindowTokens: resolveCodexContextWindow(preferred.id)?.tokens,
+					contextWindowSource: "official",
+				}));
+				return { models, catalog };
 			}
 			return { models: [], error: `Provider ${providerId} does not expose a dynamic model list` };
 		} catch (error) {

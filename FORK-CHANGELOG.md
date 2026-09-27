@@ -14,6 +14,26 @@ improvement since v1.5.0.
 For architecture, security boundaries, attribution and the publication process,
 see [FORK.md](FORK.md).
 
+For the dated review of newer upstream changes, see
+[FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
+
+## Unreleased
+
+- Adds GPT-6 Sol, Astra and Luna to the preferred OpenAI model catalog, using
+  each model's published 1,050,000-token context window where the active
+  runtime does not provide a more specific value.
+- Adds a GPT-6 catalog entry only when the connected Codex CLI or OpenAI API
+  actually returns that ID. The OpenAI API default proposes Sol, but does not
+  imply that a given API key can use it.
+- Uses the Responses API for GPT-6 API calls and limits reasoning choices to
+  those supported by the selected model; existing Astra settings without a
+  valid effort fall back to Low.
+- The local Codex CLI was updated to 0.157.1 for validation. Its live
+  `model/list` response exposed all three GPT-6 models; this is not a guarantee
+  that every user's subscription exposes them.
+- The existing effort selector still tops out at Extra high; the official
+  GPT-6 `max` effort is not exposed by this catalog update.
+
 ## Cumulative differences from upstream v1.10.0
 
 | Area | Fork improvement |

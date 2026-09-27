@@ -32,6 +32,7 @@ import {
 	getReasoningEffortOptions,
 	PROVIDER_DEFINITIONS,
 	type ProviderDefinition,
+	reasoningEffortForModel,
 } from "../../../electron/ai-edition/provider-registry";
 import { ModalShell } from "./Modals";
 import styles from "./NewEditorShell.module.css";
@@ -141,8 +142,11 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 				provider: def.id,
 				model: existing?.model ?? def.defaultModel,
 				baseUrl: existing?.baseUrl ?? def.baseUrl,
-				reasoningEffort:
+				reasoningEffort: reasoningEffortForModel(
+					def.id,
+					existing?.model ?? def.defaultModel,
 					existing?.reasoningEffort ?? (def.authKind !== "api-key" ? "medium" : undefined),
+				),
 				allowAgentEdits: existing?.allowAgentEdits ?? prev?.allowAgentEdits,
 				contextBudgetTokens: existing?.contextBudgetTokens ?? prev?.contextBudgetTokens,
 			};
@@ -169,7 +173,14 @@ function ProviderSettings({ open, onClose }: ProviderSettingsProps) {
 				if (!keyResult.success) throw new Error(keyResult.error);
 				setApiKey("");
 			}
-			const saved = await nativeBridgeClient.aiEdition.llmSetConfig(config);
+			const saved = await nativeBridgeClient.aiEdition.llmSetConfig({
+				...config,
+				reasoningEffort: reasoningEffortForModel(
+					config.provider,
+					config.model,
+					config.reasoningEffort,
+				),
+			});
 			if (!saved.success) throw new Error(saved.error);
 			await refreshSnapshot();
 			toast.success(te("providerSettings.saved", { provider: active.label }));
@@ -508,6 +519,11 @@ function ProviderForm({
 							setConfig({
 								...(config ?? { provider: def.id, model: def.defaultModel }),
 								model: e.target.value,
+								reasoningEffort: reasoningEffortForModel(
+									def.id,
+									e.target.value,
+									config?.reasoningEffort,
+								),
 							})
 						}
 						disabled={busy || modelsLoading}
@@ -535,12 +551,17 @@ function ProviderForm({
 							setConfig({
 								...(config ?? { provider: def.id, model: def.defaultModel }),
 								model: e.target.value,
+								reasoningEffort: reasoningEffortForModel(
+									def.id,
+									e.target.value,
+									config?.reasoningEffort,
+								),
 							})
 						}
 						disabled={busy}
 					/>
 				)}
-				{selectedModelInfo ? (
+				{selectedModelInfo?.description ? (
 					<p
 						style={{ fontSize: 11, color: "var(--muted)", margin: "6px 0" }}
 						title={selectedModelInfo.resolvedModel ?? selectedModelInfo.id}
@@ -616,7 +637,14 @@ function ProviderForm({
 			{def.supportsReasoningEffort ? (
 				<Field label={te("providerSettings.reasoningEffortLabel")}>
 					<select
-						value={config?.reasoningEffort ?? "none"}
+						aria-label={te("providerSettings.reasoningEffortLabel")}
+						value={
+							reasoningEffortForModel(
+								def.id,
+								config?.model ?? def.defaultModel,
+								config?.reasoningEffort,
+							) ?? "none"
+						}
 						onChange={(e) =>
 							setConfig({
 								...(config ?? { provider: def.id, model: def.defaultModel }),
@@ -625,7 +653,7 @@ function ProviderForm({
 						}
 						disabled={busy}
 					>
-						{getReasoningEffortOptions(def.id).map((r) => (
+						{getReasoningEffortOptions(def.id, config?.model).map((r) => (
 							<option key={r} value={r}>
 								{getReasoningEffortLabel(def.id, r)}
 							</option>

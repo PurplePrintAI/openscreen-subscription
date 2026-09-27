@@ -33,6 +33,7 @@ import {
 	getReasoningEffortOptions,
 	PROVIDER_DEFINITIONS,
 	type ReasoningEffort,
+	reasoningEffortForModel,
 } from "../../../electron/ai-edition/provider-registry";
 import { type ChatDisplayMessage, ChatMessage } from "./ChatMessage";
 import { ChatWelcome } from "./ChatWelcome";
@@ -386,6 +387,11 @@ function ModelQuickPopover({
 				...llmConfig,
 				provider: browseProviderId,
 				model: nextModel,
+				reasoningEffort: reasoningEffortForModel(
+					browseProviderId,
+					nextModel,
+					llmConfig.reasoningEffort,
+				),
 			});
 			if (result.success) {
 				onConfigChange();
@@ -1081,7 +1087,15 @@ function ChatStripPanel() {
 			PROVIDER_DEFINITIONS.find((d) => d.id === llmConfig.provider)?.supportsReasoningEffort,
 	);
 	const currentReasoningEffort: ReasoningEffort =
-		(llmConfig?.reasoningEffort as ReasoningEffort | undefined) ?? "medium";
+		(reasoningEffortForModel(
+			llmConfig?.provider ?? "",
+			llmConfig?.model ?? "",
+			llmConfig?.reasoningEffort,
+		) as ReasoningEffort | undefined) ?? "medium";
+	const reasoningEffortOptions = getReasoningEffortOptions(
+		llmConfig?.provider ?? "",
+		llmConfig?.model,
+	);
 	const reasoningLabel =
 		providerSupportsReasoning && llmConfig
 			? getReasoningEffortLabel(llmConfig.provider, currentReasoningEffort)
@@ -1687,7 +1701,7 @@ function ChatStripPanel() {
 										zIndex: 1000,
 									}}
 								>
-									{getReasoningEffortOptions(llmConfig?.provider ?? "").map((option) => (
+									{reasoningEffortOptions.map((option) => (
 										<button
 											type="button"
 											key={option}
