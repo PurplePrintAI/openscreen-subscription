@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { getConfig } from "app-builder-lib/out/util/config/config";
 import { describe, expect, it } from "vitest";
@@ -32,5 +33,9 @@ describe("fork release identity", () => {
 				"FORK-UPSTREAM-REVIEW.md",
 			]),
 		);
+		const macGuide = fs.readFileSync(path.resolve("MACOS-INSTALLATION.md"), "utf8");
+		expect(macGuide).toContain(`# ${config.productName} on macOS`);
+		expect(macGuide).toContain(`drag **${config.productName}** to **Applications**`);
+		expect(macGuide).not.toContain("OpenScreen Subscription");
 	});
 });
