@@ -243,7 +243,7 @@ export class AiEditionService {
 				return {
 					success: false,
 					error:
-						"Manage Claude authentication in the official CLI. OpenScreen does not store its credentials.",
+						"Manage Claude authentication in the official CLI. PurplePrint Studio does not store its credentials.",
 				};
 			if (providerId === "codex-subscription")
 				return { success: false, error: "Use ChatGPT sign-in, not an API key." };

@@ -177,7 +177,7 @@ export class CodexAppServer {
 		});
 		try {
 			await this.request("initialize", {
-				clientInfo: { name: "openscreen_subscription", title: "OpenScreen Subscription", version },
+				clientInfo: { name: "openscreen_subscription", title: "PurplePrint Studio", version },
 				capabilities: { experimentalApi: true },
 			});
 			this.send({ method: "initialized", params: {} });
@@ -226,7 +226,7 @@ export class CodexAppServer {
 		if (payload.id !== undefined) {
 			if (payload.method === "item/tool/call" && turn) {
 				const tool = turn.tools.get(String(params.tool));
-				let text = "Tool is not available in this OpenScreen turn.";
+				let text = "Tool is not available in this PurplePrint Studio turn.";
 				let success = false;
 				if (tool && ++turn.toolCalls <= 1000) {
 					try {
@@ -245,7 +245,7 @@ export class CodexAppServer {
 				// No shell, file edits, remote MCP approvals or other vendor tools are approved here.
 				this.send({
 					id: payload.id,
-					error: { code: -32601, message: "Only OpenScreen editor tools are supported." },
+					error: { code: -32601, message: "Only PurplePrint Studio editor tools are supported." },
 				});
 			}
 			return;
@@ -288,7 +288,7 @@ export class CodexAppServer {
 		child?.kill();
 	}
 	close(): void {
-		this.fail(new Error("OpenScreen closed the Codex connection."));
+		this.fail(new Error("PurplePrint Studio closed the Codex connection."));
 	}
 
 	async status(): Promise<CodexStatus> {

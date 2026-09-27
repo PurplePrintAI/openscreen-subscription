@@ -45,7 +45,7 @@
 		"cameraCaptureUnavailable": "The camera could not be opened. Recording without it.",
 		"microphoneDefaulted": "The chosen microphone could not be identified. Recording the default input.",
 		"permissionDenied": "Recording permission denied. Please allow screen recording.",
-		"accessibilityAllowAndRetry": "Allow Accessibility access for OpenScreen, then press record again to start the countdown.",
+		"accessibilityAllowAndRetry": "Allow Accessibility access for PurplePrint Studio, then press record again to start the countdown.",
 		"selectSource": "Please select a source to record"
 	},
 	"emptyState": {
@@ -273,7 +273,7 @@
 			"disclaimer": "Your video's transcript will be sent to the provider you choose. Nothing is shared until you connect one."
 		},
 		"authorUser": "You",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "PurplePrint Studio",
 		"rewindToMessage": "Rewind to this message",
 		"copyMessage": "Copy message",
 		"copiedToClipboard": "Copied to clipboard",
@@ -402,12 +402,12 @@
 		"enterCustomModel": "Enter model ID",
 		"chooseCatalogModel": "Choose from catalog",
 		"pillLocalCli": "Local CLI",
-		"localCliHint": "Sign in through the official Claude Code CLI. It manages authentication and uses its active subscription, API key, or provider account. OpenScreen does not store or change these credentials.",
+		"localCliHint": "Sign in through the official Claude Code CLI. It manages authentication and uses its active subscription, API key, or provider account. PurplePrint Studio does not store or change these credentials.",
 		"cliAccountSubscription": "Claude subscription: {{plan}}. Model access and billing follow your plan.",
 		"cliAccountApi": "API authentication is active. API charges apply, not subscription limits.",
 		"cliAccountRuntime": "CLI authentication is active. Usage and billing follow its current configuration.",
 		"checkCliConnection": "Check CLI connection",
-		"disconnectLocalCli": "Stop using in OpenScreen",
+		"disconnectLocalCli": "Stop using in PurplePrint Studio",
 		"localCliDeselected": "Claude deselected. Your CLI account remains signed in.",
 		"modelHintCli": "Loaded from the official Claude Code CLI. Model and context access depend on your account; some options may use usage credits.",
 		"title": "AI settings",
@@ -442,7 +442,7 @@
 		"signInChatGPT": "Sign in with ChatGPT",
 		"signInPending": "Finish signing in in your browser. This screen updates automatically.",
 		"cancelSignIn": "Cancel sign-in",
-		"subscriptionHint": "Requires Codex CLI and an eligible ChatGPT plan. Codex manages sign-in in an OpenScreen-only profile; no API key or token is copied. Your selected plan limits apply."
+		"subscriptionHint": "Requires Codex CLI and an eligible ChatGPT plan. Codex manages sign-in in an PurplePrint Studio-only profile; no API key or token is copied. Your selected plan limits apply."
 	},
 	"cpuCompositor": {
 		"notice": "Running without a compatible GPU — rendering on CPU, so playback is slower.",

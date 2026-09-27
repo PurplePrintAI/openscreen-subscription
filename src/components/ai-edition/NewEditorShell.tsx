@@ -110,14 +110,26 @@ export function NewEditorShell() {
 	// v4 shell: three modes (Media / Edit / Rec), a collapsible agent (chat)
 	// column, and a floating facet inspector over the stage.
 	const [mode, setMode] = useState<EditorMode>("edit");
-	const [chatOpen, setChatOpen] = useState(true);
+	const [chatOpen, setChatOpen] = useState(() => window.innerWidth >= 900);
 	const [chatWidthPx, setChatWidthPx] = useState(
 		() => Number(localStorage.getItem("os-editor-chat-width")) || 392,
 	);
-	const [timelineHeightPx, setTimelineHeightPx] = useState(
-		() => Number(localStorage.getItem("os-editor-timeline-height")) || 308,
+	const [timelineHeightPx, setTimelineHeightPx] = useState(() =>
+		Math.min(
+			Number(localStorage.getItem("os-editor-timeline-height")) || 308,
+			window.innerHeight < 700 ? 220 : 480,
+		),
 	);
-	const [inspectorOpen, setInspectorOpen] = useState(true);
+	const [inspectorOpen, setInspectorOpen] = useState(() => window.innerWidth >= 1100);
+	useEffect(() => {
+		const collapseWhenNarrow = () => {
+			if (window.innerWidth < 900) setChatOpen(false);
+			if (window.innerWidth < 1100) setInspectorOpen(false);
+			if (window.innerHeight < 700) setTimelineHeightPx((height) => Math.min(height, 220));
+		};
+		window.addEventListener("resize", collapseWhenNarrow);
+		return () => window.removeEventListener("resize", collapseWhenNarrow);
+	}, []);
 	const [facet, setFacet] = useState<Facet>("effects");
 	const [openProjectOpen, setOpenProjectOpen] = useState(false);
 	const [newProjectOpen, setNewProjectOpen] = useState(false);

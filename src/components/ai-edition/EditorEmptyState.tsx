@@ -10,7 +10,7 @@
 // deprecated editor and its own `EditorEmptyState` were deleted in 1320121d,
 // so this is the single render path for the feature.
 
-import { AlertCircle, Film, FolderOpen, Upload, X } from "lucide-react";
+import { AlertCircle, Film, FolderOpen, Sparkles, Upload, X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useScopedT } from "@/contexts/I18nContext";
@@ -174,7 +174,7 @@ export function EditorEmptyState({
 					<DialogHeader className={styles.previewEmptyDialogHeader}>
 						<div className={styles.previewEmptyDialogHeaderInner}>
 							<img
-								src="./openscreen.png"
+								src="./purpleprint-studio.png"
 								alt=""
 								aria-hidden="true"
 								className={styles.previewEmptyDialogLogo}
@@ -208,7 +208,9 @@ export function EditorEmptyState({
 			</Dialog>
 
 			<div className={styles.previewEmptyInner}>
-				<img src="./openscreen.png" alt="" aria-hidden="true" className={styles.previewEmptyLogo} />
+				<span className={styles.previewEmptyLogo} aria-hidden="true">
+					<Sparkles size={28} />
+				</span>
 				<div className={styles.previewEmptyHeading}>
 					<h2 className={styles.previewEmptyTitle}>
 						{hasProject ? t("emptyState.titleHasAsset") : t("emptyState.title")}

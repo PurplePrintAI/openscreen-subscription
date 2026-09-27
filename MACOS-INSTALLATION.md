@@ -1,5 +1,8 @@
 # OpenScreen Subscription on macOS
 
+> This guide covers published `1.10.0-subscription.*` validation builds under the
+> former name. PurplePrint Studio packaging is still under development.
+
 OpenScreen Subscription is an unofficial fork. The current macOS packages are
 validation prereleases with the fork bundle identifier and an ad-hoc hardened-runtime
 signature. They are **not notarized by Apple**.

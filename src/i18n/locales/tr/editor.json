@@ -37,7 +37,7 @@
 		"cameraNotFound": "Kamera bulunamadı.",
 		"cameraCaptureUnavailable": "Kamera açılamadı. Kamerasız kaydediliyor.",
 		"microphoneDefaulted": "Seçilen mikrofon belirlenemedi. Varsayılan giriş kaydediliyor.",
-		"accessibilityAllowAndRetry": "OpenScreen için Erişilebilirlik erişimine izin verin, ardından geri sayımı başlatmak için tekrar kayda basın.",
+		"accessibilityAllowAndRetry": "PurplePrint Studio için Erişilebilirlik erişimine izin verin, ardından geri sayımı başlatmak için tekrar kayda basın.",
 		"selectSource": "Lütfen kayıt için bir kaynak seçin"
 	},
 	"loadingVideo": "Video yükleniyor...",
@@ -273,7 +273,7 @@
 			"disclaimer": "Videonuzun transkripsiyonu seçtiğiniz sağlayıcıya gönderilecek. Bir sağlayıcı bağlamadan hiçbir şey paylaşılmaz."
 		},
 		"authorUser": "Siz",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "PurplePrint Studio",
 		"rewindToMessage": "Bu mesaja geri sar",
 		"copyMessage": "Mesajı kopyala",
 		"copiedToClipboard": "Panoya kopyalandı",
@@ -402,12 +402,12 @@
 		"enterCustomModel": "Model kimliği gir",
 		"chooseCatalogModel": "Katalogdan seç",
 		"pillLocalCli": "Yerel CLI",
-		"localCliHint": "Resmî Claude Code CLI üzerinden giriş yapın. Kimlik doğrulama ve kullanım, etkin abonelik, API anahtarı veya sağlayıcı hesabına bağlıdır. OpenScreen bu kimlik bilgilerini saklamaz veya değiştirmez.",
+		"localCliHint": "Resmî Claude Code CLI üzerinden giriş yapın. Kimlik doğrulama ve kullanım, etkin abonelik, API anahtarı veya sağlayıcı hesabına bağlıdır. PurplePrint Studio bu kimlik bilgilerini saklamaz veya değiştirmez.",
 		"cliAccountSubscription": "Claude aboneliği: {{plan}}. Model erişimi ve faturalandırma planınıza bağlıdır.",
 		"cliAccountApi": "API kimlik doğrulaması etkin. Abonelik sınırları değil, API ücretleri geçerlidir.",
 		"cliAccountRuntime": "CLI kimlik doğrulaması etkin. Kullanım ve faturalandırma mevcut yapılandırmaya bağlıdır.",
 		"checkCliConnection": "CLI bağlantısını denetle",
-		"disconnectLocalCli": "OpenScreen'de kullanmayı bırak",
+		"disconnectLocalCli": "PurplePrint Studio'de kullanmayı bırak",
 		"localCliDeselected": "Claude seçimi kaldırıldı. CLI hesabı açık kalır.",
 		"modelHintCli": "Liste resmî Claude Code CLI üzerinden alınır. Model ve bağlam erişimi hesabınıza bağlıdır; bazı seçenekler kullanım kredilerini kullanabilir.",
 		"title": "Yapay zekâ ayarları",
@@ -442,7 +442,7 @@
 		"signInChatGPT": "ChatGPT ile giriş yap",
 		"signInPending": "Tarayıcınızda girişi tamamlayın. Durum otomatik güncellenir.",
 		"cancelSignIn": "Girişi iptal et",
-		"subscriptionHint": "Codex CLI ve uygun bir ChatGPT planı gerekir. Codex, API anahtarı veya token kopyalamadan OpenScreen’e özel profilde oturum açmayı yönetir. Plan limitleriniz geçerlidir."
+		"subscriptionHint": "Codex CLI ve uygun bir ChatGPT planı gerekir. Codex, API anahtarı veya token kopyalamadan PurplePrint Studio’e özel profilde oturum açmayı yönetir. Plan limitleriniz geçerlidir."
 	},
 	"cpuCompositor": {
 		"notice": "Uyumlu GPU yok — işleme CPU üzerinde yapılıyor, bu yüzden oynatma daha yavaş.",

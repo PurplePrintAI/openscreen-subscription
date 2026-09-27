@@ -9,10 +9,9 @@
 import type { InstallChannel } from "./install-channel";
 
 export const WEBSITE_URL = "https://github.com/PurplePrintAI/openscreen-subscription";
-/** The brand spelling, for the surfaces we render ourselves. NOT `app.name`: that resolves to
- *  electron-builder's `productName` ("Openscreen") when packaged and to package.json's `name`
- *  ("openscreen") in dev, so the About box would disagree with its own title bar. */
-export const PRODUCT_NAME = "OpenScreen Subscription";
+/** The brand spelling for our own surfaces. `app.name` can resolve differently in dev and
+ * packaged builds, so the About box must not derive its title from that value. */
+export const PRODUCT_NAME = "PurplePrint Studio";
 /** The collective form, and deliberately NOT the whole of LICENSE. LICENSE carries two holders:
  *  Siddharth Vaddem, who created the project — MIT obliges us to keep that notice on a codebase
  *  that still contains his code — and the contributors collectively. This is the line every user
@@ -45,7 +44,7 @@ export interface AboutFacts {
 	node: string;
 }
 
-/** The block under "Openscreen <version>". Untranslated on purpose: every line is a version
+/** The block under "PurplePrint Studio <version>". Untranslated on purpose: every line is a version
  *  number, a platform identifier or a URL, and a pasted bug report reads the same whatever
  *  locale the reporter runs.
  *

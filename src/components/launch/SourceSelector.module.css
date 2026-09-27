@@ -1,5 +1,5 @@
 .glassContainer {
-	background: #14171c;
+	background: #1b1b1b;
 	border-radius: 20px;
 	corner-shape: squircle;
 	/*
@@ -7,15 +7,15 @@
 		transparent frameless window, leaving a square shadow that clashes with
 		the rounded card. Border + surface contrast carries the elevation instead.
 	*/
-	border: 1px solid #333a45;
+	border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .sourceCard {
 	position: relative;
 	corner-shape: squircle;
 	border-radius: 14px;
-	background: #0f1216;
-	border: 1.5px solid #242932;
+	background: #202020;
+	border: 1.5px solid rgba(255, 255, 255, 0.07);
 	overflow: hidden;
 	cursor: pointer;
 	transition:
@@ -25,7 +25,7 @@
 }
 
 .sourceCard:hover {
-	border-color: #333a45;
+	border-color: rgba(255, 255, 255, 0.14);
 	transform: translateY(-2px);
 }
 
@@ -34,19 +34,19 @@
 }
 
 .selected {
-	border-color: #10b981;
-	box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+	border-color: #8b5cf6;
+	box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.20);
 }
 
 .selected:hover {
-	border-color: #10b981;
+	border-color: #8b5cf6;
 	transform: translateY(-2px);
 }
 
 .thumb {
 	position: relative;
 	aspect-ratio: 16 / 10.5;
-	background: #0a0c10;
+	background: #151515;
 	overflow: hidden;
 }
 

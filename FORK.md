@@ -1,6 +1,7 @@
-# OpenScreen Subscription — independent fork
+# PurplePrint Studio — independent OpenScreen fork
 
-This is an **unofficial, independently maintained fork** of
+PurplePrint Studio (formerly OpenScreen Subscription) is an **unofficial,
+independently maintained fork** of
 [getopenscreen/openscreen](https://github.com/getopenscreen/openscreen), initially
 based on upstream **v1.10.0** (`dbdadb7d27fe3287d994fb741d6f264a31066648`).
 It is not an official OpenScreen release and is not endorsed by the upstream
@@ -18,8 +19,8 @@ architecture, policy and release notes behind those changes.
 - Retain API-key providers, editor tool validation and checkpoints.
 - Separate installation identity, user data and update downloads from upstream.
 
-The app remains free. "Subscription" names the optional use of the user's own
-eligible ChatGPT plan; this fork does not sell or require its own plan. Codex CLI
+The app remains free. The former "Subscription" name described optional use of the
+user's own eligible ChatGPT plan; Studio does not sell or require its own plan. Codex CLI
 is a user-installed dependency, not bundled in the installer. Tokens, API keys,
 user settings, recordings and diagnostic transcripts must never be committed or
 uploaded as release assets.

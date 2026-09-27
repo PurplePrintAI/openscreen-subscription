@@ -269,7 +269,7 @@ export const HudCursorButton = memo(function HudCursorButton({
 			data-testid="launch-cursor-mode-button"
 			className={`flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] border-0 cursor-pointer transition-all duration-150 active:scale-95 ${hudDisabledClasses} ${styles.electronNoDrag} ${
 				editableOverlay
-					? "bg-[#10b981] text-[#08090d] hover:bg-[#0e9e6e]"
+					? "bg-[#8b5cf6] text-white hover:bg-[#7c3aed]"
 					: "bg-transparent text-[#828c99] hover:bg-[#1a1e25] hover:text-[#f5f7fa]"
 			}`}
 			onClick={onClick}

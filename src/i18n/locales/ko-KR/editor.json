@@ -45,7 +45,7 @@
 		"cameraNotFound": "카메라를 찾을 수 없습니다.",
 		"cameraCaptureUnavailable": "카메라를 열 수 없습니다. 카메라 없이 녹화합니다.",
 		"microphoneDefaulted": "선택한 마이크를 확인할 수 없습니다. 기본 입력을 녹음합니다.",
-		"accessibilityAllowAndRetry": "OpenScreen의 손쉬운 사용 접근을 허용한 다음, 카운트다운을 시작하려면 다시 녹화를 누르세요.",
+		"accessibilityAllowAndRetry": "PurplePrint Studio의 손쉬운 사용 접근을 허용한 다음, 카운트다운을 시작하려면 다시 녹화를 누르세요.",
 		"selectSource": "녹화할 소스를 선택해 주세요"
 	},
 	"emptyState": {
@@ -273,7 +273,7 @@
 			"disclaimer": "영상 전사본은 선택한 공급자에게 전송됩니다. 공급자를 연결하기 전까지는 아무것도 공유되지 않습니다."
 		},
 		"authorUser": "나",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "PurplePrint Studio",
 		"rewindToMessage": "이 메시지로 되감기",
 		"copyMessage": "메시지 복사",
 		"copiedToClipboard": "클립보드에 복사됨",
@@ -402,12 +402,12 @@
 		"enterCustomModel": "모델 ID 직접 입력",
 		"chooseCatalogModel": "카탈로그에서 선택",
 		"pillLocalCli": "로컬 CLI",
-		"localCliHint": "공식 Claude Code CLI에 직접 로그인하세요. 인증과 사용량은 CLI의 현재 구독·API·제공업체 계정을 따릅니다. OpenScreen은 이 인증 정보를 저장하거나 변경하지 않습니다.",
+		"localCliHint": "공식 Claude Code CLI에 직접 로그인하세요. 인증과 사용량은 CLI의 현재 구독·API·제공업체 계정을 따릅니다. PurplePrint Studio는 이 인증 정보를 저장하거나 변경하지 않습니다.",
 		"cliAccountSubscription": "Claude 구독: {{plan}}. 모델 이용 권한과 과금은 해당 플랜을 따릅니다.",
 		"cliAccountApi": "API 인증이 활성화되어 있습니다. 구독 한도가 아닌 API 요금이 적용됩니다.",
 		"cliAccountRuntime": "CLI 인증이 연결되었습니다. 사용량과 과금은 CLI의 현재 설정을 따릅니다.",
 		"checkCliConnection": "CLI 연결 확인",
-		"disconnectLocalCli": "OpenScreen에서 선택 해제",
+		"disconnectLocalCli": "PurplePrint Studio에서 선택 해제",
 		"localCliDeselected": "Claude 선택을 해제했습니다. CLI 로그인은 유지됩니다.",
 		"modelHintCli": "공식 Claude Code CLI에서 가져온 목록입니다. 모델·컨텍스트 사용 권한은 계정에 따라 다르며, 일부 옵션은 추가 사용 크레딧을 사용할 수 있습니다.",
 		"title": "AI 설정",
@@ -442,7 +442,7 @@
 		"signInChatGPT": "ChatGPT 계정으로 로그인",
 		"signInPending": "브라우저에서 로그인을 완료해 주세요. 연결 상태가 자동으로 갱신됩니다.",
 		"cancelSignIn": "로그인 취소",
-		"subscriptionHint": "Codex CLI와 지원되는 ChatGPT 플랜이 필요합니다. 인증은 Codex가 OpenScreen 전용 저장소에서 관리하며 API key나 토큰을 복사하지 않습니다. 구독 플랜의 사용 한도가 적용됩니다."
+		"subscriptionHint": "Codex CLI와 지원되는 ChatGPT 플랜이 필요합니다. 인증은 Codex가 PurplePrint Studio 전용 저장소에서 관리하며 API key나 토큰을 복사하지 않습니다. 구독 플랜의 사용 한도가 적용됩니다."
 	},
 	"cpuCompositor": {
 		"notice": "호환되는 GPU가 없어 CPU로 렌더링합니다. 재생이 느려집니다.",

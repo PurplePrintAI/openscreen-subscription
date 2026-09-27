@@ -1,4 +1,4 @@
-# OpenScreen Subscription fork changelog
+# PurplePrint Studio fork changelog
 
 This file tracks changes made by the unofficial
 [PurplePrintAI/openscreen-subscription](https://github.com/PurplePrintAI/openscreen-subscription)
@@ -16,6 +16,18 @@ see [FORK.md](FORK.md).
 
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
+
+## Unreleased — PurplePrint Studio identity
+
+- Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet
+  accents, typography hierarchy and product mark across the editor and capture
+  entry surfaces. Recording and semantic status colors retain their meanings.
+- Renames visible app, installer, Start menu and macOS package labels to
+  PurplePrint Studio. The technical app ID, data profile, `.openscreen` format,
+  CLI command and GitHub update origin stay stable for compatibility.
+- Keeps upstream attribution explicit. This work does not add Design Coach/MCP
+  integration or claim GraphOS runtime integration.
+- No Studio release has been packaged or validated yet.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 

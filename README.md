@@ -1,12 +1,20 @@
-> **Unofficial fork: OpenScreen Subscription.** Adds local ChatGPT/Codex and Claude Code subscription routing, AI-session UI improvements, and a Windows Unicode recording-path fix. This is not an upstream release or endorsement. See [FORK.md](FORK.md) for attribution, policy and publication boundaries, and [FORK-CHANGELOG.md](FORK-CHANGELOG.md) for the versioned differences from upstream v1.10.0. Use this fork's release artifacts, not the upstream installers linked in the original documentation below.
+> **PurplePrint Studio is an independent, unofficial fork of [OpenScreen](https://github.com/getopenscreen/openscreen).** This working rebrand is not an upstream release or endorsement. Published `1.10.0-subscription.*` installers still use the former OpenScreen Subscription name until a Studio build passes release validation. See [FORK.md](FORK.md) for provenance and [FORK-CHANGELOG.md](FORK-CHANGELOG.md) for changes. Use [this fork's releases](https://github.com/PurplePrintAI/openscreen-subscription/releases), not the upstream installers described later on this page.
 
 <p align="center">
-  <img src="public/openscreen.png" alt="OpenScreen Logo" width="64" />
+  <img src="public/purpleprint-studio.png" alt="PurplePrint Studio mark" width="64" />
 </p>
 
-# <p align="center">OpenScreen</p>
+# <p align="center">PurplePrint Studio</p>
 
-<p align="center"><strong>A free, open-source desktop app for recording your screen and turning the result into polished product demos and walkthroughs.</strong></p>
+<p align="center"><strong>Agentic Film Editor for product demos and GTM video content.</strong></p>
+
+PurplePrint Studio remains free to use. It records and edits locally; optional AI editing uses the user's own configured provider or local Codex/Claude Code runtime. The existing `.openscreen` project format and `openscreen` CLI command remain unchanged for compatibility. Design Coach handoff and GraphOS integration are not included in this rebrand. See the [Studio identity and release gates](docs/purpleprint-studio-identity.md).
+
+## OpenScreen upstream documentation — reference only
+
+The feature overview and installation sections below describe the upstream OpenScreen project. Its Store listings, signing claims and release links **do not apply to this fork**. [FORK.md](FORK.md) describes fork release boundaries; [MACOS-INSTALLATION.md](MACOS-INSTALLATION.md) currently documents the published packages under their former name. Studio packages still need validation.
+
+### OpenScreen
 
 <p align="center">
   <img src="public/demo.gif" alt="Editing a recording in OpenScreen: wallpaper and video effects, an AI-assisted cut driven from the chat, then export" width="100%" />

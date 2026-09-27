@@ -45,7 +45,7 @@
 		"cameraCaptureUnavailable": "无法打开摄像头，正在不使用摄像头录制。",
 		"microphoneDefaulted": "无法识别所选麦克风，正在录制默认输入设备。",
 		"permissionDenied": "录屏权限被拒绝。请允许屏幕录制。",
-		"accessibilityAllowAndRetry": "允许 OpenScreen 使用辅助功能权限，然后再次按录制以开始倒计时。",
+		"accessibilityAllowAndRetry": "允许 PurplePrint Studio 使用辅助功能权限，然后再次按录制以开始倒计时。",
 		"selectSource": "请选择要录制的源"
 	},
 	"emptyState": {
@@ -273,7 +273,7 @@
 			"disclaimer": "你视频的转录文本将发送到你选择的提供方。在你连接之前不会共享任何内容。"
 		},
 		"authorUser": "你",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "PurplePrint Studio",
 		"rewindToMessage": "回退到此消息",
 		"copyMessage": "复制消息",
 		"copiedToClipboard": "已复制到剪贴板",
@@ -402,12 +402,12 @@
 		"enterCustomModel": "输入模型 ID",
 		"chooseCatalogModel": "从目录中选择",
 		"pillLocalCli": "本地 CLI",
-		"localCliHint": "请通过官方 Claude Code CLI 登录。认证和用量由 CLI 当前的订阅、API 密钥或服务商账户决定。OpenScreen 不存储或更改这些凭据。",
+		"localCliHint": "请通过官方 Claude Code CLI 登录。认证和用量由 CLI 当前的订阅、API 密钥或服务商账户决定。PurplePrint Studio 不存储或更改这些凭据。",
 		"cliAccountSubscription": "Claude 订阅：{{plan}}。模型权限和计费遵循该套餐。",
 		"cliAccountApi": "当前使用 API 认证，按 API 计费，不使用订阅额度。",
 		"cliAccountRuntime": "CLI 已认证。用量和计费遵循其当前配置。",
 		"checkCliConnection": "检查 CLI 连接",
-		"disconnectLocalCli": "在 OpenScreen 中取消选择",
+		"disconnectLocalCli": "在 PurplePrint Studio 中取消选择",
 		"localCliDeselected": "已取消选择 Claude。CLI 账户仍保持登录。",
 		"modelHintCli": "列表来自官方 Claude Code CLI。模型和上下文权限取决于账户；部分选项可能使用额外用量额度。",
 		"title": "AI 设置",
@@ -442,7 +442,7 @@
 		"signInChatGPT": "使用 ChatGPT 登录",
 		"signInPending": "请在浏览器中完成登录。连接状态会自动更新。",
 		"cancelSignIn": "取消登录",
-		"subscriptionHint": "需要 Codex CLI 和受支持的 ChatGPT 方案。Codex 在 OpenScreen 专用配置中管理认证，不复制 API 密钥或令牌。适用订阅方案的使用限额。"
+		"subscriptionHint": "需要 Codex CLI 和受支持的 ChatGPT 方案。Codex 在 PurplePrint Studio 专用配置中管理认证，不复制 API 密钥或令牌。适用订阅方案的使用限额。"
 	},
 	"cpuCompositor": {
 		"notice": "没有兼容的 GPU，正在使用 CPU 渲染，因此播放较慢。",

@@ -1,7 +1,6 @@
-/* OpenScreen design system — light + dark.
- * Single source of truth for tokens used by the new editor shell.
- * Mint #10b981 is the sole chromatic accent. Red is reserved for
- * REC / cut / skip / trim / transcript-highlight only. */
+/* PurplePrint Studio — GraphOS-family light + dark tokens.
+ * Neutral surfaces carry hierarchy; violet is reserved for brand, focus and
+ * primary actions. Recording red and semantic status colors keep their meaning. */
 
 /* :root:root (doubled pseudo-class) deliberately outranks a plain `:root` —
  * src/index.css's shadcn/Tailwind base ALSO declares --accent/--border/
@@ -12,51 +11,51 @@
  * depending on import order. */
 :root:root {
 	/* canvas */
-	--bg: #f8fafc;
-	--bg-grad: radial-gradient(ellipse 1200px 800px at 50% -200px, #ffffff 0%, #f1f5f9 80%);
+	--bg: #f7f7f8;
+	--bg-grad: linear-gradient(180deg, #f7f7f8, #f1f1f2);
 	--surface: #ffffff;
-	--surface-1: #f1f5f9;
-	--surface-2: #e2e8f0;
-	--surface-3: #cbd5e1;
+	--surface-1: #f1f1f2;
+	--surface-2: #e9e9ec;
+	--surface-3: #d4d4d8;
 	--surface-hi: #ffffff;
-	--surface-warm: #f1f5f9;
+	--surface-warm: #f1f1f2;
 
 	/* lines */
-	--border: #e2e8f0;
-	--border-soft: #e6eaef;
-	--border-hi: #cbd5e1;
-	--border-dark: #0f172a;
+	--border: rgba(24, 18, 43, 0.10);
+	--border-soft: rgba(24, 18, 43, 0.07);
+	--border-hi: rgba(24, 18, 43, 0.17);
+	--border-dark: #18181b;
 
 	/* foreground */
-	--fg: #0f172a;
-	--fg-2: #334155;
-	--fg-emphasis: #020617;
-	--muted: #64748b;
-	--muted-soft: #94a3b8;
-	--meta: #7c8aa0;
-	--dim: #b6c2d1;
+	--fg: #3f3f46;
+	--fg-2: #18181b;
+	--fg-emphasis: #18181b;
+	--muted: #71717a;
+	--muted-soft: #a1a1aa;
+	--meta: #71717a;
+	--dim: #a1a1aa;
 
-	/* mint brand */
-	--brand: #10b981;
-	--brand-lo: #059669;
-	--brand-glow: rgba(16, 185, 129, 0.35);
-	--brand-soft: rgba(16, 185, 129, 0.10);
-	--accent: #10b981;
-	--accent-on: #04221a;
-	--accent-soft: rgba(16, 185, 129, 0.10);
-	--accent-wash: rgba(16, 185, 129, 0.06);
-	--accent-border: rgba(16, 185, 129, 0.26);
-	--accent-ring: rgba(16, 185, 129, 0.28);
-	--accent-stripe: rgba(16, 185, 129, 0.30);
+	/* GraphOS violet: brand, focus and primary actions only */
+	--brand: #7c3aed;
+	--brand-lo: #6d28d9;
+	--brand-glow: rgba(124, 58, 237, 0.35);
+	--brand-soft: rgba(124, 58, 237, 0.08);
+	--accent: #7c3aed;
+	--accent-on: #ffffff;
+	--accent-soft: rgba(124, 58, 237, 0.08);
+	--accent-wash: rgba(124, 58, 237, 0.05);
+	--accent-border: rgba(124, 58, 237, 0.24);
+	--accent-ring: rgba(124, 58, 237, 0.35);
+	--accent-stripe: rgba(124, 58, 237, 0.28);
 
-	/* timeline playhead — deliberately NOT the mint accent. The scrub cursor
+	/* Timeline playhead deliberately differs from the violet brand. The scrub cursor
 	   crosses every lane, including the accent-coloured zoom pills, so it needs
 	   a hue of its own to stay readable on top of them. One value for both
-	   themes (the dark block doesn't override it): this violet carries against
+	   themes (the dark block doesn't override it): this blue carries against
 	   the light and the dark timeline surfaces alike. */
-	--playhead: #6c55ff;
-	--playhead-glow: rgba(108, 85, 255, 0.68);
-	--playhead-shadow: rgba(108, 85, 255, 0.35);
+	--playhead: #60a5fa;
+	--playhead-glow: rgba(96, 165, 250, 0.68);
+	--playhead-shadow: rgba(96, 165, 250, 0.35);
 
 	/* legacy shadcn-style aliases → canonical tokens. Referenced by the
 	   TimelinePane / TranscriptEditor / VirtualPreview / NewEditorShell module
@@ -86,8 +85,8 @@
 	--speed-soft: rgba(249, 115, 22, 0.14);
 	--speed-wash: rgba(249, 115, 22, 0.14);
 
-	--success: #10b981;
-	--success-soft: rgba(16, 185, 129, 0.10);
+	--success: #0f9d76;
+	--success-soft: rgba(15, 157, 118, 0.10);
 
 	/* macOS traffic lights */
 	--light-red: #ff5f57;
@@ -115,11 +114,11 @@
 	--overlay-text-2: rgba(255, 255, 255, 0.55);
 	--overlay-border: rgba(22, 23, 29, 0.06);
 
-	/* typography — Geist / Geist Mono are the brand faces, self-hosted by
+	/* Typography follows GraphOS's Pretendard-first UI; bundled Geist remains a
 	   styles/fonts.css. The old system stacks stay on as fallback so a failed
 	   font load degrades instead of dropping to a serif default. */
-	--font-display: "Geist", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-	--font-body: "Geist", system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+	--font-display: "Pretendard Variable", "Pretendard", "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+	--font-body: "Pretendard Variable", "Pretendard", "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
 	--font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
 
 	/* size */
@@ -139,10 +138,10 @@
 	--sp-6: 24px;
 
 	/* radius */
-	--r-xs: 4px;
-	--r-sm: 6px;
-	--r-md: 8px;
-	--r-lg: 12px;
+	--r-xs: 6px;
+	--r-sm: 8px;
+	--r-md: 12px;
+	--r-lg: 18px;
 	--r-pill: 9999px;
 
 	/* layout */
@@ -159,7 +158,7 @@
 	--elev-card-soft: 0 1px 2px rgba(15, 23, 42, 0.03);
 	--elev-pop: 0 8px 24px -8px rgba(15, 23, 42, 0.10), 0 2px 4px rgba(15, 23, 42, 0.04);
 
-	--focus-ring: 0 0 0 3px rgba(16, 185, 129, 0.18);
+	--focus-ring: 0 0 0 3px rgba(124, 58, 237, 0.20);
 
 	--motion-fast: 120ms;
 	--motion-base: 180ms;
@@ -167,38 +166,38 @@
 }
 
 :root[data-theme="dark"] {
-	--bg: #0a0d12;
-	--bg-grad: radial-gradient(ellipse at 50% 0%, #13171f 0%, #0a0d12 60%);
-	--surface: #14181f;
-	--surface-1: #14181f;
-	--surface-2: #1c2029;
-	--surface-3: #252a35;
-	--surface-hi: #2b313b;
-	--surface-warm: #1c2029;
+	--bg: #151515;
+	--bg-grad: linear-gradient(180deg, #151515, #1b1b1b);
+	--surface: #1b1b1b;
+	--surface-1: #202020;
+	--surface-2: #262626;
+	--surface-3: #2c2c2c;
+	--surface-hi: #333333;
+	--surface-warm: #202020;
 
-	--fg-emphasis: #ffffff;
-	--border: #252a35;
-	--border-soft: #1c2029;
-	--border-hi: #3a4150;
-	--border-dark: #0a0d12;
+	--fg-emphasis: #f4f4f5;
+	--border: rgba(255, 255, 255, 0.07);
+	--border-soft: rgba(255, 255, 255, 0.05);
+	--border-hi: rgba(255, 255, 255, 0.14);
+	--border-dark: #151515;
 
-	--fg: #e6e9ef;
-	--fg-2: #f3f5f8;
-	--muted: #8b95a3;
-	--meta: #5b6470;
-	--dim: #1c2029;
+	--fg: #d4d4d8;
+	--fg-2: #f4f4f5;
+	--muted: #a1a1aa;
+	--meta: #71717a;
+	--dim: #71717a;
 
-	--brand: #10b981;
-	--brand-lo: #34d399;
-	--brand-glow: rgba(16, 185, 129, 0.40);
-	--brand-soft: rgba(16, 185, 129, 0.14);
-	--accent: #10b981;
-	--accent-on: #0a0d12;
-	--accent-soft: rgba(16, 185, 129, 0.14);
-	--accent-wash: rgba(16, 185, 129, 0.06);
-	--accent-border: rgba(16, 185, 129, 0.26);
-	--accent-ring: rgba(16, 185, 129, 0.32);
-	--accent-stripe: rgba(16, 185, 129, 0.34);
+	--brand: #8b5cf6;
+	--brand-lo: #7c3aed;
+	--brand-glow: rgba(139, 92, 246, 0.42);
+	--brand-soft: rgba(139, 92, 246, 0.13);
+	--accent: #8b5cf6;
+	--accent-on: #ffffff;
+	--accent-soft: rgba(139, 92, 246, 0.13);
+	--accent-wash: rgba(139, 92, 246, 0.06);
+	--accent-border: rgba(139, 92, 246, 0.28);
+	--accent-ring: rgba(139, 92, 246, 0.42);
+	--accent-stripe: rgba(139, 92, 246, 0.32);
 
 	--danger: #f87171;
 	--danger-lo: #ef4444;
@@ -216,8 +215,8 @@
 	--speed-soft: rgba(251, 146, 60, 0.16);
 	--speed-wash: rgba(251, 146, 60, 0.16);
 
-	--success: #10b981;
-	--success-soft: rgba(16, 185, 129, 0.14);
+	--success: #43d2a2;
+	--success-soft: rgba(67, 210, 162, 0.14);
 
 	--scene-sky-hi: #2e3440;
 	--scene-sky-mid: #252a35;
@@ -242,5 +241,5 @@
 	--elev-card: 0 1px 2px rgba(0, 0, 0, 0.40), 0 4px 12px -4px rgba(0, 0, 0, 0.50);
 	--elev-card-soft: 0 1px 2px rgba(0, 0, 0, 0.30);
 	--elev-pop: 0 8px 24px -8px rgba(0, 0, 0, 0.60);
-	--focus-ring: 0 0 0 3px rgba(16, 185, 129, 0.30);
+	--focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.30);
 }
