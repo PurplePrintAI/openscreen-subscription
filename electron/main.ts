@@ -209,7 +209,7 @@ function setupApplicationMenu() {
 
 	if (isMac) {
 		template.push({
-			label: app.name,
+			label: PRODUCT_NAME,
 			submenu: [
 				{
 					role: "about",

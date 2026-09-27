@@ -1,6 +1,7 @@
 # PurplePrint Studio identity
 
-Status: worktree implementation; no Studio release has been published.
+Status: worktree implementation and locally tested unsigned Windows package;
+no Studio release has been published or installed.
 
 PurplePrint Studio is the agentic film editor intended as a video-production
 companion to PurplePrint Design Coach's GTM and operating phases. GraphOS is the
@@ -42,3 +43,7 @@ continuity; confirm new icons, app/menu/shortcut names and update origin in the
 actual package; run Windows and Mac record → edit → export checks. The Mac build
 requires its own signing/notarization and permission review before it can be
 called a stable consumer release. Design Coach/MCP linkage is a separate gate.
+
+The local Windows package passed an isolated-profile launch and synthetic H.264
+import → MP4 export smoke test. Package metadata and update origin were checked,
+but an installed-app upgrade and real screen recording have not been exercised.

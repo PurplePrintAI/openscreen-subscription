@@ -27,7 +27,11 @@ For the dated review of newer upstream changes, see
   CLI command and GitHub update origin stay stable for compatibility.
 - Keeps upstream attribution explicit. This work does not add Design Coach/MCP
   integration or claim GraphOS runtime integration.
-- No Studio release has been packaged or validated yet.
+- A local unsigned Windows NSIS package has been built and smoke-tested with an
+  isolated profile. Packaged H.264 import, editor launch and MP4 export passed
+  with synthetic media; no existing user data or installation was changed.
+  Existing-profile upgrade, Windows screen capture and macOS package testing
+  remain release gates. No Studio release has been published.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 
