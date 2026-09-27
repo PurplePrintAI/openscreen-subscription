@@ -50,7 +50,7 @@ permission review. Design Coach/MCP linkage is a separate workstream.
 | Profile continuity | Installed OpenScreen Subscription `.7` created an isolated-profile project with synthetic H.264 media. Studio reopened its clip, light theme and preferences, then exported a decodable MP4. The real user profile was not read or changed. |
 | Windows native capture | Packaged WGC recorded a generated QA window with microphone, system audio and camera disabled. The saved project reopened and exported a decodable MP4. Control was automated below the OS hit-test, so physical HUD mouse reachability remains unverified. |
 | Installation upgrade | Pending: the existing installed copy was not replaced. Version `.8` is a local candidate, not an approved release. |
-| macOS | CI compositor/Swift tests passed, but a Studio app bundle, DMG and Mac recording flow have not been validated. |
+| macOS | [CI run 36317659063](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36317659063) built Apple Silicon and Intel DMGs from commit `300d6956`. Both passed bundle ID, architecture, native payload, ad-hoc signature, CLI boot and mounted-DMG checks; local SHA-256 values matched the workflow report. Real Mac recording/edit/export, Developer ID signing and notarization remain unverified. |
 
 The source selector failed to list the QA window on the first automated attempt
 after it appeared, then found it on retry. Treat that as a transient observation,

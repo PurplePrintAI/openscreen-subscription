@@ -35,9 +35,15 @@ For the dated review of newer upstream changes, see
   the old project exported a decodable MP4. A packaged Windows WGC window
   capture of a generated, non-user-content target also reopened and exported.
   This exercised native capture with automated control, not the physical HUD
-  click-through path or an in-place installer upgrade. macOS package testing,
-  signing and notarization remain release gates. No Studio release has been
+  click-through path or an in-place installer upgrade.
+- Builds Apple Silicon and Intel macOS DMGs in
+  [the fork's validation workflow](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36317659063).
+  Both passed architecture, native payload, bundle ID, ad-hoc signature, CLI
+  boot and mounted-DMG checks. A real Mac record → edit → export pass, Developer
+  ID signing and notarization remain release gates. No Studio release has been
   published.
+- Advances the unpublished candidate to `1.10.0-subscription.8`, refreshes the
+  Nix dependency hash and checks the rebranded CLI banner in macOS packaging.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 
