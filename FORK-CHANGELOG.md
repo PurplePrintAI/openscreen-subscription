@@ -41,8 +41,11 @@ For the dated review of newer upstream changes, see
   in a product-named child folder beneath the prior custom location and replaced
   the Start-menu shortcut. A local backup was verified before installation;
   three existing project files and the AI configuration retained their hashes.
-  Studio launched using the existing locale. Live private projects were not
-  opened or exported during this check.
+  Studio launched using the existing locale. The installed `.8` binary loaded
+  an isolated copy of all three real project documents (three assets and three
+  clips) and opened the editor without emitting their contents. The live
+  profile was not used for this project-loading test; private footage was not
+  exported.
 - Builds Apple Silicon and Intel macOS DMGs in
   [the fork's validation workflow](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36320426373).
   Both passed architecture, native payload, bundle ID, ad-hoc signature, CLI
