@@ -31,6 +31,7 @@
 	"extraResources": [
 		{ "from": "FORK.md", "to": "FORK.md" },
 		{ "from": "FORK-CHANGELOG.md", "to": "FORK-CHANGELOG.md" },
+		{ "from": "FORK-UPSTREAM-REVIEW.md", "to": "FORK-UPSTREAM-REVIEW.md" },
 		{ "from": "MACOS-INSTALLATION.md", "to": "MACOS-INSTALLATION.md" }
 	]
 }

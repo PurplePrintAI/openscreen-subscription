@@ -22,7 +22,12 @@ describe("fork release identity", () => {
 		// Duplicate resource targets race in copyFile on Windows.
 		expect(new Set(targets).size).toBe(targets.length);
 		expect(targets).toEqual(
-			expect.arrayContaining(["LICENSE", "THIRD-PARTY-NOTICES.md", "FORK.md"]),
+			expect.arrayContaining([
+				"LICENSE",
+				"THIRD-PARTY-NOTICES.md",
+				"FORK.md",
+				"FORK-UPSTREAM-REVIEW.md",
+			]),
 		);
 	});
 });
