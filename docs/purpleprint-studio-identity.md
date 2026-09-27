@@ -38,7 +38,7 @@ and capture surfaces. The checked-in Studio icon assets are generated from
 
 ## Release gate
 
-Before publishing a Studio installer: finish physical HUD mouse testing, verify
+Before publishing a Studio installer: finish physical HUD record/stop testing, verify
 the installed app's real-project export path and update behavior from its
 product-named child directory, and run a real Mac record → edit → export pass.
 A stable Mac consumer release additionally needs Developer ID signing,
@@ -49,7 +49,7 @@ separate workstream.
 | --- | --- |
 | Windows package identity | Local unsigned NSIS package launched with an isolated profile; visible product name, bundled notices and fork update origin checked. |
 | Profile continuity | Installed OpenScreen Subscription `.7` created an isolated-profile project with synthetic H.264 media. Studio `.8` reopened its clip, light theme and preferences, then exported a decodable MP4. On the owner's live profile, three project documents and the AI configuration were hash-identical to the verified pre-install backup. The installed `.8` binary separately loaded copies of all three real project documents and opened the editor without outputting their contents; private footage was not exported. |
-| Windows native capture | Packaged WGC recorded a generated QA window with microphone, system audio and camera disabled. The saved project reopened and exported a decodable MP4. Control was automated below the OS hit-test, so physical HUD mouse reachability remains unverified. |
+| Windows native capture | Packaged WGC recorded a generated QA window with microphone, system audio and camera disabled. The saved project reopened and exported a decodable MP4. Control was automated below the OS hit-test. The owner separately confirmed that a physical click on the installed `.8` HUD's Screen button opened the source selector; record/stop hit-testing and a user-driven recording/export pass remain unverified. |
 | Installation upgrade | Owner-approved `.8` NSIS upgrade reused the per-user uninstall registration, removed the old executable, installed Studio in a product-named child folder under the previous custom root, and replaced the Start-menu shortcut. The installed app launched with the existing locale. The path transition and updater behavior still need review before publication. |
 | macOS | [CI run 36320426373](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36320426373) built Apple Silicon and Intel DMGs from commit `27bc1f5c` with the corrected installation guide. Both passed bundle ID, architecture, native payload, ad-hoc signature, CLI boot and mounted-DMG checks; local SHA-256 values matched the workflow report. Real Mac recording/edit/export, Developer ID signing and notarization remain unverified. |
 

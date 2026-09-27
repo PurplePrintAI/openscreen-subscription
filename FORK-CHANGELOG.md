@@ -34,8 +34,10 @@ For the dated review of newer upstream changes, see
   media clip, light theme and preferences when opened by the Studio package;
   the old project exported a decodable MP4. A packaged Windows WGC window
   capture of a generated, non-user-content target also reopened and exported.
-  This exercised native capture with automated control, not the physical HUD
-  click-through path.
+  This exercised native capture with automated control. On the installed `.8`
+  app, the owner separately confirmed that a physical mouse click on the HUD's
+  Screen button opened the source selector. Physical record/stop controls and
+  a user-driven recording/export pass remain unverified.
 - With the owner's approval, the `.8` NSIS installer upgraded the existing
   per-user `.7` registration. It removed the old executable, installed Studio
   in a product-named child folder beneath the prior custom location and replaced
