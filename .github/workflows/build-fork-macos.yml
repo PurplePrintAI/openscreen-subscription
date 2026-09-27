@@ -149,7 +149,7 @@ jobs:
           set -euo pipefail
           BIN="${{ steps.app.outputs.path }}/Contents/MacOS/PurplePrint Studio"
           "$BIN" help > cli-help.txt
-          grep -q "OpenScreen CLI" cli-help.txt
+          grep -Fq "PurplePrint Studio CLI (openscreen command)" cli-help.txt
 
       - name: Create DMG
         id: dmg
