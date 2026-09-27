@@ -38,6 +38,9 @@ For the dated review of newer upstream changes, see
 
 ### Release and maintenance
 
+- Refreshes the Tiptap editor packages, Electron 41 runtime, Vitest and affected
+  transitive dependencies. A clean install and npm audit report zero known
+  advisories at release preparation time.
 - Makes the branch-protection-required Nix dependency hash check run on every
   pull request, including changes that do not touch the lockfile.
 - Includes the dated upstream review in the fork package alongside this log.
