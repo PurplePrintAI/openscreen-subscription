@@ -38,12 +38,20 @@ and capture surfaces. The checked-in Studio icon assets are generated from
 
 ## Release gate
 
-Before publishing a Studio installer: validate existing-user project/settings
-continuity; confirm new icons, app/menu/shortcut names and update origin in the
-actual package; run Windows and Mac record → edit → export checks. The Mac build
-requires its own signing/notarization and permission review before it can be
-called a stable consumer release. Design Coach/MCP linkage is a separate gate.
+Before publishing a Studio installer: validate the in-place installation and
+existing-user project/settings continuity; confirm new icons, app/menu/shortcut
+names and update origin; run Windows and Mac record → edit → export checks. A
+stable Mac consumer release additionally needs signing/notarization and a privacy
+permission review. Design Coach/MCP linkage is a separate workstream.
 
-The local Windows package passed an isolated-profile launch and synthetic H.264
-import → MP4 export smoke test. Package metadata and update origin were checked,
-but an installed-app upgrade and real screen recording have not been exercised.
+| Gate | Current evidence |
+| --- | --- |
+| Windows package identity | Local unsigned NSIS package launched with an isolated profile; visible product name, bundled notices and fork update origin checked. |
+| Profile continuity | Installed OpenScreen Subscription `.7` created an isolated-profile project with synthetic H.264 media. Studio reopened its clip, light theme and preferences, then exported a decodable MP4. The real user profile was not read or changed. |
+| Windows native capture | Packaged WGC recorded a generated QA window with microphone, system audio and camera disabled. The saved project reopened and exported a decodable MP4. Control was automated below the OS hit-test, so physical HUD mouse reachability remains unverified. |
+| Installation upgrade | Pending: the existing installed copy was not replaced. Version `.8` is a local candidate, not an approved release. |
+| macOS | CI compositor/Swift tests passed, but a Studio app bundle, DMG and Mac recording flow have not been validated. |
+
+The source selector failed to list the QA window on the first automated attempt
+after it appeared, then found it on retry. Treat that as a transient observation,
+not evidence that source discovery is reliable on every launch.

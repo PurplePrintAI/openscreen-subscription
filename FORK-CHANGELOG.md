@@ -17,7 +17,7 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
-## Unreleased — PurplePrint Studio identity
+## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.8` candidate)
 
 - Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet
   accents, typography hierarchy and product mark across the editor and capture
@@ -30,8 +30,14 @@ For the dated review of newer upstream changes, see
 - A local unsigned Windows NSIS package has been built and smoke-tested with an
   isolated profile. Packaged H.264 import, editor launch and MP4 export passed
   with synthetic media; no existing user data or installation was changed.
-  Existing-profile upgrade, Windows screen capture and macOS package testing
-  remain release gates. No Studio release has been published.
+- An isolated profile created by the installed `.7` fork retained its project,
+  media clip, light theme and preferences when opened by the Studio package;
+  the old project exported a decodable MP4. A packaged Windows WGC window
+  capture of a generated, non-user-content target also reopened and exported.
+  This exercised native capture with automated control, not the physical HUD
+  click-through path or an in-place installer upgrade. macOS package testing,
+  signing and notarization remain release gates. No Studio release has been
+  published.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 
