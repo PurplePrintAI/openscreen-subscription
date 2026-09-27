@@ -12,20 +12,17 @@ name: Nix
 # for four weeks with nothing reporting it.
 #
 # Release-time bumps can't fix that — the drift starts the moment a lockfile PR
-# merges. This runs on the PR that causes it and prints the hash to paste.
+# merges. The fork requires this job for every PR into its protected branch, so
+# it must run without a path filter even when the lockfile did not change.
 on:
-  pull_request:
-    paths:
-      - package-lock.json
-      - nix/**
-      - .github/workflows/nix-check.yml
+  pull_request: {}
   # Same branch list as ci.yml, and for the reason its own comment gives: a
-  # release branch is the last place to skip a check. PRs need no filter here —
-  # the trigger above has none, so they are covered wherever they land — but a
+  # release branch is the last place to skip a check. PRs need no branch filter
+  # here, so they are covered wherever they land, but a
   # direct push or a rebase force-push onto a long-lived branch is not a PR and
   # would otherwise go unchecked.
   push:
-    branches: [main, feat/ai-edition, "release/**"]
+    branches: [main, fork/main, feat/ai-edition, "feat/**", "release/**"]
     paths:
       - package-lock.json
       - nix/**
