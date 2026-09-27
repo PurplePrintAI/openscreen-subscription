@@ -43,6 +43,15 @@ The packaged app checks the inherited PATH and common Finder-safe locations:
 `/opt/homebrew/bin` and `/usr/local/bin`. The corresponding command should work in
 Terminal (`codex --version` or `claude --version`) before troubleshooting OpenScreen.
 
+## Known transcription limitation
+
+This fork still uses the upstream v1.10.0 speech-helper code. On macOS 13 and 14,
+the helper may fail to load and the captions pane can report **Failed to fetch**.
+Upstream fixed this in
+[v1.11.0](https://github.com/getopenscreen/openscreen/releases/tag/v1.11.0),
+but that fix has not yet been backported to this fork. If transcription is
+essential on those macOS versions, wait for a build that includes the fix.
+
 ## Validation boundary
 
 GitHub Actions verifies both architectures, the ScreenCaptureKit helper, Metal
