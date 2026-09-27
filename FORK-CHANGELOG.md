@@ -27,15 +27,22 @@ For the dated review of newer upstream changes, see
   CLI command and GitHub update origin stay stable for compatibility.
 - Keeps upstream attribution explicit. This work does not add Design Coach/MCP
   integration or claim GraphOS runtime integration.
-- A local unsigned Windows NSIS package has been built and smoke-tested with an
-  isolated profile. Packaged H.264 import, editor launch and MP4 export passed
-  with synthetic media; no existing user data or installation was changed.
+- Before live installation, the unsigned Windows NSIS package was smoke-tested
+  with an isolated profile. Packaged H.264 import, editor launch and MP4 export
+  passed with synthetic media.
 - An isolated profile created by the installed `.7` fork retained its project,
   media clip, light theme and preferences when opened by the Studio package;
   the old project exported a decodable MP4. A packaged Windows WGC window
   capture of a generated, non-user-content target also reopened and exported.
   This exercised native capture with automated control, not the physical HUD
-  click-through path or an in-place installer upgrade.
+  click-through path.
+- With the owner's approval, the `.8` NSIS installer upgraded the existing
+  per-user `.7` registration. It removed the old executable, installed Studio
+  in a product-named child folder beneath the prior custom location and replaced
+  the Start-menu shortcut. A local backup was verified before installation;
+  three existing project files and the AI configuration retained their hashes.
+  Studio launched using the existing locale. Live private projects were not
+  opened or exported during this check.
 - Builds Apple Silicon and Intel macOS DMGs in
   [the fork's validation workflow](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36320426373).
   Both passed architecture, native payload, bundle ID, ad-hoc signature, CLI
