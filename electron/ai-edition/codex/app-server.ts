@@ -6,6 +6,7 @@ import { createInterface } from "node:readline";
 import { version } from "../../../package.json";
 import { resolveCodexContextWindow } from "../../../src/lib/ai-edition/modelContextWindow";
 import type { AiEditionLlmModelOption } from "../../../src/native/contracts";
+import { GPT6_MODELS, gpt6ModelOrder } from "../provider-registry";
 
 type ObjectValue = Record<string, unknown>;
 export interface CodexStatus {
@@ -360,6 +361,7 @@ export class CodexAppServer {
 				const model = object(entry);
 				if (!model.hidden && typeof model.model === "string") {
 					const id = model.model;
+					const preferred = GPT6_MODELS.find((entry) => entry.id === id);
 					const reportedContext = [
 						model.contextWindow,
 						model.context_window,
@@ -372,7 +374,9 @@ export class CodexAppServer {
 							: resolveCodexContextWindow(id);
 					models.push({
 						id,
-						label: typeof model.displayName === "string" ? model.displayName.slice(0, 300) : id,
+						label:
+							preferred?.label ??
+							(typeof model.displayName === "string" ? model.displayName.slice(0, 300) : id),
 						...(typeof model.description === "string"
 							? { description: model.description.slice(0, 2000) }
 							: {}),
@@ -391,7 +395,10 @@ export class CodexAppServer {
 			}
 		} while (cursor);
 		return models
-			.sort((a, b) => Number(b.default) - Number(a.default))
+			.sort(
+				(a, b) =>
+					Number(b.default) - Number(a.default) || gpt6ModelOrder(a.id) - gpt6ModelOrder(b.id),
+			)
 			.map(({ default: _default, ...model }) => model);
 	}
 

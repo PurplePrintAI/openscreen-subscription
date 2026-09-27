@@ -164,6 +164,45 @@ describe("ProviderSettings, reached from the app menu", () => {
 		);
 	});
 
+	it("shows available GPT-6 models and normalizes Astra reasoning when switching models", async () => {
+		getSnapshot.mockResolvedValueOnce({
+			config: { provider: "openai", model: "gpt-6-sol", reasoningEffort: "none" },
+			connectedProviders: ["openai"],
+			availableProviders: [],
+			credentialSummary: [],
+		});
+		listModels.mockResolvedValue({
+			models: ["gpt-6-sol", "gpt-6-astra", "gpt-6-luna"],
+			catalog: [
+				{ id: "gpt-6-sol", label: "GPT-6 Sol" },
+				{ id: "gpt-6-astra", label: "GPT-6 Astra" },
+				{ id: "gpt-6-luna", label: "GPT-6 Luna" },
+			],
+		});
+		renderEditorChrome("en");
+		openAiSettingsFromAppMenu();
+		await waitFor(() => expect(screen.getByRole("button", { name: /OpenAI API/ })).toBeEnabled());
+		fireEvent.click(screen.getByRole("button", { name: /OpenAI API/ }));
+		const model = await screen.findByRole("combobox", { name: "Model" });
+		expect(screen.getByRole("option", { name: "GPT-6 Sol" })).toBeInTheDocument();
+		expect(screen.getByRole("option", { name: "GPT-6 Astra" })).toBeInTheDocument();
+		expect(screen.getByRole("option", { name: "GPT-6 Luna" })).toBeInTheDocument();
+		fireEvent.change(model, { target: { value: "gpt-6-astra" } });
+		const reasoning = screen.getByRole("combobox", { name: "Reasoning effort" });
+		expect(reasoning).toHaveValue("low");
+		expect(screen.queryByRole("option", { name: "None" })).not.toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+		await waitFor(() =>
+			expect(setConfig).toHaveBeenCalledWith(
+				expect.objectContaining({
+					provider: "openai",
+					model: "gpt-6-astra",
+					reasoningEffort: "low",
+				}),
+			),
+		);
+	});
+
 	it("retains custom model IDs when toggling and refreshing the catalog", async () => {
 		listModels.mockResolvedValue(catalog);
 		await openClaude("custom-model");

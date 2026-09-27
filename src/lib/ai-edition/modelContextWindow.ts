@@ -16,6 +16,8 @@ function normalizedModel(value: string | undefined): string {
 /** Current Codex catalog models whose context windows are published by OpenAI. */
 export function resolveCodexContextWindow(model: string): ModelContextWindow | undefined {
 	const id = normalizedModel(model);
+	if (["gpt-6-astra", "gpt-6-sol", "gpt-6-luna"].includes(id))
+		return { tokens: ONE_POINT_ZERO_FIVE_MILLION, source: "official" };
 	if (/^gpt-5\.6(?:-(?:sol|terra|luna))?(?:-\d{4}-\d{2}-\d{2})?$/.test(id))
 		return { tokens: ONE_POINT_ZERO_FIVE_MILLION, source: "official" };
 	if (/^gpt-5\.5(?:-\d{4}-\d{2}-\d{2})?$/.test(id))

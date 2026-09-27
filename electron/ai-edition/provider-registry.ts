@@ -2,9 +2,9 @@
 // deps. Mirrors axcut's apps/server/src/llm/provider-registry.ts.
 //
 // Each entry carries enough metadata for the ProviderSettingsDialog to render
-// without hitting the network. Default model + base URL reflect axcut's
-// current defaults (Gemini uses the OpenAI-compatible /v1beta/openai base so
-// it shares the OpenAI wire path).
+// without hitting the network. Provider defaults are maintained by this fork
+// (Gemini uses the OpenAI-compatible /v1beta/openai base so it shares the
+// OpenAI wire path).
 
 export interface ProviderDefinition {
 	id: string;
@@ -25,6 +25,18 @@ export interface ProviderDefinition {
 	 * `/chat/completions` SSE shape). MiniMax's base URL is Anthropic's
 	 * `/messages` API, so it (like Anthropic itself) needs "anthropic". */
 	wireProtocol?: "anthropic" | "openai";
+}
+
+/** Show the current OpenAI family first when the connected account exposes it. */
+export const GPT6_MODELS = [
+	{ id: "gpt-6-sol", label: "GPT-6 Sol" },
+	{ id: "gpt-6-astra", label: "GPT-6 Astra" },
+	{ id: "gpt-6-luna", label: "GPT-6 Luna" },
+] as const;
+
+export function gpt6ModelOrder(id: string): number {
+	const index = GPT6_MODELS.findIndex((model) => model.id === id);
+	return index < 0 ? GPT6_MODELS.length : index;
 }
 
 export const PROVIDER_DEFINITIONS: ProviderDefinition[] = [
@@ -60,7 +72,7 @@ export const PROVIDER_DEFINITIONS: ProviderDefinition[] = [
 	{
 		id: "openai",
 		label: "OpenAI API",
-		defaultModel: "gpt-4o",
+		defaultModel: "gpt-6-sol",
 		authKind: "api-key",
 		supportsReasoningEffort: true,
 		baseUrl: "https://api.openai.com/v1",
@@ -171,13 +183,31 @@ export type ReasoningEffort = (typeof REASONING_EFFORT_OPTIONS)[number];
  * showing all six tiers would imply a granularity it doesn't have, since
  * "minimal" through "xhigh" all wire up identically.
  */
-export function getReasoningEffortOptions(providerId: string): readonly ReasoningEffort[] {
+export function getReasoningEffortOptions(
+	providerId: string,
+	model?: string,
+): readonly ReasoningEffort[] {
 	if (providerId === "codex-subscription" || providerId === "claude-local")
 		return ["low", "medium", "high", "xhigh"];
+	if (providerId === "openai" && model === "gpt-6-astra") return ["low", "medium", "high", "xhigh"];
+	if (providerId === "openai" && (model === "gpt-6-sol" || model === "gpt-6-luna"))
+		return ["none", "low", "medium", "high", "xhigh"];
 	if (providerId === "minimax" || providerId === "minimax-token-plan") {
 		return ["none", "medium"];
 	}
 	return REASONING_EFFORT_OPTIONS;
+}
+
+export function reasoningEffortForModel(
+	providerId: string,
+	model: string,
+	effort?: string,
+): string | undefined {
+	if (providerId !== "openai" || gpt6ModelOrder(model) === GPT6_MODELS.length) return effort;
+	if (effort === "minimal") return "low";
+	if (getReasoningEffortOptions(providerId, model).includes(effort as ReasoningEffort))
+		return effort;
+	return model === "gpt-6-astra" ? "low" : "medium";
 }
 
 /**

@@ -14,6 +14,22 @@ describe("getReasoningCapability", () => {
 		expect(getReasoningCapability("openai", "gpt-4o").supported).toBe(false);
 		expect(getReasoningCapability("openai", "o3-mini").supported).toBe(true);
 		expect(getReasoningCapability("openai", "gpt-5-mini").supported).toBe(true);
+		expect(getReasoningCapability("openai", "gpt-6-sol").supported).toBe(true);
+	});
+
+	it("routes GPT-6 tool calls through Responses with supported reasoning efforts", () => {
+		expect(buildLangChainReasoningOptions("openai", "gpt-6-astra", "none")).toEqual({
+			reasoning: { effort: "low" },
+			useResponsesApi: true,
+		});
+		expect(buildLangChainReasoningOptions("openai", "gpt-6-sol", "xhigh")).toEqual({
+			reasoning: { effort: "xhigh" },
+			useResponsesApi: true,
+		});
+		expect(buildLangChainReasoningOptions("openai", "gpt-6-luna", "none")).toEqual({
+			reasoning: { effort: "none" },
+			useResponsesApi: true,
+		});
 	});
 
 	it("uses the thinking strategy for Anthropic 4.x and not for 3.x", () => {

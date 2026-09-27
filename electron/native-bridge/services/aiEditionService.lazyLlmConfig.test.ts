@@ -77,6 +77,60 @@ function serviceWithCountingFactory(): { service: AiEditionService; builds: () =
 }
 
 describe("AiEditionService — LLM store resolution is deferred", () => {
+	it("puts available GPT-6 API models first with verified labels and context", async () => {
+		const store = {
+			getConfig: () => ({
+				provider: "openai",
+				model: "gpt-6-sol",
+				baseUrl: "https://api.openai.com/v1/",
+			}),
+			getCredential: () => ({ value: "test-key" }),
+		} as unknown as LlmConfigStore;
+		const fetch = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					data: [
+						{ id: "gpt-4o" },
+						{ id: "gpt-6-luna" },
+						{ id: "gpt-6-astra" },
+						{ id: "gpt-6-sol" },
+					],
+				}),
+				{ status: 200 },
+			),
+		);
+		try {
+			const service = new AiEditionService({
+				llmConfig: () => store,
+			} as unknown as AiEditionServiceOptions);
+			const result = await service.llmListProviderModels("openai");
+			expect(result.models).toEqual(["gpt-6-sol", "gpt-6-astra", "gpt-6-luna", "gpt-4o"]);
+			expect(result.catalog).toEqual([
+				{
+					id: "gpt-6-sol",
+					label: "GPT-6 Sol",
+					contextWindowTokens: 1_050_000,
+					contextWindowSource: "official",
+				},
+				{
+					id: "gpt-6-astra",
+					label: "GPT-6 Astra",
+					contextWindowTokens: 1_050_000,
+					contextWindowSource: "official",
+				},
+				{
+					id: "gpt-6-luna",
+					label: "GPT-6 Luna",
+					contextWindowTokens: 1_050_000,
+					contextWindowSource: "official",
+				},
+			]);
+			expect(fetch).toHaveBeenCalledWith("https://api.openai.com/v1/models", expect.any(Object));
+		} finally {
+			fetch.mockRestore();
+		}
+	});
+
 	it("reads local CLI readiness without collecting credentials or offering an app login", async () => {
 		const { service } = serviceWithCountingFactory();
 		const snapshot = await service.llmGetSnapshot();

@@ -8,6 +8,9 @@ import {
 
 describe("model context window metadata", () => {
 	it.each([
+		["gpt-6-sol", 1_050_000],
+		["gpt-6-astra", 1_050_000],
+		["gpt-6-luna", 1_050_000],
 		["gpt-5.6-sol", 1_050_000],
 		["gpt-5.6-terra", 1_050_000],
 		["gpt-5.5", 1_050_000],

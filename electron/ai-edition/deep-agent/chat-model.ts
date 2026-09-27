@@ -49,7 +49,7 @@ export interface ReasoningCapability {
 }
 
 export interface LangChainReasoningOptions {
-	reasoning?: { effort: "low" | "medium" | "high" };
+	reasoning?: { effort: "none" | "low" | "medium" | "high" | "xhigh" };
 	thinking?: Record<string, unknown>;
 	outputConfig?: Record<string, unknown>;
 	thinkingConfig?: Record<string, unknown>;
@@ -58,6 +58,19 @@ export interface LangChainReasoningOptions {
 }
 
 const OPENAI_REASONING_EFFORTS: readonly AgentReasoningEffort[] = ["none", "low", "medium", "high"];
+const GPT6_REASONING_EFFORTS: readonly AgentReasoningEffort[] = [
+	"none",
+	"low",
+	"medium",
+	"high",
+	"xhigh",
+];
+const GPT6_ASTRA_REASONING_EFFORTS: readonly AgentReasoningEffort[] = [
+	"low",
+	"medium",
+	"high",
+	"xhigh",
+];
 const ANTHROPIC_REASONING_EFFORTS: readonly AgentReasoningEffort[] = [
 	"none",
 	"low",
@@ -78,6 +91,15 @@ const GOOGLE_REASONING_EFFORTS: readonly AgentReasoningEffort[] = ["none", "low"
 export function getReasoningCapability(provider: string, model?: string): ReasoningCapability {
 	const def: ProviderDefinition | undefined = getProviderDefinition(provider);
 	const normalizedModel = normalizeModelName(model);
+	if (provider === "openai" && /^gpt-6-(?:astra|sol|luna)$/.test(normalizedModel)) {
+		return {
+			supported: true,
+			efforts:
+				normalizedModel === "gpt-6-astra" ? GPT6_ASTRA_REASONING_EFFORTS : GPT6_REASONING_EFFORTS,
+			defaultEffort: normalizedModel === "gpt-6-astra" ? "low" : "medium",
+			strategy: "openai-responses",
+		};
+	}
 
 	if (
 		(provider === "openai" || provider === "openai-compatible") &&
@@ -148,6 +170,17 @@ export function buildLangChainReasoningOptions(
 ): LangChainReasoningOptions {
 	const capability = getReasoningCapability(provider, model);
 	const normalizedEffort = normalizeReasoningEffortForCapability(effort, capability);
+	if (provider === "openai" && /^gpt-6-(?:astra|sol|luna)$/.test(normalizeModelName(model))) {
+		return {
+			reasoning: {
+				effort:
+					normalizedEffort === "none"
+						? "none"
+						: ((normalizedEffort ?? "medium") as "low" | "medium" | "high" | "xhigh"),
+			},
+			useResponsesApi: true,
+		};
+	}
 	if (!capability.supported || !normalizedEffort || normalizedEffort === "none") {
 		return {};
 	}
@@ -211,7 +244,7 @@ function buildAnthropicReasoningOptions(
 }
 
 function isOpenAIReasoningModel(model: string): boolean {
-	return /^(o\d|o\d-|o\d\.|gpt-5|gpt-5-|gpt-5\.)/.test(model);
+	return /^(o\d|o\d-|o\d\.|gpt-5|gpt-5-|gpt-5\.|gpt-6-)/.test(model);
 }
 
 function isAnthropicReasoningModel(model: string): boolean {
