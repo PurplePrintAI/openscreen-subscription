@@ -42,8 +42,9 @@ For the dated review of newer upstream changes, see
 - Fixes the packaged audio-demuxer WASM URL used by automatic transcription.
   The installed `.8` opened a silent recording but showed a transient
   "Failed to fetch" transcription error because this URL resolved outside the
-  packaged `dist/wasm` directory. The `.9` fix still needs an installed-app
-  retest; it does not change the recording or export path.
+  packaged `dist/wasm` directory. After the `.9` upgrade, the owner recorded
+  another silent clip without the error toast; its new project persisted a
+  `no-audio` verdict and the owner exported an MP4 successfully.
 - With the owner's approval, the `.8` NSIS installer upgraded the existing
   per-user `.7` registration. It removed the old executable, installed Studio
   in a product-named child folder beneath the prior custom location and replaced
@@ -64,10 +65,16 @@ For the dated review of newer upstream changes, see
 - Advances the unpublished candidate to `1.10.0-subscription.9`. The `.8`
   candidate refreshed the Nix dependency hash and checked the rebranded CLI
   banner in macOS packaging. The unsigned `.9` Windows NSIS installer was built
-  and its packaged WASM path checked, but is not installed. This developer PC
+  and its packaged WASM path checked, then installed on the owner's PC after a
+  verified backup. Nine installed payload files matched the `.9` build, the
+  registered version was `.9`, and the Start-menu shortcut kept its target.
+  This developer PC
   lacked `libclang.dll` for a fresh compositor rebuild, so packaging reused the
   verified `.8` compositor binary with the same SHA-256; the WGC helper was
-  rebuilt. macOS `.9` packaging validation is pending.
+  rebuilt. [macOS `.9` CI](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36358715037)
+  built Apple Silicon and Intel DMGs and passed payload, bundle identity,
+  architecture, ad-hoc signature structure, CLI boot and mounted-DMG checks.
+  A real Mac record → edit → export pass and notarization remain unverified.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 
