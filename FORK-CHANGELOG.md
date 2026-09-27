@@ -17,7 +17,7 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
-## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.8` candidate)
+## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.9` candidate)
 
 - Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet
   accents, typography hierarchy and product mark across the editor and capture
@@ -36,8 +36,14 @@ For the dated review of newer upstream changes, see
   capture of a generated, non-user-content target also reopened and exported.
   This exercised native capture with automated control. On the installed `.8`
   app, the owner separately confirmed that a physical mouse click on the HUD's
-  Screen button opened the source selector. Physical record/stop controls and
-  a user-driven recording/export pass remain unverified.
+  Screen button opened the source selector. The owner then selected a source,
+  recorded six seconds, stopped from the HUD and opened the saved recording in
+  Studio. A user-driven export remains unverified.
+- Fixes the packaged audio-demuxer WASM URL used by automatic transcription.
+  The installed `.8` opened a silent recording but showed a transient
+  "Failed to fetch" transcription error because this URL resolved outside the
+  packaged `dist/wasm` directory. The `.9` fix still needs an installed-app
+  retest; it does not change the recording or export path.
 - With the owner's approval, the `.8` NSIS installer upgraded the existing
   per-user `.7` registration. It removed the old executable, installed Studio
   in a product-named child folder beneath the prior custom location and replaced
@@ -55,8 +61,13 @@ For the dated review of newer upstream changes, see
   name and links Apple's current per-app security procedure. A real Mac record →
   edit → export pass, Developer ID signing and notarization remain release
   gates. No Studio release has been published.
-- Advances the unpublished candidate to `1.10.0-subscription.8`, refreshes the
-  Nix dependency hash and checks the rebranded CLI banner in macOS packaging.
+- Advances the unpublished candidate to `1.10.0-subscription.9`. The `.8`
+  candidate refreshed the Nix dependency hash and checked the rebranded CLI
+  banner in macOS packaging. The unsigned `.9` Windows NSIS installer was built
+  and its packaged WASM path checked, but is not installed. This developer PC
+  lacked `libclang.dll` for a fresh compositor rebuild, so packaging reused the
+  verified `.8` compositor binary with the same SHA-256; the WGC helper was
+  rebuilt. macOS `.9` packaging validation is pending.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 

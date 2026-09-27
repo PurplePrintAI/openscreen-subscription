@@ -6,8 +6,11 @@ const DECODE_QUEUE_BACKPRESSURE = 20;
 const SOURCE_LOAD_TIMEOUT_MS = 60_000;
 const READ_END_PADDING_SEC = 0.5;
 
-function webDemuxerWasmUrl(): string {
-	return new URL("../exporter/wasm/web-demuxer.wasm", window.location.href).href;
+export function webDemuxerWasmUrl(pageUrl = window.location.href): string {
+	// Vite copies public/wasm next to dist/index.html. Resolve from the loaded
+	// page, not this source file's directory: the latter points outside dist in
+	// the packaged app and makes silent recordings fail with "Failed to fetch".
+	return new URL("./wasm/web-demuxer.wasm", pageUrl).href;
 }
 
 /** Mixes one WebCodecs AudioData frame down to mono (averaged across channels). */

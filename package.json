@@ -1,7 +1,7 @@
 {
 	"name": "openscreen",
 	"private": true,
-	"version": "1.10.0-subscription.8",
+	"version": "1.10.0-subscription.9",
 	"description": "Record your screen and polish the demo",
 	"homepage": "https://getopenscreen.com/",
 	"license": "MIT",
