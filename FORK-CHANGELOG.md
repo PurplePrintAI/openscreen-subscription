@@ -19,9 +19,11 @@ For the dated review of newer upstream changes, see
 
 ## Unreleased — ChatGPT subscription image scenes
 
-- Adds an explicit image-scene action to the AI session when the selected
-  provider is ChatGPT subscription (Codex). The user confirms each generation
-  because it consumes subscription limits. No API key is passed to the CLI.
+- Adds an explicit image-scene action to the AI session whenever ChatGPT
+  subscription (Codex) is connected, even if conversation turns use Claude or
+  another provider. The user confirms each generation because it consumes
+  subscription limits. No API key is passed to the CLI, and the active chat
+  provider/model is not changed.
 - Copies the generated original image into the app-owned project media folder,
   previews it in the conversation, and creates a five-second MP4 still clip for
   the existing video-only Media panel. The original is kept beside the clip so

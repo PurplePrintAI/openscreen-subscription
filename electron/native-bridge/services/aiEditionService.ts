@@ -185,8 +185,6 @@ export class AiEditionService {
 		sessionId: string,
 		prompt: string,
 	): Promise<AiEditionGeneratedSceneResult> {
-		if (this.llmConfig.getConfig()?.provider !== "codex-subscription")
-			throw new Error("Select ChatGPT subscription (Codex) to generate image scenes.");
 		if (!this.options.selectSession(projectId, sessionId))
 			throw new Error("Chat session unavailable.");
 		await this.options.documents.getProject(projectId);

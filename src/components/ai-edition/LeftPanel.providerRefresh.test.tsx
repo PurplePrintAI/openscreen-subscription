@@ -202,10 +202,10 @@ describe("ChatStripPanel streaming", () => {
 		expect(screen.queryByText("AFTER FINISH")).toBeNull();
 	});
 
-	it("generates an image scene only after confirmation and imports its video clip", async () => {
+	it("uses the connected Codex subscription for images while Claude stays the chat provider", async () => {
 		llmGetSnapshot.mockResolvedValue({
-			config: { provider: "codex-subscription", model: "gpt-6-sol" },
-			connectedProviders: ["codex-subscription"],
+			config: { provider: "claude-local", model: "opus[1m]" },
+			connectedProviders: ["claude-local", "codex-subscription"],
 			availableProviders: [],
 			credentialSummary: [],
 		});
@@ -240,6 +240,7 @@ describe("ChatStripPanel streaming", () => {
 			);
 			await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
 			fireEvent.change(screen.getByRole("textbox"), { target: { value: "A violet sphere" } });
+			expect(screen.getByRole("button", { name: "chat.imageSceneButton" })).toBeEnabled();
 			fireEvent.click(screen.getByRole("button", { name: "chat.imageSceneButton" }));
 			expect(generateImageScene).not.toHaveBeenCalled();
 			confirm.mockReturnValue(true);
@@ -262,10 +263,40 @@ describe("ChatStripPanel streaming", () => {
 				"src",
 				"file:///C:/studio/source.png",
 			);
+			expect(saveModel).not.toHaveBeenCalled();
 		} finally {
 			confirm.mockRestore();
 			useProjectStore.setState({ addAsset: originalAddAsset });
 		}
+	});
+
+	it("allows an image-only prompt when Codex is connected but no chat provider is active", async () => {
+		llmGetSnapshot.mockResolvedValue({
+			config: null,
+			connectedProviders: ["codex-subscription"],
+			availableProviders: [],
+			credentialSummary: [],
+		});
+		useProjectStore.setState({ projectId: session.projectId });
+		render(
+			<EditorDialogsProvider>
+				<LeftPanel active="chat" />
+			</EditorDialogsProvider>,
+		);
+		const composer = await screen.findByPlaceholderText("chat.imageScenePromptPlaceholder");
+		expect(composer).toBeEnabled();
+		fireEvent.change(composer, { target: { value: "A violet sphere" } });
+		expect(screen.getByRole("button", { name: "chat.imageSceneButton" })).toBeEnabled();
+		expect(screen.getByRole("button", { name: "chat.send" })).toBeDisabled();
+		fireEvent.keyDown(composer, { key: "Enter" });
+		expect(generateImageScene).not.toHaveBeenCalled();
+	});
+
+	it("keeps image generation unavailable without a connected Codex subscription", async () => {
+		await ready();
+		fireEvent.change(screen.getByRole("textbox"), { target: { value: "A violet sphere" } });
+		expect(screen.getByRole("button", { name: "chat.imageSceneButton" })).toBeDisabled();
+		expect(generateImageScene).not.toHaveBeenCalled();
 	});
 
 	it("keeps an interrupted partial reply, clearly marked incomplete", async () => {

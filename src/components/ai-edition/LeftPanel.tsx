@@ -689,7 +689,9 @@ function ChatStripPanel() {
 	const [activeModelCatalog, setActiveModelCatalog] = useState<AiEditionLlmModelOption[]>([]);
 	// unknown ≠ none; see chatAvailability.ts.
 	const canChat = canSendChat(llmConfig, connectedProviders);
-	const canGenerateImage = canChat && llmConfig?.provider === "codex-subscription";
+	// Image generation uses the separate, app-owned Codex subscription even when
+	// conversation turns use Claude or another provider.
+	const canGenerateImage = connectedProviders?.includes("codex-subscription") === true;
 	const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
 	const modelButtonRef = useRef<HTMLButtonElement | null>(null);
 	const [modelPopoverRect, setModelPopoverRect] = useState<{
@@ -1667,7 +1669,7 @@ function ChatStripPanel() {
 					followLatestRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
 				}}
 			>
-				{!canChat && messages.length === 0 ? (
+				{!canChat && !canGenerateImage && messages.length === 0 ? (
 					<ChatWelcome onOpenProviderSettings={openProviderSettings} />
 				) : messages.length === 0 ? (
 					<p
@@ -1679,7 +1681,7 @@ function ChatStripPanel() {
 							lineHeight: 1.5,
 						}}
 					>
-						{t("chat.emptyState")}
+						{t(!canChat ? "chat.imageScenePromptPlaceholder" : "chat.emptyState")}
 					</p>
 				) : (
 					<>
@@ -1727,15 +1729,19 @@ function ChatStripPanel() {
 			<div className={styles.chatInput}>
 				<textarea
 					placeholder={
-						canChat ? t("chat.composerPlaceholder") : t("chat.composerDisabledNoProvider")
+						canChat
+							? t("chat.composerPlaceholder")
+							: canGenerateImage
+								? t("chat.imageScenePromptPlaceholder")
+								: t("chat.composerDisabledNoProvider")
 					}
 					value={input}
-					disabled={!canChat}
+					disabled={!canChat && !canGenerateImage}
 					onChange={(e) => setInput(e.target.value)}
 					onKeyDown={(e) => {
 						if (e.key === "Enter" && !e.shiftKey) {
 							e.preventDefault();
-							void send();
+							if (canChat) void send();
 						}
 					}}
 				/>
@@ -1847,7 +1853,7 @@ function ChatStripPanel() {
 							canGenerateImage ? t("chat.imageSceneButton") : t("chat.imageSceneRequiresCodex")
 						}
 						onClick={() => void generateImageScene()}
-						disabled={busy || !input.trim() || !canGenerateImage}
+						disabled={busy || !projectId || !input.trim() || !canGenerateImage}
 					>
 						<ImagePlus size={17} aria-hidden />
 					</button>
