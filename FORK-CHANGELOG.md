@@ -90,10 +90,24 @@ For the dated review of newer upstream changes, see
   startup; a second click received "already running". Retrying later recorded
   and exported MP4. `.11` blocks overlapping start requests and
   shows a localized "Starting…" spinner while waiting for the native helper.
-  The clean `.11` Windows package passed CI and was installed on the owner's PC
-  after a verified `.10` backup. The owner confirmed a successful test recording,
-  MP4 export and an installed-app "up to date" check. A real future-version
-  updater download/install remains unverified. This `.11` release is Windows-only.
+  The clean `.11` Windows package passed CI and was installed on the owner's PC.
+  The owner confirmed a successful test recording, MP4 export and an installed-app
+  "up to date" check. A real future-version updater download/install remains
+  unverified. This `.11` release is Windows-only.
+
+### Validation correction · 2026-09-28
+
+The pre-`.11` copy of 2,868 profile files was mistakenly taken from an older
+`openscreen` profile. It was **not** a backup of Studio's active
+`openscreen-subscription` profile. The claim that six active project/recording/
+AI-config files remained hash-identical across the `.11` upgrade is withdrawn.
+The `.10` installed directory and rollback installer were backed up, but no
+immediately pre-`.11` active-profile snapshot exists. A verified pre-`.10`
+active-profile backup is retained: all 19 checked critical files are still
+present, 18 have unchanged hashes and one now differs (timing and cause unknown). The
+post-`.11` active profile has seven projects; a new backup matches 5,628 relative
+file paths and sizes and 29 critical file hashes. This does not prove no file
+changed during the `.11` upgrade. The public release notes carry this correction.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 
