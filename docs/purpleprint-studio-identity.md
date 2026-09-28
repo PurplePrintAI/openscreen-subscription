@@ -1,8 +1,8 @@
 # PurplePrint Studio identity
 
-Status: unsigned `.11` Windows candidate installed on the owner's PC. The owner
+Status: unsigned `.11` Windows preview validated on the owner's PC. The owner
 confirmed recording, MP4 export and an "up to date" check in the installed app.
-No Studio release has been published.
+The `.11` distribution is Windows-only.
 
 PurplePrint Studio is the agentic film editor intended as a video-production
 companion to PurplePrint Design Coach's GTM and operating phases. GraphOS is the
@@ -42,8 +42,8 @@ and capture surfaces. The checked-in Studio icon assets are generated from
 The `.11` clean Windows package and owner-driven recording → MP4 export passed
 from the product-named installation directory. Its manual update check reports
 "up to date"; a real future-version updater download/install cannot be tested
-until a later release exists. Decide how to handle the unsigned Windows
-installer before public publication.
+until a newer release exists. Public release notes must disclose that the Windows
+installer is unsigned.
 A separate macOS release still needs a real Mac record → edit → export pass.
 A stable Mac consumer release additionally needs Developer ID signing,
 notarization and a privacy-permission review. Design Coach/MCP linkage is a
