@@ -151,10 +151,11 @@ jobs:
       - name: Install ffmpeg (homebrew-core) and verify headers/libs
         run: |
           brew update
-          # macos-14 images can retain an openssl@1.1 link. Newer ffmpeg
-          # dependencies need openssl@3, and Homebrew refuses to overwrite it.
-          if [[ "$(readlink /opt/homebrew/bin/openssl 2>/dev/null || true)" == *openssl@1.1* ]]; then
-            brew unlink openssl@1.1
+          # macos-14 images can retain an orphaned openssl@1.1 symlink.
+          # `brew unlink` removes zero links there, so remove this one stale
+          # symlink only when it still points at 1.1 before installing ffmpeg.
+          if [[ -L /opt/homebrew/bin/openssl && "$(readlink /opt/homebrew/bin/openssl)" == *openssl@1.1* ]]; then
+            rm /opt/homebrew/bin/openssl
           fi
           brew install ffmpeg
           ls /opt/homebrew/opt/ffmpeg/include | head -5
