@@ -1,0 +1,93 @@
+name: Validate PurplePrint Studio for Windows
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["fork/main"]
+    paths:
+      - ".github/workflows/build-fork-windows.yml"
+      - "build/fork-speech-payload.json"
+      - "crates/**"
+      - "electron/**"
+      - "scripts/**"
+      - "src/**"
+      - "package.json"
+      - "package-lock.json"
+      - "electron-builder.fork.json"
+      - "electron-builder.json5"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  package:
+    name: Windows x64 clean package
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup
+
+      - name: Check pinned LLVM toolchain
+        shell: pwsh
+        run: |
+          $clang = 'C:\Program Files\LLVM\bin\libclang.dll'
+          if (-not (Test-Path -LiteralPath $clang)) {
+            throw "libclang missing at $clang"
+          }
+
+      - name: Build native helpers, renderer and unsigned NSIS package
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: npm run build:win:fork
+
+      - name: Smoke-test packaged CLI
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $exe = Join-Path "release/$version/win-unpacked" 'PurplePrint Studio.exe'
+          $process = Start-Process -FilePath $exe -ArgumentList 'help' -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput cli-help.txt -RedirectStandardError cli-stderr.txt
+          if ($process.ExitCode -ne 0) { throw "Packaged CLI exited $($process.ExitCode)" }
+          if (-not (Select-String -LiteralPath cli-help.txt -SimpleMatch 'PurplePrint Studio CLI (openscreen command)' -Quiet)) {
+            throw 'Packaged CLI banner missing'
+          }
+
+      - name: Verify package identity, payload and checksums
+        shell: pwsh
+        env:
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/validate-fork-windows-package.mjs
+
+      - name: Confirm candidate is unsigned
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $setup = "release/$version/PurplePrint-Studio-$version-Windows-x64-Setup.exe"
+          $status = (Get-AuthenticodeSignature -LiteralPath $setup).Status
+          if ($status -ne 'NotSigned') { throw "Unexpected installer signature status: $status" }
+
+      - name: Read candidate version
+        id: version
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          "value=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Upload validation-only Windows package
+        uses: actions/upload-artifact@v7
+        with:
+          name: purpleprint-studio-windows-x64
+          path: |
+            release/${{ steps.version.outputs.value }}/PurplePrint-Studio-${{ steps.version.outputs.value }}-Windows-x64-Setup.exe
+            release/${{ steps.version.outputs.value }}/PurplePrint-Studio-${{ steps.version.outputs.value }}-Windows-x64-Setup.exe.blockmap
+            release/${{ steps.version.outputs.value }}/latest.yml
+            release/${{ steps.version.outputs.value }}/windows-validation.json
+            release/${{ steps.version.outputs.value }}/SHA256SUMS-Windows.txt
+          if-no-files-found: error
+          retention-days: 30

@@ -17,7 +17,7 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
-## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.9` candidate)
+## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.10` candidate)
 
 - Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet
   accents, typography hierarchy and product mark across the editor and capture
@@ -75,6 +75,15 @@ For the dated review of newer upstream changes, see
   built Apple Silicon and Intel DMGs and passed payload, bundle identity,
   architecture, ad-hoc signature structure, CLI boot and mounted-DMG checks.
   A real Mac record → edit → export pass and notarization remain unverified.
+- Advances the Windows source candidate to `1.10.0-subscription.10`. Update
+  discovery now reads published releases in the installed `subscription`
+  prerelease channel; GitHub's `/releases/latest` endpoint returned 404 while
+  the fork had only prereleases. Drafts and unrelated channels are ignored,
+  versions are compared semantically, and release URLs remain restricted to
+  this fork. A clean Windows packaging workflow rebuilds the native helpers
+  and verifies the installer without publishing it. The Windows speech runtime
+  is pinned to a checksum-verified artifact built by this fork rather than an
+  upstream workflow artifact.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 

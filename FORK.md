@@ -56,7 +56,8 @@ are different actions. Do not represent a PR as accepted without actual review.
 2. Build the WGC helper and compositor from this checkout. Keep native-payload
    and freshness checks enabled. Do not bypass them or retimestamp old binaries.
 3. Fetch the pinned, checksum-verified LGPL FFmpeg SDK. Stage speech helpers from
-   a recorded upstream build; retain provenance and hashes.
+   the recorded fork build in `build/fork-speech-payload.json`; retain provenance
+   and hashes.
 4. Run app/test typechecks, relevant tests, the full unit suite, i18n checks and
    native smoke tests. Resolve new failures; never relabel a failed check as passed.
 5. Package with `electron-builder.fork.json` and `--publish never`. The original
@@ -74,6 +75,13 @@ After staging native dependencies:
 npm run build-vite
 npx electron-builder --win nsis --x64 --config electron-builder.fork.json --config.npmRebuild=false --publish never
 ```
+
+For a clean Windows runner build, use
+[`build-fork-windows.yml`](.github/workflows/build-fork-windows.yml). Relevant
+fork PR changes trigger it; after the workflow is on the default branch, it
+can also be dispatched manually. It rebuilds the native helpers and unsigned
+installer, checks the packaged payload against the build outputs, and uploads
+validation-only artifacts without publishing a GitHub Release.
 
 The installer is unsigned unless an independently authorized signing identity is
 configured. No upstream publisher identity is borrowed. Windows security prompts
