@@ -17,7 +17,7 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
-## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.10` candidate)
+## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.11` candidate)
 
 - Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet
   accents, typography hierarchy and product mark across the editor and capture
@@ -84,6 +84,13 @@ For the dated review of newer upstream changes, see
   and verifies the installer without publishing it. The Windows speech runtime
   is pinned to a checksum-verified artifact built by this fork rather than an
   upstream workflow artifact.
+- The `.10` clean Windows package passed CI and was installed locally after a
+  verified `.9` backup. The owner reported a first recording attempt where the
+  three-second countdown ended but native capture had not yet acknowledged
+  startup; a second click received "already running". Retrying later recorded
+  and exported MP4. The `.11` candidate blocks overlapping start requests and
+  shows a localized "Starting…" spinner while waiting for the native helper.
+  Installed `.11` retesting remains pending.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 
