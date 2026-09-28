@@ -1,8 +1,8 @@
 # PurplePrint Studio identity
 
-Status: unsigned `.10` Windows candidate installed on the owner's PC for
-validation; `.11` source candidate addresses overlapping native starts. No
-Studio release has been published.
+Status: unsigned `.11` Windows candidate installed on the owner's PC. The owner
+confirmed recording, MP4 export and an "up to date" check in the installed app.
+No Studio release has been published.
 
 PurplePrint Studio is the agentic film editor intended as a video-production
 companion to PurplePrint Design Coach's GTM and operating phases. GraphOS is the
@@ -39,10 +39,11 @@ and capture surfaces. The checked-in Studio icon assets are generated from
 
 ## Release gate
 
-Before publishing a Studio installer: verify updater behavior from the
-product-named installation directory and retest `.11` native recording startup.
-A clean Windows native packaging pass and a user-driven Windows record → edit →
-MP4 export have passed on earlier candidates.
+The `.11` clean Windows package and owner-driven recording → MP4 export passed
+from the product-named installation directory. Its manual update check reports
+"up to date"; a real future-version updater download/install cannot be tested
+until a later release exists. Decide how to handle the unsigned Windows
+installer before public publication.
 A separate macOS release still needs a real Mac record → edit → export pass.
 A stable Mac consumer release additionally needs Developer ID signing,
 notarization and a privacy-permission review. Design Coach/MCP linkage is a
@@ -50,11 +51,11 @@ separate workstream.
 
 | Gate | Current evidence |
 | --- | --- |
-| Windows package identity | The `.10` unsigned NSIS package was built cleanly on a Windows CI runner with libclang. Owner-approved installation reused the existing per-user location without another nested folder. Registered and executable versions report `.10`; the Start-menu shortcut points to the installed executable. Seven installed speech runtime files match the fork-pinned manifest. |
+| Windows package identity | The `.11` unsigned NSIS package was built cleanly on a Windows CI runner with libclang. Owner-approved installation reused the existing per-user location without another nested folder. Uninstall registration and installed ASAR report `.11`; the Start-menu shortcut points to the installed executable. Seven installed speech runtime files match the fork-pinned manifest. |
 | Profile continuity | Installed OpenScreen Subscription `.7` created an isolated-profile project with synthetic H.264 media. Studio `.8` reopened its clip, light theme and preferences, then exported a decodable MP4. On the owner's live profile, three project documents and the AI configuration were hash-identical to the verified pre-install backup. The installed `.8` binary separately loaded copies of all three real project documents and opened the editor without outputting their contents; private footage was not exported. |
-| Windows native capture | Packaged WGC recorded a generated QA window with microphone, system audio and camera disabled. The saved project reopened and exported a decodable MP4. Control was automated below the OS hit-test. Installed `.8` and `.9` were also recorded by the owner with a physical mouse; `.9` exported MP4 successfully. On installed `.10`, the owner reported that the first attempt showed "already running" after clicking Record again while the native helper had not acknowledged startup; retrying recorded and exported MP4. `.11` blocks this overlap and shows "Starting…" until startup settles, but is not yet installed. |
+| Windows native capture | Packaged WGC recorded a generated QA window with microphone, system audio and camera disabled. The saved project reopened and exported a decodable MP4. Control was automated below the OS hit-test. Installed `.8` and `.9` were also recorded by the owner with a physical mouse; `.9` exported MP4 successfully. On installed `.10`, the owner reported that the first attempt showed "already running" after clicking Record again while the native helper had not acknowledged startup; retrying recorded and exported MP4. `.11` blocks this overlap and shows "Starting…" while the helper starts. The owner reported a successful `.11` test recording and MP4 export; visibility of the brief starting label was not separately confirmed. |
 | Silent-recording transcription | The `.8` recording contained video but no audio stream. Automatic transcription showed "Failed to fetch" because its WASM URL resolved outside packaged `dist/wasm`. Installed `.9` corrected the URL: another video-only recording produced no error toast, and its saved asset carries the expected `no-audio` verdict. |
-| Installation upgrade | Owner-approved `.8` NSIS upgrade reused the per-user uninstall registration and created a product-named child folder under the previous custom root. Subsequent `.9` and `.10` upgrades reused that exact folder. Before `.10`, the profile and installation were backed up and ten critical project/recording/config hashes matched; they remained unchanged after upgrade. `.10` fixes release discovery for the fork's `subscription` prereleases. Download/install behavior from this path still needs review before publication. |
+| Installation upgrade | Owner-approved `.8` NSIS upgrade reused the per-user uninstall registration and created a product-named child folder under the previous custom root. Subsequent `.9`, `.10` and `.11` upgrades reused that exact folder. Before `.11`, 2,868 profile files, 188 installed files and a `.10` rollback installer were backed up and verified; six critical project/recording/AI-config hashes remained unchanged after upgrade. `.10` fixed release discovery for the fork's `subscription` prereleases; the installed `.11` manual update check reports "up to date". A real future-version updater download/install remains unverified. |
 | macOS | [CI run 36358715037](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36358715037) built `.9` Apple Silicon and Intel DMGs from commit `f81a8b9d`. Both passed bundle ID, architecture, native payload, ad-hoc signature structure, CLI boot and mounted-DMG checks; downloaded SHA-256 values matched the workflow report. Real Mac recording/edit/export, Developer ID signing and notarization remain unverified. |
 
 The source selector failed to list the QA window on the first automated attempt
