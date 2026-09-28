@@ -43,6 +43,7 @@ const chatSelectSession = vi.fn();
 const chatCreateSession = vi.fn();
 const chatRewind = vi.fn();
 const chatRun = vi.fn<() => Promise<AiEditionChatResult>>();
+const generateImageScene = vi.fn();
 const modelList = vi.fn<() => Promise<AiEditionLlmProviderModelsResult>>();
 const saveModel = vi.fn(async (_config: AiEditionLlmConfig) => ({ success: true }));
 let chatEvent: ((event: AiEditionChatEvent) => void) | undefined;
@@ -55,6 +56,7 @@ vi.mock("@/native/client", () => ({
 			chatSelectSession: (...args: unknown[]) => chatSelectSession(...args),
 			chatCreateSession: (...args: unknown[]) => chatCreateSession(...args),
 			chatRun: () => chatRun(),
+			generateImageScene: (...args: unknown[]) => generateImageScene(...args),
 			chatRewind: (...args: unknown[]) => chatRewind(...args),
 			chatBudget: () => Promise.resolve(null),
 			llmListProviderModels: () => modelList(),
@@ -93,6 +95,7 @@ beforeEach(() => {
 	chatCreateSession.mockReset();
 	chatRewind.mockReset().mockResolvedValue({ success: false, error: "test refused" });
 	chatRun.mockReset();
+	generateImageScene.mockReset();
 	modelList.mockReset().mockResolvedValue({ models: [] });
 	saveModel.mockClear();
 	useProjectStore.setState({ projectId: null, document: null });
@@ -197,6 +200,72 @@ describe("ChatStripPanel streaming", () => {
 		);
 		act(() => chatEvent?.({ kind: "text", sessionId: session.id, delta: "AFTER FINISH" }));
 		expect(screen.queryByText("AFTER FINISH")).toBeNull();
+	});
+
+	it("generates an image scene only after confirmation and imports its video clip", async () => {
+		llmGetSnapshot.mockResolvedValue({
+			config: { provider: "codex-subscription", model: "gpt-6-sol" },
+			connectedProviders: ["codex-subscription"],
+			availableProviders: [],
+			credentialSummary: [],
+		});
+		useProjectStore.setState({ projectId: session.projectId });
+		chatListSessions.mockResolvedValue([session]);
+		chatSelectSession.mockResolvedValue({ ...session, messages: [] });
+		generateImageScene.mockResolvedValue({
+			imagePath: "C:/studio/source.png",
+			videoPath: "C:/studio/scene.mp4",
+			userMessage: {
+				id: "generated-user",
+				role: "user",
+				content: "A violet sphere",
+				createdAt: "2026-08-27T12:00:00Z",
+			},
+			assistantMessage: {
+				id: "generated-assistant",
+				role: "assistant",
+				content: "Generated",
+				createdAt: "2026-08-27T12:00:01Z",
+			},
+		});
+		const originalAddAsset = useProjectStore.getState().addAsset;
+		const addAsset = vi.fn(async () => null);
+		useProjectStore.setState({ addAsset });
+		const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+		try {
+			render(
+				<EditorDialogsProvider>
+					<LeftPanel active="chat" />
+				</EditorDialogsProvider>,
+			);
+			await waitFor(() => expect(screen.getByRole("textbox")).toBeEnabled());
+			fireEvent.change(screen.getByRole("textbox"), { target: { value: "A violet sphere" } });
+			fireEvent.click(screen.getByRole("button", { name: "chat.imageSceneButton" }));
+			expect(generateImageScene).not.toHaveBeenCalled();
+			confirm.mockReturnValue(true);
+			fireEvent.click(screen.getByRole("button", { name: "chat.imageSceneButton" }));
+			await waitFor(() =>
+				expect(generateImageScene).toHaveBeenCalledWith(
+					session.projectId,
+					session.id,
+					"A violet sphere",
+				),
+			);
+			await waitFor(() =>
+				expect(addAsset).toHaveBeenCalledWith(
+					"C:/studio/scene.mp4",
+					"chat.imageSceneAssetLabel",
+					5,
+				),
+			);
+			expect(screen.getByRole("img", { name: "chat.generatedImagePreview" })).toHaveAttribute(
+				"src",
+				"file:///C:/studio/source.png",
+			);
+		} finally {
+			confirm.mockRestore();
+			useProjectStore.setState({ addAsset: originalAddAsset });
+		}
 	});
 
 	it("keeps an interrupted partial reply, clearly marked incomplete", async () => {

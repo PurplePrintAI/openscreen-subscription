@@ -230,6 +230,34 @@ export function selectSession(projectId: string, sessionId: string): ChatSession
 	};
 }
 
+/** Record a generated artifact in the current in-memory conversation. */
+export function appendGeneratedScene(
+	projectId: string,
+	sessionId: string,
+	prompt: string,
+	imagePath: string,
+): { userMessage: AiEditionChatMessage; assistantMessage: AiEditionChatMessage } {
+	const session = sessionsByProject.get(projectId)?.get(sessionId);
+	if (!session) throw new Error("Chat session unavailable.");
+	const now = new Date().toISOString();
+	const userMessage: AiEditionChatMessage = {
+		id: randomUUID(),
+		role: "user",
+		content: prompt,
+		createdAt: now,
+	};
+	const assistantMessage: AiEditionChatMessage = {
+		id: randomUUID(),
+		role: "assistant",
+		content:
+			"Generated a five-second still-image scene. The original image is saved beside the video clip.",
+		createdAt: new Date().toISOString(),
+		generatedImagePath: imagePath,
+	};
+	session.messages.push(userMessage, assistantMessage);
+	return { userMessage, assistantMessage };
+}
+
 export function renameSession(
 	projectId: string,
 	sessionId: string,

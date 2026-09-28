@@ -8,6 +8,7 @@ import {
 	type AiEditionChatSession,
 	type AiEditionChatSessionSummary,
 	type AiEditionDocumentResult,
+	type AiEditionGeneratedSceneResult,
 	type AiEditionLlmConfig,
 	type AiEditionLlmDisconnectResult,
 	type AiEditionLlmProviderModelsResult,
@@ -182,11 +183,11 @@ export const nativeBridgeClient = {
 				action: "document.delete",
 				payload: { projectId },
 			}),
-		addAsset: (projectId: string, path: string, label?: string) =>
+		addAsset: (projectId: string, path: string, label?: string, durationSec?: number) =>
 			requireNativeBridgeData<AiEditionAssetResult>({
 				domain: "aiEdition",
 				action: "document.addAsset",
-				payload: { projectId, path, label },
+				payload: { projectId, path, label, durationSec },
 			}),
 		removeAsset: (projectId: string, assetId: string) =>
 			requireNativeBridgeData<AiEditionAssetResult>({
@@ -257,6 +258,12 @@ export const nativeBridgeClient = {
 				domain: "aiEdition",
 				action: "chat.run",
 				payload: { projectId, sessionId, message, document },
+			}),
+		generateImageScene: (projectId: string, sessionId: string, prompt: string) =>
+			requireNativeBridgeData<AiEditionGeneratedSceneResult>({
+				domain: "aiEdition",
+				action: "image.generateScene",
+				payload: { projectId, sessionId, prompt },
 			}),
 		chatUndoLastBatch: (projectId: string, sessionId: string) =>
 			requireNativeBridgeData<AiEditionChatResult>({

@@ -30,6 +30,8 @@ export interface CodexRun {
 	input: string;
 	tools?: CodexTool[];
 	onText?: (text: string) => void;
+	onImageGeneration?: (item: ObjectValue) => void;
+	timeoutMs?: number;
 	signal?: AbortSignal;
 }
 interface PendingRequest {
@@ -40,6 +42,7 @@ interface PendingRequest {
 interface ActiveTurn {
 	tools: Map<string, CodexTool>;
 	onText?: (text: string) => void;
+	onImageGeneration?: (item: ObjectValue) => void;
 	text: string;
 	turnId?: string;
 	toolCalls: number;
@@ -260,6 +263,9 @@ export class CodexAppServer {
 		if (payload.method === "item/agentMessage/delta" && typeof params.delta === "string") {
 			turn.text += params.delta;
 			turn.onText?.(params.delta);
+		} else if (payload.method === "item/completed") {
+			const item = object(params.item);
+			if (item.type === "imageGeneration") turn.onImageGeneration?.(item);
 		} else if (payload.method === "turn/started") {
 			turn.turnId = String(object(params.turn).id ?? "");
 		} else if (payload.method === "turn/completed") {
@@ -438,6 +444,7 @@ export class CodexAppServer {
 				const turn: ActiveTurn = {
 					tools: new Map((input.tools ?? []).map((tool) => [tool.name, tool])),
 					onText: input.onText,
+					onImageGeneration: input.onImageGeneration,
 					text: "",
 					toolCalls: 0,
 					resolve,
@@ -452,7 +459,7 @@ export class CodexAppServer {
 				}
 				timer = setTimeout(
 					() => reject(new Error("Codex AI request timed out. Please retry.")),
-					this.turnTimeoutMs,
+					input.timeoutMs ?? this.turnTimeoutMs,
 				);
 				void this.request("turn/start", {
 					threadId,
@@ -476,6 +483,36 @@ export class CodexAppServer {
 				/* Ephemeral thread may already be gone. */
 			});
 		}
+	}
+
+	/** Built-in Codex image generation, using only the app-owned ChatGPT subscription profile. */
+	async generateImage(prompt: string): Promise<{ savedPath?: string; result?: string }> {
+		const trimmed = prompt.trim();
+		if (!trimmed || trimmed.length > 4_000)
+			throw new Error("Image prompt must be 1–4,000 characters.");
+		const status = await this.status();
+		if (!status.connected)
+			throw new Error(status.error ?? "Connect your ChatGPT account in AI settings first.");
+		const capabilities = await this.request("modelProvider/capabilities/read");
+		if (capabilities.imageGeneration !== true)
+			throw new Error("Image generation is unavailable for this ChatGPT subscription.");
+		const images: ObjectValue[] = [];
+		await this.run({
+			instructions:
+				"Create exactly one still image for a video scene. Use only built-in image generation. " +
+				"Do not use shell, code, web, files, apps, or editor tools. Do not edit the project.",
+			input: `$imagegen ${trimmed}`,
+			tools: [],
+			timeoutMs: 360_000,
+			onImageGeneration: (item) => images.push(item),
+		});
+		if (images.length !== 1 || images[0].status !== "completed")
+			throw new Error("Codex did not return one completed image.");
+		const image = images[0];
+		return {
+			...(typeof image.savedPath === "string" ? { savedPath: image.savedPath } : {}),
+			...(typeof image.result === "string" ? { result: image.result } : {}),
+		};
 	}
 }
 

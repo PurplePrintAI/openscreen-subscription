@@ -279,6 +279,51 @@ describe("Codex app-server subscription transport", () => {
 		expect(f.sent.some((packet) => packet.method === "turn/interrupt")).toBe(false);
 	});
 
+	it("generates one image through the subscription capability without editor tools", async () => {
+		const f = fixture((packet, emit) => {
+			if (packet.method === "modelProvider/capabilities/read") {
+				emit({ id: packet.id, result: { imageGeneration: true } });
+				return true;
+			}
+			if (packet.method === "turn/start") {
+				emit({ id: packet.id, result: { turn: { id: "image-turn" } } });
+				emit({
+					method: "item/completed",
+					params: {
+						threadId: "thread-1",
+						item: { type: "imageGeneration", status: "completed", savedPath: "C:/image.png" },
+					},
+				});
+				emit({
+					method: "turn/completed",
+					params: { threadId: "thread-1", turn: { id: "image-turn", status: "completed" } },
+				});
+				return true;
+			}
+			return false;
+		});
+		expect(await f.runtime.generateImage("A violet sphere")).toEqual({
+			savedPath: "C:/image.png",
+		});
+		expect(f.sent.find((packet) => packet.method === "thread/start")?.params).toMatchObject({
+			sandbox: "read-only",
+			dynamicTools: [],
+		});
+		expect(f.sent.find((packet) => packet.method === "turn/start")?.params).toMatchObject({
+			input: [{ type: "text", text: "$imagegen A violet sphere", text_elements: [] }],
+		});
+	});
+
+	it("does not start an image turn when the subscription capability is absent", async () => {
+		const f = fixture((packet, emit) => {
+			if (packet.method !== "modelProvider/capabilities/read") return false;
+			emit({ id: packet.id, result: { imageGeneration: false } });
+			return true;
+		});
+		await expect(f.runtime.generateImage("A violet sphere")).rejects.toThrow("unavailable");
+		expect(f.sent.some((packet) => packet.method === "turn/start")).toBe(false);
+	});
+
 	it("interrupts timed-out turns and releases their thread", async () => {
 		const f = fixture((packet, emit) => {
 			if (packet.method !== "turn/start") return false;

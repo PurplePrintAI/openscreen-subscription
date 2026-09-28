@@ -1406,6 +1406,7 @@
 .assistantContent pre code { white-space: pre; padding: 0; background: transparent; }
 .assistantContent blockquote { margin: 0.75em 0; padding-left: 12px; border-left: 3px solid var(--border); color: var(--muted); }
 .assistantContent hr { margin: 1em 0; border-color: var(--border-soft); }
+.generatedScenePreview { display: block; width: min(100%, 360px); height: auto; margin-top: 10px; border: 1px solid var(--border-soft); border-radius: var(--r-md); }
 .messageTable { max-width: 100%; overflow-x: auto; margin: 0.75em 0; }
 .messageTable table { border-collapse: collapse; font-size: 0.92em; }
 .messageTable th, .messageTable td { border: 1px solid var(--border); padding: 6px 9px; text-align: start; }
@@ -1518,6 +1519,10 @@
 	transition: background var(--motion-fast) var(--ease);
 }
 .reasoningBtn:hover .chip { background: var(--success-soft); filter: brightness(1.1); }
+.imageSceneBtn { display: grid; place-items: center; width: 30px; height: 30px; margin-left: auto; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--fg-2); cursor: pointer; }
+.imageSceneBtn:hover:not(:disabled) { color: var(--accent); background: var(--surface-3); }
+.imageSceneBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.imageSceneBtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .chip .d {
 	width: 5px;
 	height: 5px;
@@ -1525,7 +1530,7 @@
 	background: var(--success);
 }
 .sendBtn {
-	margin-left: auto;
+	margin-left: 0;
 	width: 32px;
 	height: 32px;
 	display: grid;

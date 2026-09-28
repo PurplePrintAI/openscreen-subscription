@@ -12,6 +12,7 @@ import type {
 	AiEditionChatSession,
 	AiEditionChatSessionSummary,
 	AiEditionDocumentResult,
+	AiEditionGeneratedSceneResult,
 	AiEditionLlmConfig,
 	AiEditionLlmDisconnectResult,
 	AiEditionLlmModelOption,
@@ -25,9 +26,11 @@ import {
 	translateCaptionSegments,
 } from "../../ai-edition/caption-translate";
 import type { ChatEventSink } from "../../ai-edition/chat-service";
+import { appendGeneratedScene } from "../../ai-edition/chat-service";
 import { getClaudeCli } from "../../ai-edition/claude/cli";
 import { getCodexAppServer } from "../../ai-edition/codex/app-server";
 import type { DocumentService } from "../../ai-edition/document-service";
+import { encodeStillScene, saveGeneratedImage } from "../../ai-edition/generated-scene";
 import type { LlmConfigStore, LlmCredential } from "../../ai-edition/llm-config-store";
 import {
 	listAnthropicModels,
@@ -162,10 +165,43 @@ export class AiEditionService {
 		}
 	}
 
-	async addAsset(projectId: string, path: string, label?: string): Promise<AiEditionAssetResult> {
-		const document = await this.options.documents.addAsset(projectId, { path, label });
+	async addAsset(
+		projectId: string,
+		path: string,
+		label?: string,
+		durationSec?: number,
+	): Promise<AiEditionAssetResult> {
+		const document = await this.options.documents.addAsset(projectId, {
+			path,
+			label,
+			durationSec,
+		});
 		const assetId = document.project.primaryAssetId ?? document.assets.at(-1)?.id ?? "";
 		return { assetId, document };
+	}
+
+	async generateImageScene(
+		projectId: string,
+		sessionId: string,
+		prompt: string,
+	): Promise<AiEditionGeneratedSceneResult> {
+		if (this.llmConfig.getConfig()?.provider !== "codex-subscription")
+			throw new Error("Select ChatGPT subscription (Codex) to generate image scenes.");
+		if (!this.options.selectSession(projectId, sessionId))
+			throw new Error("Chat session unavailable.");
+		await this.options.documents.getProject(projectId);
+		const image = await (await getCodexAppServer()).generateImage(prompt);
+		const { app } = await import("electron");
+		const paths = await saveGeneratedImage(app.getPath("userData"), projectId, image);
+		try {
+			await encodeStillScene(paths.imagePath, paths.videoPath);
+		} catch (error) {
+			throw new Error(
+				`The original image was saved at ${paths.imagePath}, but its video clip could not be created: ${error instanceof Error ? error.message : String(error)}`,
+			);
+		}
+		const messages = appendGeneratedScene(projectId, sessionId, prompt.trim(), paths.imagePath);
+		return { ...paths, ...messages };
 	}
 
 	async removeAsset(projectId: string, assetId: string): Promise<AiEditionAssetResult> {

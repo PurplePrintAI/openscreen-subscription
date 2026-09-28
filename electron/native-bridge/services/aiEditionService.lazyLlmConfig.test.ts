@@ -237,6 +237,20 @@ describe("AiEditionService — LLM store resolution is deferred", () => {
 		expect(await service.llmSubscriptionLogin("openai-oauth")).toMatchObject({ success: false });
 		expect(runtime.status).not.toHaveBeenCalled();
 	});
+
+	it("does not generate an image through a non-subscription provider", async () => {
+		const getProject = vi.fn();
+		const service = new AiEditionService({
+			llmConfig: () =>
+				({ getConfig: () => ({ provider: "openai", model: "gpt-6-sol" }) }) as LlmConfigStore,
+			documents: { getProject },
+			selectSession: () => ({ id: "s", projectId: "p", messages: [] }),
+		} as unknown as AiEditionServiceOptions);
+		await expect(service.generateImageScene("p", "s", "a sphere")).rejects.toThrow(
+			"Select ChatGPT subscription",
+		);
+		expect(getProject).not.toHaveBeenCalled();
+	});
 	it("does not build the store while the service is constructed", () => {
 		const { builds } = serviceWithCountingFactory();
 		expect(builds()).toBe(0);

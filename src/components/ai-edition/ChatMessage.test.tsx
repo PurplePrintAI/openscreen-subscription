@@ -60,6 +60,22 @@ describe("chat message rendering", () => {
 		);
 	});
 
+	it("previews only the explicit main-process generated image field", () => {
+		render(
+			<ChatMessage
+				message={{
+					role: "assistant",
+					content: "Generated",
+					generatedImagePath: "C:\\Studio\\generated-scenes\\proj_1\\source.png",
+				}}
+			/>,
+		);
+		expect(screen.getByRole("img", { name: "chat.generatedImagePreview" })).toHaveAttribute(
+			"src",
+			"file:///C:/Studio/generated-scenes/proj_1/source.png",
+		);
+	});
+
 	it("reconciles partial Markdown while streaming and only exposes actions on completion", () => {
 		const { container, rerender } = render(
 			<ChatMessage streaming message={{ role: "assistant", content: "**Par" }} />,
