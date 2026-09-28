@@ -49,6 +49,8 @@ release/**
 # Playwright
 test-results
 playwright-report/
+/.playwright-cli/
+/output/playwright/
 
 
 # Vitest browser mode screenshots

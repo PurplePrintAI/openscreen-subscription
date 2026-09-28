@@ -315,25 +315,93 @@ function ffmpegSdkDest() {
  */
 function vendorFfmpegSdk(tmp, dest) {
 	// BtbN nests bin/ include/ lib/ under one versioned dir; find it by its headers.
+	console.log(`Locating FFmpeg SDK in verified archive for ${dest}`);
 	const root = findDirContaining(tmp, "include");
 	if (!root) {
 		throw new Error(
 			"No include/ directory inside the shared archive — cannot vendor the ffmpeg SDK.",
 		);
 	}
-	// A dev machine has this as a junction; rm unlinks it rather than eating the
-	// target, and we only get here on --force or when it is genuinely absent.
-	fs.rmSync(dest, { recursive: true, force: true });
+	// Never write through a developer junction or a path outside this checkout.
+	// The destination name contains the pinned FFmpeg version, so an interrupted
+	// copy can be completed in place without deleting the whole SDK directory.
+	const thirdpartyPath = path.join(ROOT, "crates", "thirdparty");
+	fs.mkdirSync(thirdpartyPath, { recursive: true });
+	const thirdparty = fs.realpathSync.native(thirdpartyPath);
+	if (fs.lstatSync(dest, { throwIfNoEntry: false })?.isSymbolicLink()) {
+		throw new Error(`Refusing to write FFmpeg SDK through link: ${dest}`);
+	}
+	const resolvedDest = fs.existsSync(dest) ? fs.realpathSync.native(dest) : path.resolve(dest);
+	if (!samePath(path.dirname(resolvedDest), thirdparty)) {
+		throw new Error(`Refusing to replace FFmpeg SDK outside ${thirdparty}: ${resolvedDest}`);
+	}
 	fs.mkdirSync(path.dirname(dest), { recursive: true });
-	// `verbatimSymlinks` matters on Linux, where BtbN ships lib/libavcodec.so ->
-	// libavcodec.so.62.28.102. WITHOUT it, cpSync RESOLVES each link and writes an
-	// absolute one pointing back into the extraction temp dir — which this function's
-	// caller deletes immediately after, leaving every dev symlink dangling. The
-	// headers then satisfy build.rs's assert while `-lavcodec` fails at link time,
-	// which is exactly how this presented. Windows has no symlinks here, so the flag
-	// is a no-op there.
-	fs.cpSync(root, dest, { recursive: true, verbatimSymlinks: true });
+	console.log(`Copying verified FFmpeg SDK from ${root}`);
+	// Copy only build inputs, not the archive's executable and documentation. Walk
+	// files explicitly: Windows can terminate a bulk cpSync of this extracted tree
+	// without surfacing an exception, leaving an empty SDK directory that a simple
+	// existsSync check incorrectly treats as complete on the next run.
+	fs.mkdirSync(dest, { recursive: true });
+	for (const part of ["include", "lib"]) {
+		const source = path.join(root, part);
+		if (!fs.existsSync(source)) throw new Error(`FFmpeg SDK archive missing ${part}/`);
+		copySdkTree(source, path.join(dest, part));
+	}
+	console.log(`FFmpeg SDK copy finished: ${dest}`);
+	if (!fs.existsSync(path.join(dest, "include", "libavformat", "avformat.h"))) {
+		throw new Error(`FFmpeg SDK copy incomplete: ${dest}`);
+	}
 	console.log(`Vendored ffmpeg SDK (include/ + lib/) -> ${dest}`);
+}
+
+function copySdkTree(source, dest) {
+	if (fs.lstatSync(dest, { throwIfNoEntry: false })?.isSymbolicLink()) {
+		throw new Error(`Refusing to write FFmpeg SDK through link: ${dest}`);
+	}
+	fs.mkdirSync(dest, { recursive: true });
+	for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+		const from = path.join(source, entry.name);
+		const to = path.join(dest, entry.name);
+		if (entry.isDirectory()) {
+			copySdkTree(from, to);
+		} else if (entry.isSymbolicLink()) {
+			// Preserve Linux's relative libav*.so links; never point at the temporary
+			// extraction tree, which disappears after staging.
+			const link = fs.readlinkSync(from);
+			if (fs.existsSync(to) || fs.lstatSync(to, { throwIfNoEntry: false })) {
+				if (fs.lstatSync(to).isSymbolicLink() && fs.readlinkSync(to) === link) continue;
+				throw new Error(`Refusing to replace a different FFmpeg SDK link: ${to}`);
+			}
+			fs.symlinkSync(link, to);
+		} else if (entry.isFile()) {
+			if (fs.lstatSync(to, { throwIfNoEntry: false })?.isSymbolicLink()) {
+				throw new Error(`Refusing to overwrite FFmpeg SDK link with file: ${to}`);
+			}
+			fs.copyFileSync(from, to);
+		} else {
+			throw new Error(`Unexpected FFmpeg SDK member: ${from}`);
+		}
+	}
+}
+
+function samePath(left, right) {
+	return process.platform === "win32" ? left.toLowerCase() === right.toLowerCase() : left === right;
+}
+
+function cleanupFfmpegExtraction(tmp) {
+	const tempRoot = fs.realpathSync.native(os.tmpdir());
+	const resolved = fs.realpathSync.native(tmp);
+	if (
+		!samePath(path.dirname(resolved), tempRoot) ||
+		!path.basename(resolved).startsWith("openscreen-ffmpeg-")
+	) {
+		throw new Error(`Refusing to remove unexpected FFmpeg extraction: ${resolved}`);
+	}
+	if (process.env.OPENSCREEN_KEEP_FFMPEG_TMP === "1") {
+		console.log(`Keeping FFmpeg extraction for diagnosis: ${tmp}`);
+		return;
+	}
+	fs.rmSync(tmp, { recursive: true, force: true });
 }
 
 /** First directory at or under `dir` that has a child named `name`. */
@@ -418,7 +486,11 @@ async function fetchSharedDlls(tag, binDir) {
 	// DLLs but not the SDK must still re-download — otherwise we skip here and
 	// the compositor build fails afterwards on the missing FFMPEG_DIR.
 	const sdkDest = ffmpegSdkDest();
-	const sdkPresent = sdkDest == null || fs.existsSync(sdkDest);
+	const sdkPresent =
+		sdkDest == null ||
+		(fs.existsSync(path.join(sdkDest, "include", "libavformat", "avformat.h")) &&
+			fs.existsSync(path.join(sdkDest, "lib")) &&
+			fs.readdirSync(path.join(sdkDest, "lib")).some((name) => /^(lib)?avformat/i.test(name)));
 	if (alreadyVendored && sdkPresent && !process.argv.includes("--force")) {
 		console.log(
 			`\nShared ffmpeg libraries already present in ${binDir}. Use --force to re-vendor.`,
@@ -490,7 +562,7 @@ async function fetchSharedDlls(tag, binDir) {
 		if (sdkDest) vendorFfmpegSdk(tmp, sdkDest);
 		console.log("LGPL verified: safe to ship with an MIT app.");
 	} finally {
-		fs.rmSync(tmp, { recursive: true, force: true });
+		cleanupFfmpegExtraction(tmp);
 	}
 }
 
@@ -563,7 +635,7 @@ async function main() {
 			console.log(`\nVendored -> ${dest}`);
 			console.log("LGPL verified: safe to ship with an MIT app.");
 		} finally {
-			fs.rmSync(tmp, { recursive: true, force: true });
+			cleanupFfmpegExtraction(tmp);
 		}
 	}
 

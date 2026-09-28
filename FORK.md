@@ -1,6 +1,7 @@
-# OpenScreen Subscription — independent fork
+# PurplePrint Studio — independent OpenScreen fork
 
-This is an **unofficial, independently maintained fork** of
+PurplePrint Studio (formerly OpenScreen Subscription) is an **unofficial,
+independently maintained fork** of
 [getopenscreen/openscreen](https://github.com/getopenscreen/openscreen), initially
 based on upstream **v1.10.0** (`dbdadb7d27fe3287d994fb741d6f264a31066648`).
 It is not an official OpenScreen release and is not endorsed by the upstream
@@ -18,8 +19,8 @@ architecture, policy and release notes behind those changes.
 - Retain API-key providers, editor tool validation and checkpoints.
 - Separate installation identity, user data and update downloads from upstream.
 
-The app remains free. "Subscription" names the optional use of the user's own
-eligible ChatGPT plan; this fork does not sell or require its own plan. Codex CLI
+The app remains free. The former "Subscription" name described optional use of the
+user's own eligible ChatGPT plan; Studio does not sell or require its own plan. Codex CLI
 is a user-installed dependency, not bundled in the installer. Tokens, API keys,
 user settings, recordings and diagnostic transcripts must never be committed or
 uploaded as release assets.
@@ -55,7 +56,8 @@ are different actions. Do not represent a PR as accepted without actual review.
 2. Build the WGC helper and compositor from this checkout. Keep native-payload
    and freshness checks enabled. Do not bypass them or retimestamp old binaries.
 3. Fetch the pinned, checksum-verified LGPL FFmpeg SDK. Stage speech helpers from
-   a recorded upstream build; retain provenance and hashes.
+   the recorded fork build in `build/fork-speech-payload.json`; retain provenance
+   and hashes.
 4. Run app/test typechecks, relevant tests, the full unit suite, i18n checks and
    native smoke tests. Resolve new failures; never relabel a failed check as passed.
 5. Package with `electron-builder.fork.json` and `--publish never`. The original
@@ -73,6 +75,13 @@ After staging native dependencies:
 npm run build-vite
 npx electron-builder --win nsis --x64 --config electron-builder.fork.json --config.npmRebuild=false --publish never
 ```
+
+For a clean Windows runner build, use
+[`build-fork-windows.yml`](.github/workflows/build-fork-windows.yml). Relevant
+fork PR changes trigger it; after the workflow is on the default branch, it
+can also be dispatched manually. It rebuilds the native helpers and unsigned
+installer, checks the packaged payload against the build outputs, and uploads
+validation-only artifacts without publishing a GitHub Release.
 
 The installer is unsigned unless an independently authorized signing identity is
 configured. No upstream publisher identity is borrowed. Windows security prompts

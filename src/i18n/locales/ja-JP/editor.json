@@ -45,7 +45,7 @@
 		"cameraNotFound": "カメラが見つかりません。",
 		"cameraCaptureUnavailable": "カメラを開けませんでした。カメラなしで録画します。",
 		"microphoneDefaulted": "選択したマイクを特定できませんでした。既定の入力を録音します。",
-		"accessibilityAllowAndRetry": "OpenScreenにアクセシビリティアクセスを許可してから、もう一度録画を押してカウントダウンを開始してください。",
+		"accessibilityAllowAndRetry": "PurplePrint Studioにアクセシビリティアクセスを許可してから、もう一度録画を押してカウントダウンを開始してください。",
 		"selectSource": "録画するソースを選択してください"
 	},
 	"emptyState": {
@@ -273,7 +273,7 @@
 			"disclaimer": "動画の文字起こしは、選択したプロバイダーに送信されます。接続するまでは何も共有されません。"
 		},
 		"authorUser": "あなた",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "PurplePrint Studio",
 		"rewindToMessage": "このメッセージまで巻き戻す",
 		"copyMessage": "メッセージをコピー",
 		"copiedToClipboard": "クリップボードにコピーしました",
@@ -402,12 +402,12 @@
 		"enterCustomModel": "モデル ID を入力",
 		"chooseCatalogModel": "カタログから選択",
 		"pillLocalCli": "ローカル CLI",
-		"localCliHint": "公式 Claude Code CLI で直接ログインしてください。認証と利用量は CLI の現在のサブスクリプション・API・プロバイダーアカウントに従います。OpenScreen は認証情報を保存・変更しません。",
+		"localCliHint": "公式 Claude Code CLI で直接ログインしてください。認証と利用量は CLI の現在のサブスクリプション・API・プロバイダーアカウントに従います。PurplePrint Studio は認証情報を保存・変更しません。",
 		"cliAccountSubscription": "Claude サブスクリプション: {{plan}}。モデルの利用可否と料金はプランに従います。",
 		"cliAccountApi": "API 認証が有効です。サブスクリプションの上限ではなく API 料金が適用されます。",
 		"cliAccountRuntime": "CLI 認証が有効です。利用量と料金は現在の設定に従います。",
 		"checkCliConnection": "CLI 接続を確認",
-		"disconnectLocalCli": "OpenScreen での選択を解除",
+		"disconnectLocalCli": "PurplePrint Studio での選択を解除",
 		"localCliDeselected": "Claude の選択を解除しました。CLI のログインは維持されます。",
 		"modelHintCli": "公式 Claude Code CLI から取得した一覧です。モデルとコンテキストの利用可否はアカウントに依存し、一部の選択肢では追加クレジットを使う場合があります。",
 		"title": "AI 設定",
@@ -442,7 +442,7 @@
 		"signInChatGPT": "ChatGPTでログイン",
 		"signInPending": "ブラウザーでログインを完了してください。接続状態は自動更新されます。",
 		"cancelSignIn": "ログインをキャンセル",
-		"subscriptionHint": "Codex CLIと対応するChatGPTプランが必要です。認証はCodexがOpenScreen専用プロファイルで管理し、APIキーやトークンはコピーしません。プランの利用制限が適用されます。"
+		"subscriptionHint": "Codex CLIと対応するChatGPTプランが必要です。認証はCodexがPurplePrint Studio専用プロファイルで管理し、APIキーやトークンはコピーしません。プランの利用制限が適用されます。"
 	},
 	"cpuCompositor": {
 		"notice": "対応 GPU がないため CPU で描画しています。再生が遅くなります。",

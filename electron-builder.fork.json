@@ -1,10 +1,10 @@
 {
 	"extends": "./electron-builder.json5",
 	"appId": "io.github.purpleprintai.openscreen-subscription",
-	"productName": "OpenScreen Subscription",
+	"productName": "PurplePrint Studio",
 	"extraMetadata": {
 		"name": "openscreen-subscription",
-		"description": "Unofficial OpenScreen fork with optional ChatGPT and local Claude integration",
+		"description": "PurplePrint Studio, an agentic film editor based on OpenScreen",
 		"author": { "name": "PurplePrintAI", "url": "https://github.com/PurplePrintAI" },
 		"homepage": "https://github.com/PurplePrintAI/openscreen-subscription",
 		"repository": {
@@ -15,18 +15,18 @@
 	"publish": { "provider": "github", "owner": "PurplePrintAI", "repo": "openscreen-subscription" },
 	"win": {
 		"target": ["nsis"],
-		"artifactName": "OpenScreen-Subscription-${version}-Windows-x64-Setup.${ext}"
+		"artifactName": "PurplePrint-Studio-${version}-Windows-x64-Setup.${ext}"
 	},
 	"mac": {
 		"target": ["dmg"],
-		"artifactName": "OpenScreen-Subscription-${version}-macOS-${arch}.${ext}"
+		"artifactName": "PurplePrint-Studio-${version}-macOS-${arch}.${ext}"
 	},
 	"nsis": {
 		"oneClick": false,
 		"allowToChangeInstallationDirectory": true,
 		"createStartMenuShortcut": true,
 		"createDesktopShortcut": false,
-		"shortcutName": "OpenScreen Subscription"
+		"shortcutName": "PurplePrint Studio"
 	},
 	"extraResources": [
 		{ "from": "FORK.md", "to": "FORK.md" },

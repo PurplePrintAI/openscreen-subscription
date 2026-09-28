@@ -45,7 +45,7 @@
 		"cameraCaptureUnavailable": "Không thể mở máy ảnh. Đang ghi mà không có máy ảnh.",
 		"microphoneDefaulted": "Không xác định được micrô đã chọn. Đang ghi từ đầu vào mặc định.",
 		"permissionDenied": "Quyền ghi hình bị từ chối. Vui lòng cho phép ghi màn hình.",
-		"accessibilityAllowAndRetry": "Cho phép OpenScreen truy cập Trợ năng, sau đó nhấn ghi lại để bắt đầu đếm ngược.",
+		"accessibilityAllowAndRetry": "Cho phép PurplePrint Studio truy cập Trợ năng, sau đó nhấn ghi lại để bắt đầu đếm ngược.",
 		"selectSource": "Vui lòng chọn một nguồn để ghi"
 	},
 	"emptyState": {
@@ -273,7 +273,7 @@
 			"disclaimer": "Bản chép lời video sẽ được gửi đến nhà cung cấp bạn chọn. Không có gì được chia sẻ cho đến khi bạn kết nối một nhà cung cấp."
 		},
 		"authorUser": "Bạn",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "PurplePrint Studio",
 		"rewindToMessage": "Tua lại đến tin nhắn này",
 		"copyMessage": "Sao chép tin nhắn",
 		"copiedToClipboard": "Đã sao chép vào bộ nhớ tạm",
@@ -402,12 +402,12 @@
 		"enterCustomModel": "Nhập ID mô hình",
 		"chooseCatalogModel": "Chọn từ danh mục",
 		"pillLocalCli": "CLI cục bộ",
-		"localCliHint": "Đăng nhập qua CLI Claude Code chính thức. CLI quản lý xác thực và dùng gói đăng ký, khóa API hoặc tài khoản nhà cung cấp hiện tại. OpenScreen không lưu hay thay đổi thông tin xác thực này.",
+		"localCliHint": "Đăng nhập qua CLI Claude Code chính thức. CLI quản lý xác thực và dùng gói đăng ký, khóa API hoặc tài khoản nhà cung cấp hiện tại. PurplePrint Studio không lưu hay thay đổi thông tin xác thực này.",
 		"cliAccountSubscription": "Gói Claude: {{plan}}. Quyền dùng mô hình và thanh toán theo gói của bạn.",
 		"cliAccountApi": "Đang xác thực bằng API. Áp dụng phí API, không dùng hạn mức đăng ký.",
 		"cliAccountRuntime": "CLI đã xác thực. Mức sử dụng và thanh toán theo cấu hình hiện tại.",
 		"checkCliConnection": "Kiểm tra kết nối CLI",
-		"disconnectLocalCli": "Ngừng sử dụng trong OpenScreen",
+		"disconnectLocalCli": "Ngừng sử dụng trong PurplePrint Studio",
 		"localCliDeselected": "Đã bỏ chọn Claude. Tài khoản CLI vẫn đăng nhập.",
 		"modelHintCli": "Danh sách lấy từ CLI Claude Code chính thức. Quyền dùng mô hình và ngữ cảnh phụ thuộc tài khoản; một số tùy chọn có thể dùng tín dụng sử dụng.",
 		"title": "Cài đặt AI",
@@ -442,7 +442,7 @@
 		"signInChatGPT": "Đăng nhập bằng ChatGPT",
 		"signInPending": "Hoàn tất đăng nhập trong trình duyệt. Trạng thái sẽ tự cập nhật.",
 		"cancelSignIn": "Hủy đăng nhập",
-		"subscriptionHint": "Cần Codex CLI và gói ChatGPT phù hợp. Codex quản lý đăng nhập trong hồ sơ riêng của OpenScreen, không sao chép khóa API hay token. Áp dụng giới hạn gói đăng ký."
+		"subscriptionHint": "Cần Codex CLI và gói ChatGPT phù hợp. Codex quản lý đăng nhập trong hồ sơ riêng của PurplePrint Studio, không sao chép khóa API hay token. Áp dụng giới hạn gói đăng ký."
 	},
 	"cpuCompositor": {
 		"notice": "Không có GPU tương thích — kết xuất trên CPU nên phát lại chậm hơn.",

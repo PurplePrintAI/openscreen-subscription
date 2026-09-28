@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { getConfig } from "app-builder-lib/out/util/config/config";
 import { describe, expect, it } from "vitest";
@@ -5,7 +6,9 @@ import { describe, expect, it } from "vitest";
 describe("fork release identity", () => {
 	it("keeps installation and update identity separate from upstream", async () => {
 		const config = await getConfig(process.cwd(), path.resolve("electron-builder.fork.json"), null);
-		expect(config.appId).not.toBe("com.etiennelescot.openscreen");
+		// The technical ID and profile name stay stable across the visible rebrand.
+		expect(config.appId).toBe("io.github.purpleprintai.openscreen-subscription");
+		expect(config.productName).toBe("PurplePrint Studio");
 		expect(config.extraMetadata?.name).toBe("openscreen-subscription");
 		expect(config.extraMetadata?.author).toEqual({
 			name: "PurplePrintAI",
@@ -18,6 +21,7 @@ describe("fork release identity", () => {
 			repo: "openscreen-subscription",
 		});
 		expect(config.nsis?.createStartMenuShortcut).toBe(true);
+		expect(config.nsis?.shortcutName).toBe("PurplePrint Studio");
 		const targets = (config.extraResources as Array<{ to: string }>).map((entry) => entry.to);
 		// Duplicate resource targets race in copyFile on Windows.
 		expect(new Set(targets).size).toBe(targets.length);
@@ -29,5 +33,9 @@ describe("fork release identity", () => {
 				"FORK-UPSTREAM-REVIEW.md",
 			]),
 		);
+		const macGuide = fs.readFileSync(path.resolve("MACOS-INSTALLATION.md"), "utf8");
+		expect(macGuide).toContain(`# ${config.productName} on macOS`);
+		expect(macGuide).toContain(`drag **${config.productName}** to **Applications**`);
+		expect(macGuide).not.toContain("OpenScreen Subscription");
 	});
 });

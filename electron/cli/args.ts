@@ -61,7 +61,7 @@ const SUBCOMMANDS = new Set([
 	"-h",
 ]);
 
-export const CLI_USAGE = `OpenScreen CLI
+export const CLI_USAGE = `PurplePrint Studio CLI (openscreen command)
 
 Usage:
   openscreen export <project.openscreen> [options]   Render a project to MP4/GIF

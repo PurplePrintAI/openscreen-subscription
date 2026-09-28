@@ -39,6 +39,7 @@ const recorderState = vi.hoisted(() => ({
 		recording: false,
 		paused: false,
 		saving: false,
+		starting: false,
 		elapsedSeconds: 0,
 		toggleRecording: vi.fn(),
 		togglePaused: vi.fn(),
@@ -143,6 +144,7 @@ vi.mock("@/contexts/I18nContext", () => ({
 			"recording.selectSource": "Please select a source to record",
 			"recording.systemPicker": "Your system will ask what to share",
 			"recording.inProgress": "Recording",
+			"recording.starting": "Starting…",
 			"tooltips.useVerticalTray": "Use vertical tray",
 			"tooltips.useHorizontalTray": "Use horizontal tray",
 			"audio.enableSystemAudio": "Enable system audio",
@@ -177,12 +179,12 @@ vi.mock("@/contexts/I18nContext", () => ({
 			language: "Language",
 			"systemLanguagePrompt.title": "Use your system language?",
 			"systemLanguagePrompt.description":
-				"We detected English as your system language. Do you want to switch OpenScreen to English?",
+				"We detected English as your system language. Do you want to switch PurplePrint Studio to English?",
 			"systemLanguagePrompt.keepDefault": "Keep current language",
 			"systemLanguagePrompt.switch": "Switch to English",
 			"softwareEncoderFallback.title": "Switched to software encoding",
 			"softwareEncoderFallback.description":
-				"The default GPU encoder failed to start, so OpenScreen fell back to software H.264 encoding. Recording should continue as normal, but CPU usage may be higher.",
+				"The default GPU encoder failed to start, so PurplePrint Studio fell back to software H.264 encoding. Recording should continue as normal, but CPU usage may be higher.",
 			"softwareEncoderFallback.dismiss": "Got it",
 			"softwareEncoderFallback.dontShowAgain": "Don't show again",
 		};
@@ -290,6 +292,7 @@ function resetLaunchMocks() {
 	recorderState.value.softwareEncoderFallbackNoticeVisible = false;
 	recorderState.value.dismissSoftwareEncoderFallbackNotice.mockClear();
 	recorderState.value.recording = false;
+	recorderState.value.starting = false;
 	recorderState.value.microphoneEnabled = false;
 	recorderState.value.setMicrophoneEnabled.mockClear();
 	recorderState.value.setMicrophoneDeviceId.mockClear();
@@ -335,6 +338,17 @@ describe("LaunchWindow record button", () => {
 		await waitFor(() => {
 			expect(window.electronAPI.openSourceSelector).toHaveBeenCalledTimes(1);
 		});
+		expect(recorderState.value.toggleRecording).not.toHaveBeenCalled();
+	});
+
+	it("shows and disables the Record control while native capture is starting", async () => {
+		recorderState.value.starting = true;
+		renderLaunchWindow();
+		const recordButton = await screen.findByTestId("launch-record-button");
+		expect(recordButton).toBeDisabled();
+		expect(recordButton).toHaveAttribute("title", "Starting…");
+		expect(screen.getByText("Starting…")).toBeInTheDocument();
+		fireEvent.click(recordButton);
 		expect(recorderState.value.toggleRecording).not.toHaveBeenCalled();
 	});
 

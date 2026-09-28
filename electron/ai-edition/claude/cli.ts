@@ -368,12 +368,12 @@ export class ClaudeCli {
 							)
 						) {
 							throw new Error(
-								"Claude enabled tools outside the OpenScreen editor. Check your CLI managed configuration.",
+								"Claude enabled tools outside the PurplePrint Studio editor. Check your CLI managed configuration.",
 							);
 						}
 						if (expectedTools.some((name) => !(event.tools as unknown[]).includes(name))) {
 							throw new Error(
-								"Claude could not load the OpenScreen editor tools. Check your CLI MCP policy and connection.",
+								"Claude could not load the PurplePrint Studio editor tools. Check your CLI MCP policy and connection.",
 							);
 						}
 					}

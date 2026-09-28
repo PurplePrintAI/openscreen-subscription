@@ -4,6 +4,7 @@ import {
 	type AboutFacts,
 	COPYRIGHT,
 	formatAboutDetail,
+	PRODUCT_NAME,
 	usesNativeAboutPanel,
 	WEBSITE_URL,
 } from "./about";
@@ -22,6 +23,11 @@ function facts(overrides: Partial<AboutFacts> = {}): AboutFacts {
 }
 
 describe("formatAboutDetail", () => {
+	it("uses the Studio display identity without dropping upstream provenance", () => {
+		expect(PRODUCT_NAME).toBe("PurplePrint Studio");
+		expect(formatAboutDetail(facts())).toContain("Unofficial fork of getopenscreen/openscreen");
+	});
+
 	it("lays the runtime, the install and the project out one per line", () => {
 		expect(formatAboutDetail(facts())).toBe(
 			[

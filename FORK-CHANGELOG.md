@@ -1,4 +1,4 @@
-# OpenScreen Subscription fork changelog
+# PurplePrint Studio fork changelog
 
 This file tracks changes made by the unofficial
 [PurplePrintAI/openscreen-subscription](https://github.com/PurplePrintAI/openscreen-subscription)
@@ -16,6 +16,84 @@ see [FORK.md](FORK.md).
 
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
+
+## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.11` candidate)
+
+- Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet
+  accents, typography hierarchy and product mark across the editor and capture
+  entry surfaces. Recording and semantic status colors retain their meanings.
+- Renames visible app, installer, Start menu and macOS package labels to
+  PurplePrint Studio. The technical app ID, data profile, `.openscreen` format,
+  CLI command and GitHub update origin stay stable for compatibility.
+- Keeps upstream attribution explicit. This work does not add Design Coach/MCP
+  integration or claim GraphOS runtime integration.
+- Before live installation, the unsigned Windows NSIS package was smoke-tested
+  with an isolated profile. Packaged H.264 import, editor launch and MP4 export
+  passed with synthetic media.
+- An isolated profile created by the installed `.7` fork retained its project,
+  media clip, light theme and preferences when opened by the Studio package;
+  the old project exported a decodable MP4. A packaged Windows WGC window
+  capture of a generated, non-user-content target also reopened and exported.
+  This exercised native capture with automated control. On the installed `.8`
+  app, the owner separately confirmed that a physical mouse click on the HUD's
+  Screen button opened the source selector. The owner then selected a source,
+  recorded six seconds, stopped from the HUD and opened the saved recording in
+  Studio. A user-driven export remains unverified.
+- Fixes the packaged audio-demuxer WASM URL used by automatic transcription.
+  The installed `.8` opened a silent recording but showed a transient
+  "Failed to fetch" transcription error because this URL resolved outside the
+  packaged `dist/wasm` directory. After the `.9` upgrade, the owner recorded
+  another silent clip without the error toast; its new project persisted a
+  `no-audio` verdict and the owner exported an MP4 successfully.
+- With the owner's approval, the `.8` NSIS installer upgraded the existing
+  per-user `.7` registration. It removed the old executable, installed Studio
+  in a product-named child folder beneath the prior custom location and replaced
+  the Start-menu shortcut. A local backup was verified before installation;
+  three existing project files and the AI configuration retained their hashes.
+  Studio launched using the existing locale. The installed `.8` binary loaded
+  an isolated copy of all three real project documents (three assets and three
+  clips) and opened the editor without emitting their contents. The live
+  profile was not used for this project-loading test; private footage was not
+  exported.
+- Builds Apple Silicon and Intel macOS DMGs in
+  [the fork's validation workflow](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36320426373).
+  Both passed architecture, native payload, bundle ID, ad-hoc signature, CLI
+  boot and mounted-DMG checks. The bundled installation guide uses the Studio
+  name and links Apple's current per-app security procedure. A real Mac record →
+  edit → export pass, Developer ID signing and notarization remain release
+  gates. No Studio release has been published.
+- Advances the unpublished candidate to `1.10.0-subscription.9`. The `.8`
+  candidate refreshed the Nix dependency hash and checked the rebranded CLI
+  banner in macOS packaging. The unsigned `.9` Windows NSIS installer was built
+  and its packaged WASM path checked, then installed on the owner's PC after a
+  verified backup. Nine installed payload files matched the `.9` build, the
+  registered version was `.9`, and the Start-menu shortcut kept its target.
+  This developer PC
+  lacked `libclang.dll` for a fresh compositor rebuild, so packaging reused the
+  verified `.8` compositor binary with the same SHA-256; the WGC helper was
+  rebuilt. [macOS `.9` CI](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36358715037)
+  built Apple Silicon and Intel DMGs and passed payload, bundle identity,
+  architecture, ad-hoc signature structure, CLI boot and mounted-DMG checks.
+  A real Mac record → edit → export pass and notarization remain unverified.
+- Advances the Windows source candidate to `1.10.0-subscription.10`. Update
+  discovery now reads published releases in the installed `subscription`
+  prerelease channel; GitHub's `/releases/latest` endpoint returned 404 while
+  the fork had only prereleases. Drafts and unrelated channels are ignored,
+  versions are compared semantically, and release URLs remain restricted to
+  this fork. A clean Windows packaging workflow rebuilds the native helpers
+  and verifies the installer without publishing it. The Windows speech runtime
+  is pinned to a checksum-verified artifact built by this fork rather than an
+  upstream workflow artifact.
+- The `.10` clean Windows package passed CI and was installed locally after a
+  verified `.9` backup. The owner reported a first recording attempt where the
+  three-second countdown ended but native capture had not yet acknowledged
+  startup; a second click received "already running". Retrying later recorded
+  and exported MP4. The `.11` candidate blocks overlapping start requests and
+  shows a localized "Starting…" spinner while waiting for the native helper.
+  The clean `.11` Windows package passed CI and was installed on the owner's PC
+  after a verified `.10` backup. The owner confirmed a successful test recording,
+  MP4 export and an installed-app "up to date" check. A real future-version
+  updater download/install remains unverified; `.11` is not published.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 

@@ -57,6 +57,7 @@ type UseScreenRecorderReturn = {
 	recording: boolean;
 	paused: boolean;
 	saving: boolean;
+	starting: boolean;
 	elapsedSeconds: number;
 	toggleRecording: () => void;
 	/** Starts recording with no countdown overlay. Used by the headless CLI runner. */
@@ -208,6 +209,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const [recording, setRecording] = useState(false);
 	const [paused, setPaused] = useState(false);
 	const [saving, setSaving] = useState(false);
+	const [starting, setStarting] = useState(false);
 	const [elapsedSeconds, setElapsedSeconds] = useState(0);
 	const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
 	const [microphoneDeviceId, setMicrophoneDeviceId] = useState<string | undefined>(undefined);
@@ -271,6 +273,10 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	const allowAutoFinalize = useRef(false);
 	const discardRecordingId = useRef<number | null>(null);
 	const restarting = useRef(false);
+	// A native helper can take seconds to acknowledge Start. During that gap the
+	// countdown is gone but `recording` is still false; a second click must not
+	// issue another start IPC against the first helper process.
+	const startingRecording = useRef(false);
 	const countdownRunId = useRef(0);
 	const [countdownActive, setCountdownActive] = useState(false);
 	const webcamReady = useRef(false);
@@ -1509,7 +1515,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	};
 
 	const startRecordCountdown = async () => {
-		if (countdownActive || recording) {
+		if (countdownActive || recording || startingRecording.current) {
 			return;
 		}
 
@@ -1654,6 +1660,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		countdownRunToken?: number,
 		preparedRecordingId?: number | null,
 	) => {
+		if (startingRecording.current) return;
+		startingRecording.current = true;
+		setStarting(true);
 		try {
 			if (!isCountdownRunActive(countdownRunToken)) {
 				teardownMedia();
@@ -1957,6 +1966,9 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 			screenRecorder.current = null;
 			webcamRecorder.current = null;
 			teardownMedia();
+		} finally {
+			startingRecording.current = false;
+			setStarting(false);
 		}
 	};
 
@@ -2114,6 +2126,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 	};
 
 	const toggleRecording = () => {
+		if (startingRecording.current) return;
 		if (recording) {
 			stopRecording.current();
 			return;
@@ -2276,6 +2289,7 @@ export function useScreenRecorder(): UseScreenRecorderReturn {
 		recording,
 		paused,
 		saving,
+		starting,
 		elapsedSeconds,
 		toggleRecording,
 		startRecordingImmediately: () => startRecording(),

@@ -45,7 +45,7 @@
 		"cameraCaptureUnavailable": "تعذّر فتح الكاميرا. يجري التسجيل بدون كاميرا.",
 		"microphoneDefaulted": "تعذّر تحديد الميكروفون المحدَّد؛ يجري التسجيل من الإدخال الافتراضي.",
 		"permissionDenied": "تم رفض إذن التسجيل. يرجى السماح بتسجيل الشاشة.",
-		"accessibilityAllowAndRetry": "اسمح بوصول تسهيلات الاستخدام لـ OpenScreen، ثم اضغط على التسجيل مرة أخرى لبدء العد التنازلي.",
+		"accessibilityAllowAndRetry": "اسمح بوصول تسهيلات الاستخدام لـ PurplePrint Studio، ثم اضغط على التسجيل مرة أخرى لبدء العد التنازلي.",
 		"selectSource": "يرجى تحديد مصدر للتسجيل"
 	},
 	"emptyState": {
@@ -273,7 +273,7 @@
 			"disclaimer": "سيُرسَل نصّ فيديوك إلى المزوّد الذي تختاره. لا يُشارَك شيء قبل أن تربط مزوّداً."
 		},
 		"authorUser": "أنت",
-		"authorAssistant": "OpenScreen",
+		"authorAssistant": "PurplePrint Studio",
 		"rewindToMessage": "إعادة الضبط إلى هذه الرسالة",
 		"copyMessage": "نسخ الرسالة",
 		"copiedToClipboard": "تم النسخ إلى الحافظة",
@@ -402,12 +402,12 @@
 		"enterCustomModel": "إدخال معرّف النموذج",
 		"chooseCatalogModel": "الاختيار من الكتالوج",
 		"pillLocalCli": "واجهة CLI محلية",
-		"localCliHint": "سجّل الدخول عبر واجهة Claude Code CLI الرسمية. تتولى المصادقة وتستخدم الاشتراك أو مفتاح API أو حساب المزوّد النشط. لا يخزّن OpenScreen بيانات الاعتماد هذه ولا يغيّرها.",
+		"localCliHint": "سجّل الدخول عبر واجهة Claude Code CLI الرسمية. تتولى المصادقة وتستخدم الاشتراك أو مفتاح API أو حساب المزوّد النشط. لا يخزّن PurplePrint Studio بيانات الاعتماد هذه ولا يغيّرها.",
 		"cliAccountSubscription": "اشتراك Claude: {{plan}}. يتبع الوصول إلى النماذج والفوترة خطتك.",
 		"cliAccountApi": "مصادقة API نشطة. تُطبّق رسوم API وليس حدود الاشتراك.",
 		"cliAccountRuntime": "تمت مصادقة CLI. يتبع الاستخدام والفوترة إعداداتها الحالية.",
 		"checkCliConnection": "التحقق من اتصال CLI",
-		"disconnectLocalCli": "إيقاف الاستخدام في OpenScreen",
+		"disconnectLocalCli": "إيقاف الاستخدام في PurplePrint Studio",
 		"localCliDeselected": "تم إلغاء اختيار Claude. يبقى حساب CLI مسجّل الدخول.",
 		"modelHintCli": "القائمة من واجهة Claude Code CLI الرسمية. يعتمد الوصول إلى النماذج والسياق على حسابك؛ قد تستخدم بعض الخيارات أرصدة الاستخدام.",
 		"title": "إعدادات الذكاء الاصطناعي",
@@ -442,7 +442,7 @@
 		"signInChatGPT": "تسجيل الدخول باستخدام ChatGPT",
 		"signInPending": "أكمل تسجيل الدخول في المتصفح. يتم تحديث الحالة تلقائيًا.",
 		"cancelSignIn": "إلغاء تسجيل الدخول",
-		"subscriptionHint": "يتطلب Codex CLI وخطة ChatGPT مؤهلة. يدير Codex المصادقة في ملف خاص بـ OpenScreen دون نسخ مفاتيح API أو الرموز. تسري حدود خطتك."
+		"subscriptionHint": "يتطلب Codex CLI وخطة ChatGPT مؤهلة. يدير Codex المصادقة في ملف خاص بـ PurplePrint Studio دون نسخ مفاتيح API أو الرموز. تسري حدود خطتك."
 	},
 	"cpuCompositor": {
 		"notice": "لا توجد بطاقة رسومات متوافقة — تتم المعالجة على المعالج، لذا يكون التشغيل أبطأ.",

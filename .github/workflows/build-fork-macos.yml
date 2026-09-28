@@ -1,4 +1,4 @@
-name: Build OpenScreen Subscription for macOS
+name: Build PurplePrint Studio for macOS
 
 on:
   workflow_dispatch:
@@ -98,8 +98,8 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="$(node -p 'require("./package.json").version')"
-          APP="$(find "release/${VERSION}" -maxdepth 3 -name 'OpenScreen Subscription.app' -type d -print -quit)"
-          [ -n "$APP" ] || { echo "::error::OpenScreen Subscription.app was not packaged"; exit 1; }
+          APP="$(find "release/${VERSION}" -maxdepth 3 -name 'PurplePrint Studio.app' -type d -print -quit)"
+          [ -n "$APP" ] || { echo "::error::PurplePrint Studio.app was not packaged"; exit 1; }
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "path=${APP}" >> "$GITHUB_OUTPUT"
 
@@ -114,7 +114,7 @@ jobs:
         run: |
           set -euo pipefail
           APP="${{ steps.app.outputs.path }}"
-          BIN="${APP}/Contents/MacOS/OpenScreen Subscription"
+          BIN="${APP}/Contents/MacOS/PurplePrint Studio"
           RESOURCES="${APP}/Contents/Resources"
           NATIVE="${RESOURCES}/electron/native/bin/darwin-${{ matrix.arch }}"
 
@@ -147,9 +147,9 @@ jobs:
       - name: Smoke-test packaged CLI boot
         run: |
           set -euo pipefail
-          BIN="${{ steps.app.outputs.path }}/Contents/MacOS/OpenScreen Subscription"
+          BIN="${{ steps.app.outputs.path }}/Contents/MacOS/PurplePrint Studio"
           "$BIN" help > cli-help.txt
-          grep -q "OpenScreen CLI" cli-help.txt
+          grep -Fq "PurplePrint Studio CLI (openscreen command)" cli-help.txt
 
       - name: Create DMG
         id: dmg
@@ -160,7 +160,7 @@ jobs:
             arm64) LABEL="Apple-Silicon" ;;
             x64) LABEL="Intel" ;;
           esac
-          OUT="release/${VERSION}/OpenScreen-Subscription-${VERSION}-macOS-${LABEL}.dmg"
+          OUT="release/${VERSION}/PurplePrint-Studio-${VERSION}-macOS-${LABEL}.dmg"
           STAGING="release/${VERSION}/dmg-${{ matrix.arch }}"
           rm -rf "$STAGING" "$OUT"
           mkdir -p "$STAGING"
@@ -168,7 +168,7 @@ jobs:
           ln -s /Applications "$STAGING/Applications"
           hdiutil create \
             -srcfolder "$STAGING" \
-            -volname "OpenScreen Subscription" \
+            -volname "PurplePrint Studio" \
             -fs HFS+ \
             -format UDBZ \
             "$OUT"
@@ -185,7 +185,7 @@ jobs:
           }
           trap cleanup EXIT
           hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT" "${{ steps.dmg.outputs.path }}" >/dev/null
-          APP="${MOUNT}/OpenScreen Subscription.app"
+          APP="${MOUNT}/PurplePrint Studio.app"
           test -d "$APP"
           test -L "${MOUNT}/Applications"
           codesign --verify --deep --strict "$APP"
@@ -204,7 +204,7 @@ jobs:
           import { readFileSync, writeFileSync } from "node:fs";
           const bytes = readFileSync(process.env.DMG);
           const report = {
-            product: "OpenScreen Subscription",
+            product: "PurplePrint Studio",
             version: process.env.VERSION,
             architecture: process.env.ARCH,
             bundleId: "io.github.purpleprintai.openscreen-subscription",

@@ -1,5 +1,8 @@
-const LATEST_RELEASE_API =
-	"https://api.github.com/repos/PurplePrintAI/openscreen-subscription/releases/latest";
+// GitHub's /releases/latest omits prereleases. This fork currently publishes
+// subscription.N builds as prereleases, so that endpoint returns 404 even when
+// the app has an update feed. Inspect the published releases instead.
+const RELEASES_API =
+	"https://api.github.com/repos/PurplePrintAI/openscreen-subscription/releases?per_page=100";
 const OFFICIAL_RELEASE_PREFIX = "/PurplePrintAI/openscreen-subscription/releases/tag/";
 
 interface ReleaseResponse {
@@ -124,7 +127,7 @@ export async function checkLatestRelease(options: {
 	fetchLatest: FetchLatestRelease;
 	signal?: AbortSignal;
 }): Promise<UpdateCheckResult> {
-	const response = await options.fetchLatest(LATEST_RELEASE_API, {
+	const response = await options.fetchLatest(RELEASES_API, {
 		headers: {
 			Accept: "application/vnd.github+json",
 			"X-GitHub-Api-Version": "2022-11-28",
@@ -134,32 +137,38 @@ export async function checkLatestRelease(options: {
 	if (!response.ok) throw new Error(`GitHub release check failed (${response.status})`);
 
 	const payload = await response.json();
-	if (
-		typeof payload !== "object" ||
-		payload === null ||
-		typeof (payload as Record<string, unknown>).tag_name !== "string" ||
-		typeof (payload as Record<string, unknown>).html_url !== "string" ||
-		(payload as Record<string, unknown>).draft !== false ||
-		(payload as Record<string, unknown>).prerelease !== false
-	) {
-		throw new Error("invalid GitHub release response");
-	}
-	const release = payload as { tag_name: string; html_url: string };
+	if (!Array.isArray(payload)) throw new Error("invalid GitHub release response");
 	const current = parseVersion(options.currentVersion);
-	const latest = parseVersion(release.tag_name);
-	const comparison = compareVersions(latest.normalized, current.normalized);
-	if (comparison <= 0) {
+	const channel = current.prerelease[0] ?? null;
+	let latest: { version: string; tag: string; url: string } | null = null;
+	for (const entry of payload) {
+		if (typeof entry !== "object" || entry === null || entry.draft !== false) continue;
+		if (typeof entry.tag_name !== "string" || typeof entry.html_url !== "string") continue;
+		let version: ParsedVersion;
+		try {
+			version = parseVersion(entry.tag_name);
+		} catch {
+			continue;
+		}
+		// Match electron-updater's GitHub channel: stable installs stay stable;
+		// subscription prereleases only advance within the subscription channel.
+		if ((version.prerelease[0] ?? null) !== channel) continue;
+		if (!latest || compareVersions(version.normalized, latest.version) > 0) {
+			latest = { version: version.normalized, tag: entry.tag_name, url: entry.html_url };
+		}
+	}
+	if (!latest || compareVersions(latest.version, current.normalized) <= 0) {
 		return {
 			kind: "current",
 			currentVersion: current.normalized,
-			latestVersion: latest.normalized,
+			latestVersion: latest?.version ?? current.normalized,
 		};
 	}
 
 	return {
 		kind: "available",
 		currentVersion: current.normalized,
-		latestVersion: latest.normalized,
-		releaseUrl: officialReleaseUrl(release.html_url, release.tag_name),
+		latestVersion: latest.version,
+		releaseUrl: officialReleaseUrl(latest.url, latest.tag),
 	};
 }

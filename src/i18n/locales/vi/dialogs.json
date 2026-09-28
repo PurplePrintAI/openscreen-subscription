@@ -79,12 +79,12 @@
 		"saveGif": "Lưu GIF đã xuất",
 		"saveVideo": "Lưu Video đã xuất",
 		"selectVideo": "Chọn tệp video",
-		"saveProject": "Lưu dự án OpenScreen",
-		"openProject": "Mở dự án OpenScreen",
+		"saveProject": "Lưu dự án PurplePrint Studio",
+		"openProject": "Mở dự án PurplePrint Studio",
 		"gifImage": "Hình ảnh GIF",
 		"mp4Video": "Video MP4",
 		"videoFiles": "Tệp Video",
-		"openscreenProject": "Dự án OpenScreen",
+		"openscreenProject": "Dự án PurplePrint Studio",
 		"allFiles": "Tất cả các tệp"
 	}
 }
