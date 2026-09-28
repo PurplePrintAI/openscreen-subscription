@@ -17,7 +17,7 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
-## Unreleased — PurplePrint Studio identity (`1.10.0-subscription.11` candidate)
+## 1.10.0-subscription.11 — 2026-09-28 (Windows prerelease)
 
 - Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet
   accents, typography hierarchy and product mark across the editor and capture
@@ -61,7 +61,7 @@ For the dated review of newer upstream changes, see
   boot and mounted-DMG checks. The bundled installation guide uses the Studio
   name and links Apple's current per-app security procedure. A real Mac record →
   edit → export pass, Developer ID signing and notarization remain release
-  gates. No Studio release has been published.
+  gates. This `.11` distribution does not include a macOS installer.
 - Advances the unpublished candidate to `1.10.0-subscription.9`. The `.8`
   candidate refreshed the Nix dependency hash and checked the rebranded CLI
   banner in macOS packaging. The unsigned `.9` Windows NSIS installer was built
@@ -88,12 +88,12 @@ For the dated review of newer upstream changes, see
   verified `.9` backup. The owner reported a first recording attempt where the
   three-second countdown ended but native capture had not yet acknowledged
   startup; a second click received "already running". Retrying later recorded
-  and exported MP4. The `.11` candidate blocks overlapping start requests and
+  and exported MP4. `.11` blocks overlapping start requests and
   shows a localized "Starting…" spinner while waiting for the native helper.
   The clean `.11` Windows package passed CI and was installed on the owner's PC
   after a verified `.10` backup. The owner confirmed a successful test recording,
   MP4 export and an installed-app "up to date" check. A real future-version
-  updater download/install remains unverified; `.11` is not published.
+  updater download/install remains unverified. This `.11` release is Windows-only.
 
 ## 1.10.0-subscription.7 — 2026-09-27
 
