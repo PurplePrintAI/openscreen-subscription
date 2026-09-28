@@ -285,6 +285,7 @@ export const HudRecordButton = memo(function HudRecordButton({
 	recording,
 	paused,
 	saving,
+	starting,
 	elapsedSeconds,
 	label,
 	savingLabel,
@@ -293,18 +294,20 @@ export const HudRecordButton = memo(function HudRecordButton({
 	recording: boolean;
 	paused: boolean;
 	saving: boolean;
+	starting: boolean;
 	elapsedSeconds: number;
 	label: string;
 	savingLabel: string;
 	onClick: () => void;
 }) {
+	const busy = saving || starting;
 	return (
 		<Tooltip content={label}>
 			<button
 				data-testid="launch-record-button"
-				disabled={saving}
-				className={`flex h-[34px] shrink-0 items-center justify-center rounded-[17px] border-0 transition-all duration-150 ${recording || saving ? "min-w-[78px] px-3" : "w-[34px]"} ${styles.electronNoDrag} ${
-					saving
+				disabled={busy}
+				className={`flex h-[34px] shrink-0 items-center justify-center rounded-[17px] border-0 transition-all duration-150 ${recording || busy ? "min-w-[78px] px-3" : "w-[34px]"} ${styles.electronNoDrag} ${
+					busy
 						? "bg-transparent opacity-60 cursor-not-allowed"
 						: "bg-transparent hover:bg-[rgba(248,113,113,0.16)]"
 				}`}
@@ -313,8 +316,8 @@ export const HudRecordButton = memo(function HudRecordButton({
 				aria-label={label}
 				style={{ flex: "0 0 auto" }}
 			>
-				<div className={`flex items-center justify-center ${recording || saving ? "gap-1.5" : ""}`}>
-					{saving ? (
+				<div className={`flex items-center justify-center ${recording || busy ? "gap-1.5" : ""}`}>
+					{busy ? (
 						<div className="animate-spin flex items-center justify-center">
 							{getIcon("spinner", "text-[#f87171]")}
 						</div>
@@ -324,8 +327,10 @@ export const HudRecordButton = memo(function HudRecordButton({
 							className={paused ? "text-amber-400" : "text-[#f87171]"}
 						/>
 					)}
-					{saving && (
-						<span className="text-[#f87171] text-xs font-semibold select-none">{savingLabel}</span>
+					{busy && (
+						<span className="text-[#f87171] text-xs font-semibold select-none">
+							{saving ? savingLabel : label}
+						</span>
 					)}
 					{recording && (
 						<span

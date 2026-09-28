@@ -84,6 +84,7 @@ export function LaunchWindow() {
 		recording,
 		paused,
 		saving,
+		starting,
 		elapsedSeconds,
 		toggleRecording,
 		togglePaused,
@@ -139,7 +140,7 @@ export function LaunchWindow() {
 
 	const isVertical = trayLayout === "vertical";
 	const isPopoverOpen = isLanguageMenuOpen || isDeviceSettingsOpen;
-	const controlsLocked = recording || saving;
+	const controlsLocked = recording || saving || starting;
 
 	const settingsTriggerRef = useRef<HTMLButtonElement | null>(null);
 	const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -599,7 +600,7 @@ export function LaunchWindow() {
 
 	const handleRecordButtonClick = useCallback(
 		(sourceSelectedOverride?: boolean) => {
-			if (saving) {
+			if (saving || starting) {
 				return;
 			}
 			// Linux never detours through the in-app picker: there is nothing for
@@ -633,7 +634,15 @@ export function LaunchWindow() {
 
 			toggleRecording();
 		},
-		[hasSelectedSource, portalOwnsSource, openSourceSelector, recording, saving, toggleRecording],
+		[
+			hasSelectedSource,
+			portalOwnsSource,
+			openSourceSelector,
+			recording,
+			saving,
+			starting,
+			toggleRecording,
+		],
 	);
 	const handleRecordClick = useCallback(() => handleRecordButtonClick(), [handleRecordButtonClick]);
 
@@ -671,11 +680,11 @@ export function LaunchWindow() {
 		window.electronAPI?.hudOverlayClose?.();
 	}, []);
 	const openStudio = useCallback(() => {
-		if (!saving) window.electronAPI.switchToEditor();
-	}, [saving]);
+		if (!saving && !starting) window.electronAPI.switchToEditor();
+	}, [saving, starting]);
 	const openNotes = useCallback(() => {
-		if (!saving) window.electronAPI.openNotes();
-	}, [saving]);
+		if (!saving && !starting) window.electronAPI.openNotes();
+	}, [saving, starting]);
 
 	/** Switches the HUD between horizontal and vertical tray layouts. */
 	const toggleTrayLayout = useCallback(() => {
@@ -770,10 +779,10 @@ export function LaunchWindow() {
 	}, []);
 
 	const toggleLanguageMenu = useCallback(() => {
-		if (saving) return;
+		if (saving || starting) return;
 		setIsDeviceSettingsOpen(false);
 		setIsLanguageMenuOpen((open) => !open);
-	}, [saving]);
+	}, [saving, starting]);
 
 	const handleSelectLocale = useCallback(
 		(nextLocale: string) => {
@@ -871,15 +880,17 @@ export function LaunchWindow() {
 	// record will do, and the recording label stays neutral because the portal
 	// reports a KIND, never a window title. Naming a source we were never told
 	// is what put a window's name on a full-screen recording.
-	const recordLabel = saving
-		? t("recording.saving")
-		: portalOwnsSource
-			? recording
-				? t("recording.inProgress")
-				: t("recording.systemPicker")
-			: hasSelectedSource || recording
-				? selectedSource
-				: t("recording.selectSource");
+	const recordLabel = starting
+		? t("recording.starting")
+		: saving
+			? t("recording.saving")
+			: portalOwnsSource
+				? recording
+					? t("recording.inProgress")
+					: t("recording.systemPicker")
+				: hasSelectedSource || recording
+					? selectedSource
+					: t("recording.selectSource");
 
 	// Stable identity, or the panel's memo boundary would break on every parent
 	// render — including the once-a-second one during a recording.
@@ -1028,6 +1039,7 @@ export function LaunchWindow() {
 						recording={recording}
 						paused={paused}
 						saving={saving}
+						starting={starting}
 						elapsedSeconds={elapsedSeconds}
 						label={recordLabel}
 						savingLabel={t("recording.saving")}
@@ -1036,7 +1048,7 @@ export function LaunchWindow() {
 
 					{!recording && (
 						<HudStudioButton
-							disabled={saving}
+							disabled={saving || starting}
 							label={t("tooltips.openStudio")}
 							onClick={openStudio}
 						/>
@@ -1058,7 +1070,11 @@ export function LaunchWindow() {
 					)}
 
 					{!isLinuxHud && (
-						<HudNotesButton disabled={saving} label={t("tooltips.openNotes")} onClick={openNotes} />
+						<HudNotesButton
+							disabled={saving || starting}
+							label={t("tooltips.openNotes")}
+							onClick={openNotes}
+						/>
 					)}
 
 					<HudDivider vertical={isVertical} />
@@ -1072,7 +1088,7 @@ export function LaunchWindow() {
 							vertical={isVertical}
 							code={languageCode}
 							label={activeLanguageLabel}
-							disabled={saving}
+							disabled={saving || starting}
 							expanded={isLanguageMenuOpen}
 							onClick={toggleLanguageMenu}
 						/>
@@ -1081,7 +1097,7 @@ export function LaunchWindow() {
 
 						<HudWindowControls
 							vertical={isVertical}
-							disabled={saving}
+							disabled={saving || starting}
 							hideLabel={t("tooltips.hideHUD")}
 							closeLabel={t("tooltips.closeApp")}
 							onHide={sendHudOverlayHide}
@@ -1107,7 +1123,9 @@ export function LaunchWindow() {
 								// process. The recording veto is applied here because the gear is
 								// disabled mid-take but a panel already open stays mounted, and the
 								// main process refuses the check then — an offered button would be dead.
-								canCheckForUpdates={(appInfo?.canCheckForUpdates ?? false) && !recording}
+								canCheckForUpdates={
+									(appInfo?.canCheckForUpdates ?? false) && !recording && !starting
+								}
 								checkingForUpdates={isCheckingForUpdates}
 								onSelectMic={handleSelectMicDevice}
 								onSelectCamera={handleSelectCameraDevice}

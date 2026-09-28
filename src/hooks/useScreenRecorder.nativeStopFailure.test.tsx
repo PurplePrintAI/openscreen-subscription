@@ -80,6 +80,41 @@ afterEach(() => {
 });
 
 describe("useScreenRecorder native Windows stop failure", () => {
+	it("ignores a second Record click while the native helper is still starting", async () => {
+		let confirmStart: ((value: { success: true; recordingId: number }) => void) | undefined;
+		api.startNativeWindowsRecording.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					confirmStart = resolve;
+				}),
+		);
+
+		const view = renderHook(() => useScreenRecorder());
+		await act(async () => {
+			view.result.current.toggleRecording();
+		});
+		await settle(3_500);
+		expect(api.startNativeWindowsRecording).toHaveBeenCalledTimes(1);
+		expect(view.result.current.starting).toBe(true);
+
+		await act(async () => {
+			view.result.current.toggleRecording();
+		});
+		await settle(3_500);
+		expect(api.showCountdownOverlay).toHaveBeenCalledTimes(1);
+		expect(api.startNativeWindowsRecording).toHaveBeenCalledTimes(1);
+
+		const finishStart = confirmStart;
+		if (!finishStart) throw new Error("Native start was not requested");
+		await act(async () => {
+			finishStart({ success: true, recordingId: 7 });
+		});
+		await settle();
+		expect(view.result.current.recording).toBe(true);
+		expect(view.result.current.starting).toBe(false);
+		expect(toast.error).not.toHaveBeenCalled();
+	});
+
 	/**
 	 * Issue #252's second symptom. When the helper wedges, the main process
 	 * releases its handle in a `finally` regardless, so a renderer that kept its
