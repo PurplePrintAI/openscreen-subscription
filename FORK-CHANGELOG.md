@@ -17,7 +17,9 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
-## Unreleased — AI conversation persistence
+## 1.10.0-subscription.12 — Windows x64 candidate (not published)
+
+### AI conversation persistence
 
 - Saves each project's AI conversations, messages, generated-image references,
   manual compaction state and rewind checkpoints under the local Studio profile.
@@ -28,7 +30,7 @@ For the dated review of newer upstream changes, see
 - Older builds stored conversations only in memory, so chats already lost on
   restart before this change cannot be recovered.
 
-## Unreleased — ChatGPT subscription image scenes
+### ChatGPT subscription image scenes
 
 - Adds an explicit image-scene action to the AI session whenever ChatGPT
   subscription (Codex) is connected, even if conversation turns use Claude or

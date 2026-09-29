@@ -1,4 +1,4 @@
-> **PurplePrint Studio is an independent, unofficial fork of [OpenScreen](https://github.com/getopenscreen/openscreen).** This working rebrand is not an upstream release or endorsement. Published `1.10.0-subscription.*` installers still use the former OpenScreen Subscription name until a Studio build passes release validation. See [FORK.md](FORK.md) for provenance and [FORK-CHANGELOG.md](FORK-CHANGELOG.md) for changes. Use [this fork's releases](https://github.com/PurplePrintAI/openscreen-subscription/releases), not the upstream installers described later on this page.
+> **PurplePrint Studio is an independent, unofficial fork of [OpenScreen](https://github.com/getopenscreen/openscreen).** This rebrand is not an upstream release or endorsement. The published Windows `.11` installer uses the PurplePrint Studio name; earlier Mac validation builds retain the former OpenScreen Subscription name. See [FORK.md](FORK.md) for provenance and [FORK-CHANGELOG.md](FORK-CHANGELOG.md) for changes. Use [this fork's releases](https://github.com/PurplePrintAI/openscreen-subscription/releases), not the upstream installers described later on this page.
 
 <p align="center">
   <img src="public/purpleprint-studio.png" alt="PurplePrint Studio mark" width="64" />
@@ -12,7 +12,7 @@ PurplePrint Studio remains free to use. It records and edits locally; optional A
 
 ## OpenScreen upstream documentation — reference only
 
-The feature overview and installation sections below describe the upstream OpenScreen project. Its Store listings, signing claims and release links **do not apply to this fork**. [FORK.md](FORK.md) describes fork release boundaries; [MACOS-INSTALLATION.md](MACOS-INSTALLATION.md) currently documents the published packages under their former name. Studio packages still need validation.
+The feature overview and installation sections below describe the upstream OpenScreen project. Its Store listings, signing claims and release links **do not apply to this fork**. [FORK.md](FORK.md) describes fork release boundaries; [MACOS-INSTALLATION.md](MACOS-INSTALLATION.md) documents the older Mac validation packages under their former name. Future Studio candidates and Mac packages need their own validation.
 
 ### OpenScreen
 
