@@ -316,6 +316,15 @@ export interface AiEditionChatMessage {
 	 * ↩ button is shown. Matches axcut's Message.checkpointId.
 	 */
 	checkpointId?: string | null;
+	/** Main-process-owned source image for an explicitly generated still scene. */
+	generatedImagePath?: string;
+}
+
+export interface AiEditionGeneratedSceneResult {
+	imagePath: string;
+	videoPath: string;
+	userMessage: AiEditionChatMessage;
+	assistantMessage: AiEditionChatMessage;
 }
 
 export interface AiEditionChatResult {
@@ -550,7 +559,7 @@ export type NativeBridgeRequest =
 	| {
 			domain: "aiEdition";
 			action: "document.addAsset";
-			payload: { projectId: string; path: string; label?: string };
+			payload: { projectId: string; path: string; label?: string; durationSec?: number };
 			requestId?: string;
 	  }
 	| {
@@ -612,6 +621,12 @@ export type NativeBridgeRequest =
 				 * When omitted the chat runs text-only (no tools). */
 				document?: unknown;
 			};
+			requestId?: string;
+	  }
+	| {
+			domain: "aiEdition";
+			action: "image.generateScene";
+			payload: { projectId: string; sessionId: string; prompt: string };
 			requestId?: string;
 	  }
 	| {

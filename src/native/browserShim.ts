@@ -409,7 +409,7 @@ function createShimBridgeClient() {
 				saveProjectsState();
 				return Promise.resolve({ success: true });
 			},
-			addAsset: (projectId: string, path: string, label?: string) => {
+			addAsset: (projectId: string, path: string, label?: string, durationSec?: number) => {
 				const doc = documentsByProject[projectId];
 				if (!doc) return Promise.resolve({ assetId: "", document: null });
 				const assetId = `asset_${Math.random().toString(36).slice(2, 10)}`;
@@ -418,6 +418,7 @@ function createShimBridgeClient() {
 					kind: "video" as const,
 					label: label || path.split(/[\\/]/).pop() || "Recording",
 					originalPath: path,
+					...(durationSec !== undefined ? { durationSec } : {}),
 				};
 				const next: ShimDocument = {
 					...doc,

@@ -3,6 +3,7 @@ import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { type AxcutDocument, createEmptyDocument } from "../../src/lib/ai-edition/schema";
 import {
+	appendGeneratedScene,
 	createSession,
 	deleteSession,
 	listSessions,
@@ -43,6 +44,26 @@ describe("chat-service sessions", () => {
 		if (got) got.messages.push({} as never);
 		const got2 = selectSession(projectId, s.id);
 		expect(got2?.messages).toEqual([]);
+	});
+
+	it("records a generated image in its own session", () => {
+		const project = "proj_generated_scene";
+		const session = createSession(project);
+		const messages = appendGeneratedScene(
+			project,
+			session.id,
+			"A violet sphere",
+			"/tmp/source.png",
+		);
+		expect(selectSession(project, session.id)?.messages).toEqual([
+			messages.userMessage,
+			messages.assistantMessage,
+		]);
+		expect(messages.assistantMessage.generatedImagePath).toBe("/tmp/source.png");
+		expect(listSessions(project)[0].messageCount).toBe(2);
+		expect(() => appendGeneratedScene(project, "other-session", "x", "/tmp/x.png")).toThrow(
+			"unavailable",
+		);
 	});
 
 	it("selectSession returns null for an unknown sessionId", () => {

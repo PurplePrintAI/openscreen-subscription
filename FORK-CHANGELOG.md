@@ -17,6 +17,21 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
+## Unreleased — ChatGPT subscription image scenes
+
+- Adds an explicit image-scene action to the AI session whenever ChatGPT
+  subscription (Codex) is connected, even if conversation turns use Claude or
+  another provider. The user confirms each generation because it consumes
+  subscription limits. No API key is passed to the CLI, and the active chat
+  provider/model is not changed.
+- Copies the generated original image into the app-owned project media folder,
+  previews it in the conversation, and creates a five-second MP4 still clip for
+  the existing video-only Media panel. The original is kept beside the clip so
+  later scene changes can start from the full-quality image.
+- Keeps the Codex run read-only with shell, web, apps and editor tools disabled.
+  The workflow does not yet animate images or integrate Blender, Hyperframe or
+  the PurplePrint Design Coach. It is not part of the published `.11` build.
+
 ## 1.10.0-subscription.11 — 2026-09-28 (Windows prerelease)
 
 - Adopts the PurplePrint GraphOS family's neutral surfaces, restrained violet

@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Film, MessageSquare, Plus, Search, X } from "lucide-react";
+import { ArrowLeft, Check, Film, ImagePlus, MessageSquare, Plus, Search, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
@@ -689,6 +689,9 @@ function ChatStripPanel() {
 	const [activeModelCatalog, setActiveModelCatalog] = useState<AiEditionLlmModelOption[]>([]);
 	// unknown ≠ none; see chatAvailability.ts.
 	const canChat = canSendChat(llmConfig, connectedProviders);
+	// Image generation uses the separate, app-owned Codex subscription even when
+	// conversation turns use Claude or another provider.
+	const canGenerateImage = connectedProviders?.includes("codex-subscription") === true;
 	const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
 	const modelButtonRef = useRef<HTMLButtonElement | null>(null);
 	const [modelPopoverRect, setModelPopoverRect] = useState<{
@@ -820,6 +823,7 @@ function ChatStripPanel() {
 							time: m.createdAt,
 							toolCalls: m.toolCalls,
 							checkpointId: m.checkpointId ?? null,
+							generatedImagePath: m.generatedImagePath,
 						})),
 					);
 				} else {
@@ -986,6 +990,100 @@ function ChatStripPanel() {
 		}
 	};
 
+	const generateImageScene = async () => {
+		const prompt = input.trim();
+		if (!projectId || !prompt || busy || activeRunRef.current) return;
+		if (!canGenerateImage) {
+			toast.error(t("chat.imageSceneRequiresCodex"));
+			return;
+		}
+		if (!window.confirm(t("chat.imageSceneConfirm"))) return;
+		const run = { projectId, sessionId: activeSessionId, text: "", thinking: "" };
+		activeRunRef.current = run;
+		const optimisticUserId = `local_${Date.now()}_image`;
+		setInput("");
+		setBusy(true);
+		setStreamText(t("chat.imageSceneWorking"));
+		followLatestRef.current = true;
+		setMessages((previous) => [
+			...previous,
+			{
+				id: optimisticUserId,
+				role: "user",
+				content: prompt,
+				time: new Date().toISOString(),
+			},
+		]);
+		try {
+			let sessionId = activeSessionId;
+			if (!sessionId) {
+				const created = await nativeBridgeClient.aiEdition.chatCreateSession(projectId);
+				sessionId = created.id;
+				if (activeRunRef.current === run && projectIdRef.current === projectId) {
+					activeSessionIdRef.current = sessionId;
+					setSessions((previous) => [...previous, created]);
+					setActiveSessionId(sessionId);
+				}
+			}
+			run.sessionId = sessionId;
+			const generated = await nativeBridgeClient.aiEdition.generateImageScene(
+				projectId,
+				sessionId,
+				prompt,
+			);
+			if (activeRunRef.current === run && projectIdRef.current === projectId) {
+				setMessages((previous) => [
+					...previous.map((message) =>
+						message.id === optimisticUserId
+							? { ...message, id: generated.userMessage.id }
+							: message,
+					),
+					{
+						id: generated.assistantMessage.id,
+						role: "assistant",
+						content: t("chat.imageSceneCreated"),
+						time: generated.assistantMessage.createdAt,
+						generatedImagePath: generated.imagePath,
+					},
+				]);
+				void refreshSessions(projectId);
+			}
+			try {
+				if (useProjectStore.getState().projectId === projectId) {
+					await useProjectStore
+						.getState()
+						.addAsset(generated.videoPath, t("chat.imageSceneAssetLabel"), 5);
+				} else {
+					await nativeBridgeClient.aiEdition.addAsset(
+						projectId,
+						generated.videoPath,
+						t("chat.imageSceneAssetLabel"),
+						5,
+					);
+				}
+				toast.success(t("chat.imageSceneReady"));
+			} catch (error) {
+				toast.error(t("chat.imageSceneImportFailed"), {
+					description: `${error instanceof Error ? error.message : String(error)} (${generated.videoPath})`,
+				});
+			}
+		} catch (error) {
+			if (activeRunRef.current === run && projectIdRef.current === projectId) {
+				setMessages((previous) => previous.filter((message) => message.id !== optimisticUserId));
+				setInput(prompt);
+			}
+			toast.error(t("chat.imageSceneFailed"), {
+				description: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			if (activeRunRef.current === run) {
+				activeRunRef.current = null;
+				setBusy(false);
+				setStreamText("");
+			}
+		}
+	};
+
 	// Auto-send a prompt handed over by another part of the UI (e.g. the
 	// timeline's Auto-enhance → "Smart zooms + cuts with AI"). Routes through
 	// the normal send() so sessions/checkpoints/rewind all keep working; the
@@ -1044,6 +1142,7 @@ function ChatStripPanel() {
 						time: m.createdAt,
 						toolCalls: m.toolCalls,
 						checkpointId: m.checkpointId ?? null,
+						generatedImagePath: m.generatedImagePath,
 					})),
 				);
 				setInput(result.prompt);
@@ -1570,7 +1669,7 @@ function ChatStripPanel() {
 					followLatestRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
 				}}
 			>
-				{!canChat && messages.length === 0 ? (
+				{!canChat && !canGenerateImage && messages.length === 0 ? (
 					<ChatWelcome onOpenProviderSettings={openProviderSettings} />
 				) : messages.length === 0 ? (
 					<p
@@ -1582,7 +1681,7 @@ function ChatStripPanel() {
 							lineHeight: 1.5,
 						}}
 					>
-						{t("chat.emptyState")}
+						{t(!canChat ? "chat.imageScenePromptPlaceholder" : "chat.emptyState")}
 					</p>
 				) : (
 					<>
@@ -1630,15 +1729,19 @@ function ChatStripPanel() {
 			<div className={styles.chatInput}>
 				<textarea
 					placeholder={
-						canChat ? t("chat.composerPlaceholder") : t("chat.composerDisabledNoProvider")
+						canChat
+							? t("chat.composerPlaceholder")
+							: canGenerateImage
+								? t("chat.imageScenePromptPlaceholder")
+								: t("chat.composerDisabledNoProvider")
 					}
 					value={input}
-					disabled={!canChat}
+					disabled={!canChat && !canGenerateImage}
 					onChange={(e) => setInput(e.target.value)}
 					onKeyDown={(e) => {
 						if (e.key === "Enter" && !e.shiftKey) {
 							e.preventDefault();
-							void send();
+							if (canChat) void send();
 						}
 					}}
 				/>
@@ -1742,6 +1845,18 @@ function ChatStripPanel() {
 							onOpenFullSettings={openProviderSettings}
 						/>
 					) : null}
+					<button
+						type="button"
+						className={styles.imageSceneBtn}
+						aria-label={t("chat.imageSceneButton")}
+						title={
+							canGenerateImage ? t("chat.imageSceneButton") : t("chat.imageSceneRequiresCodex")
+						}
+						onClick={() => void generateImageScene()}
+						disabled={busy || !projectId || !input.trim() || !canGenerateImage}
+					>
+						<ImagePlus size={17} aria-hidden />
+					</button>
 					<button
 						type="button"
 						className={styles.sendBtn}

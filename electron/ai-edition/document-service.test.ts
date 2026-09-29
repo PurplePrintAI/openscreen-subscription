@@ -260,6 +260,18 @@ describe("DocumentService", () => {
 			expect(updated.project.primaryAssetId).toBe(asset?.id);
 		});
 
+		it("stores a verified duration supplied for a generated clip", async () => {
+			const doc = await service.createProject("P");
+			const updated = await service.addAsset(doc.project.id, {
+				path: "/tmp/scene.mp4",
+				durationSec: 5,
+			});
+			expect(updated.assets[0]?.durationSec).toBe(5);
+			await expect(
+				service.addAsset(doc.project.id, { path: "/tmp/bad.mp4", durationSec: -1 }),
+			).rejects.toThrow("duration must be positive");
+		});
+
 		it("resolves relative paths against the cwd", async () => {
 			const doc = await service.createProject("P");
 			const updated = await service.addAsset(doc.project.id, { path: "recording.webm" });

@@ -38,6 +38,7 @@ export interface ProjectSummary {
 export interface AddAssetInput {
 	path: string;
 	label?: string;
+	durationSec?: number;
 }
 
 export class DocumentNotFoundError extends Error {
@@ -289,6 +290,11 @@ export class DocumentService {
 				projectId,
 			);
 		}
+		if (
+			input.durationSec !== undefined &&
+			(!Number.isFinite(input.durationSec) || input.durationSec <= 0)
+		)
+			throw new ProjectFileError("Asset duration must be positive and finite.", projectId);
 		const absolutePath = path.isAbsolute(input.path) ? input.path : path.resolve(input.path);
 		// P3.1 — capture the file size at import. Non-fatal: a stat failure
 		// (network drive, permissions) just leaves sizeBytes undefined.
@@ -303,6 +309,7 @@ export class DocumentService {
 			kind: "video",
 			label: input.label?.trim() || path.basename(absolutePath),
 			originalPath: absolutePath,
+			...(input.durationSec !== undefined ? { durationSec: input.durationSec } : {}),
 			sizeBytes,
 			cameraTrack: null,
 		};

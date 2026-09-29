@@ -483,6 +483,7 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 									request.payload.projectId,
 									request.payload.path,
 									request.payload.label,
+									request.payload.durationSec,
 								),
 							);
 						case "document.removeAsset":
@@ -552,6 +553,15 @@ export function registerNativeBridgeHandlers(context: NativeBridgeContext) {
 								),
 							);
 						}
+						case "image.generateScene":
+							return createSuccessResponse(
+								requestId,
+								await aiEditionService.generateImageScene(
+									request.payload.projectId,
+									request.payload.sessionId,
+									request.payload.prompt,
+								),
+							);
 						case "chat.undoLastBatch":
 							return createSuccessResponse(
 								requestId,

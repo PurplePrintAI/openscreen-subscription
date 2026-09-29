@@ -3,6 +3,7 @@ import { memo } from "react";
 import Markdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
+import { toFileUrl } from "@/components/video-editor/projectPersistence";
 import { useI18n, useScopedT } from "@/contexts/I18nContext";
 import type { AiEditionToolCallSummary } from "@/native/contracts";
 import styles from "./NewEditorShell.module.css";
@@ -16,6 +17,7 @@ export interface ChatDisplayMessage {
 	checkpointId?: string | null;
 	thinking?: string;
 	interrupted?: boolean;
+	generatedImagePath?: string;
 }
 
 // Model output is untrusted: no raw HTML, remote images, local-file links or custom protocols.
@@ -66,6 +68,7 @@ export const ChatMessage = memo(function ChatMessage({
 	const time = validDate
 		? date.toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })
 		: message.time;
+	const content = message.generatedImagePath ? t("chat.imageSceneCreated") : message.content;
 	return (
 		<article
 			className={`${styles.msg} ${user ? styles.msgUser : styles.msgAssistant}`}
@@ -80,10 +83,10 @@ export const ChatMessage = memo(function ChatMessage({
 					<div>{message.thinking}</div>
 				</details>
 			) : null}
-			{message.content ? (
+			{content ? (
 				<div className={user ? styles.msgBubble : styles.assistantContent}>
 					{user ? (
-						message.content
+						content
 					) : (
 						<Markdown
 							skipHtml
@@ -91,10 +94,18 @@ export const ChatMessage = memo(function ChatMessage({
 							components={markdownComponents}
 							urlTransform={safeMessageUrl}
 						>
-							{message.content}
+							{content}
 						</Markdown>
 					)}
 				</div>
+			) : null}
+			{message.generatedImagePath ? (
+				<img
+					className={styles.generatedScenePreview}
+					src={toFileUrl(message.generatedImagePath)}
+					alt={t("chat.generatedImagePreview")}
+					loading="lazy"
+				/>
 			) : null}
 			{message.toolCalls?.length ? (
 				<ul className={styles.messageTools}>
@@ -144,7 +155,7 @@ export const ChatMessage = memo(function ChatMessage({
 							title={t("chat.copyMessage")}
 							aria-label={t("chat.copyMessage")}
 							onClick={() =>
-								void navigator.clipboard.writeText(message.content).then(
+								void navigator.clipboard.writeText(content).then(
 									() => toast.success(t("chat.copiedToClipboard")),
 									() => toast.error(t("chat.copyFailed")),
 								)

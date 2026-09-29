@@ -4,6 +4,9 @@ import { AiEditionService, type AiEditionServiceOptions } from "./aiEditionServi
 
 const runtime = vi.hoisted(() => ({
 	status: vi.fn(async () => ({ available: true, connected: true, plan: "plus" })),
+	generateImage: vi.fn(async (_prompt: string): Promise<never> => {
+		throw new Error("Codex subscription unavailable");
+	}),
 	logout: vi.fn(async () => undefined),
 	models: vi.fn(async () => [
 		{
@@ -236,6 +239,24 @@ describe("AiEditionService — LLM store resolution is deferred", () => {
 		const { service } = serviceWithCountingFactory();
 		expect(await service.llmSubscriptionLogin("openai-oauth")).toMatchObject({ success: false });
 		expect(runtime.status).not.toHaveBeenCalled();
+	});
+
+	it("routes image generation to the subscription without changing the active chat provider", async () => {
+		const getProject = vi.fn(async () => ({}));
+		const llmConfig = vi.fn(() => {
+			throw new Error("Image generation must not read the active chat config.");
+		});
+		const service = new AiEditionService({
+			llmConfig,
+			documents: { getProject },
+			selectSession: () => ({ id: "s", projectId: "p", messages: [] }),
+		} as unknown as AiEditionServiceOptions);
+		await expect(service.generateImageScene("p", "s", "a sphere")).rejects.toThrow(
+			"Codex subscription unavailable",
+		);
+		expect(getProject).toHaveBeenCalledExactlyOnceWith("p");
+		expect(runtime.generateImage).toHaveBeenCalledExactlyOnceWith("a sphere");
+		expect(llmConfig).not.toHaveBeenCalled();
 	});
 	it("does not build the store while the service is constructed", () => {
 		const { builds } = serviceWithCountingFactory();
