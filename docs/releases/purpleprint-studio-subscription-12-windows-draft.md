@@ -35,28 +35,32 @@ third-party notices remain included.
 
 ## Candidate artifact (validation only)
 
-- PR head: feff6d2e80b8020b572c688afd6f9dd9a04d913e. The pull-request
-  runner checked out merge commit 163122750ef6ca7aa42bb8ed0b0257e72738b92f,
-  which combines that head with the already merged fork/main.
-- [Full CI](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36513534474)
-  and [clean Windows packaging](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36513534491)
+- Owner-tested PR head: e46f551d15569109cc7fc42533cb50b650b211a1.
+  The pull-request runner checked out merge commit
+  5f61ed82a8a01d16c5e4d457faf0579b07a86f18.
+- [Full CI](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36514529135)
+  and [clean Windows packaging](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36514529127)
   passed. The package validated its native payload, product identity, update
   origin, packaged CLI, license/notices, checksums and unsigned status.
 - Installer: PurplePrint-Studio-1.10.0-subscription.12-Windows-x64-Setup.exe
-  (245,994,048 bytes).
-- SHA-256: B7611D41E5B0C607B8400958DE1ED12CC783096DC9110ED7AF0D538030A33C3A.
+  (245,994,029 bytes).
+- SHA-256: AB32A87267E44A924FCD7E6036D6B28F1CAB6CEF7ADB4850ADD6EFF2181BAE2A.
 - The installer matches windows-validation.json and SHA256SUMS-Windows.txt.
   Its SHA-512 and byte size also match latest.yml. Authenticode status:
   NotSigned.
 - This GitHub Actions artifact is a temporary validation download, not a
-  published release or active update feed entry.
+  published release or active update feed entry. A later publication build
+  needs its own matching checksum and manifest; do not reuse this hash for a
+  different installer.
 
-## Remaining gates before publication
+## Validation and remaining gates
 
-- [ ] Verify the owner-installed .12 candidate preserves the active profile.
-  Earlier .11 development candidates passed an image-scene import/export test
-  and a one-turn Claude conversation restore test, but that is not .12 package
-  validation.
+- [x] The owner installed this exact .12 candidate after backing up 5,637
+  active-profile files. Eight projects, one chat history and two
+  generated-scene files remained; all 13 important hashes matched after
+  installation and QA project launch. The editor displayed the saved
+  two-message conversation and five-second image scene. The owner reported
+  a successful MP4 export; this agent did not inspect or decode that file.
 - [ ] Copy the verified candidate details into a GitHub release draft, with
   Windows-only and unsigned limitations visible to downloaders.
 - [ ] Receive explicit fork-owner approval before publishing a GitHub Release.
