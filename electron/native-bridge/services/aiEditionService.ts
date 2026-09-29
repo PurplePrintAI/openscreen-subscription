@@ -26,7 +26,7 @@ import {
 	translateCaptionSegments,
 } from "../../ai-edition/caption-translate";
 import type { ChatEventSink } from "../../ai-edition/chat-service";
-import { appendGeneratedScene } from "../../ai-edition/chat-service";
+import { appendGeneratedScene, deleteProjectSessions } from "../../ai-edition/chat-service";
 import { getClaudeCli } from "../../ai-edition/claude/cli";
 import { getCodexAppServer } from "../../ai-edition/codex/app-server";
 import type { DocumentService } from "../../ai-edition/document-service";
@@ -156,6 +156,7 @@ export class AiEditionService {
 	async deleteProject(projectId: string): Promise<AiEditionDocumentResult> {
 		try {
 			await this.options.documents.deleteProject(projectId);
+			deleteProjectSessions(projectId);
 			return { success: true };
 		} catch (error) {
 			return {

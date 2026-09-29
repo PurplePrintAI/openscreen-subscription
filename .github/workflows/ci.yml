@@ -105,7 +105,7 @@ jobs:
 
   # PR #189 — port macOS du compositor (Metal + VideoToolbox).
   #
-  # Compile check on a `macos-14` runner (Apple Silicon). Verifies that the
+  # Compile check on a supported `macos-latest` runner (Apple Silicon). Verifies that the
   # scaffold + engine-layer code added by #189 actually compiles for
   # `aarch64-apple-darwin` — bindgen + cc on macOS produce the ffmpeg FFI
   # bindings + the VideoToolbox context that the Rust crate statically
@@ -133,7 +133,7 @@ jobs:
   #   * `shaders.metal` is compiled AT RUNTIME by `new_library_with_source`, so a
   #     whole file of invalid MSL (HLSL's global `cbuffer`/`Texture2D` have no MSL
   #     equivalent) type-checks perfectly — `every_shader_entry_point_compiles`
-  #     catches it. macos-14 runners have a real Metal device, so it runs for real.
+  #     catches it. Apple Silicon runners have a real Metal device, so it runs for real.
   #   * `AVERROR(EAGAIN)` is -11 on Windows/Linux and -35 on macOS. A hardcoded -11
   #     compiles anywhere and silently decodes zero frames —
   #     `averror_constants_match_the_ffmpeg_macros` confronts it with shim.c.
@@ -141,7 +141,9 @@ jobs:
   #     `newRenderPipelineState` time — `the_compositor_builds_on_the_system_device`.
   rust-macos-compositor-check:
     name: Rust test (macOS compositor)
-    runs-on: macos-14
+    # Homebrew no longer bottles ffmpeg dependencies for macOS 14. Its source
+    # build of x265 fails in libtool before our Rust tests even start.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
       - name: Install Rust toolchain
@@ -151,7 +153,7 @@ jobs:
       - name: Install ffmpeg (homebrew-core) and verify headers/libs
         run: |
           brew update
-          # macos-14 images can retain an orphaned openssl@1.1 symlink.
+          # Older runner images can retain an orphaned openssl@1.1 symlink.
           # `brew unlink` removes zero links there, so remove this one stale
           # symlink only when it still points at 1.1 before installing ffmpeg.
           if [[ -L /opt/homebrew/bin/openssl && "$(readlink /opt/homebrew/bin/openssl)" == *openssl@1.1* ]]; then
@@ -311,8 +313,7 @@ jobs:
   # real display, a real tap and a real speaker — is `npm run test:sck-audio-timeline:mac`,
   # which cannot run here and is run by hand.
   #
-  # `macos-latest`, matching `build.yml`'s arm64 leg — NOT `macos-14` like the compositor job
-  # above, and the difference is load bearing. A gate has to compile with the toolchain that
+  # `macos-latest`, matching `build.yml`'s arm64 leg. A gate has to compile with the toolchain that
   # actually ships the binary, or it fails on code that is fine and passes on code that is not.
   # This job was written as `macos-14` by copying the job above and failed immediately:
   # `ScreenCaptureRecorder.swift` has carried a trailing comma in an argument list since long

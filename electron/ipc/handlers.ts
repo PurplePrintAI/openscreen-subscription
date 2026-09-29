@@ -40,6 +40,7 @@ import type {
 } from "../../src/native/contracts";
 import {
 	compactSessionNow,
+	configureChatSessionStorage,
 	createSession,
 	deleteSession,
 	getSessionContextUsage,
@@ -4161,6 +4162,7 @@ export function registerIpcHandlers(
 	// race destroyed two real project files), so a second instance means a second
 	// queue racing for the same path: temp+rename still keeps the file valid, but
 	// a save can land under a concurrent one and be silently lost.
+	configureChatSessionStorage(app.getPath("userData"));
 	const aiEditionDocuments = new DocumentService(
 		path.join(app.getPath("userData"), "projects"),
 		RECORDINGS_DIR,

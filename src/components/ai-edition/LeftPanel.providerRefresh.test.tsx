@@ -154,6 +154,38 @@ describe("ChatStripPanel streaming", () => {
 		fireEvent.change(screen.getByRole("textbox"), { target: { value: "My prompt" } });
 		fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
 	}
+	it("opens the newest restored conversation when a project loads", async () => {
+		const older = { ...session, id: "session-older", title: "Earlier" };
+		const newer = {
+			...session,
+			id: "session-newer",
+			title: "Latest",
+			messageCount: 1,
+			createdAt: "2026-08-28T12:00:00Z",
+		};
+		chatListSessions.mockResolvedValue([older, newer]);
+		chatSelectSession.mockResolvedValue({
+			...newer,
+			messages: [
+				{
+					id: "message-newer",
+					role: "assistant",
+					content: "Latest reply",
+					createdAt: "2026-08-28T12:01:00Z",
+				},
+			],
+		});
+		useProjectStore.setState({ projectId: session.projectId });
+		render(
+			<EditorDialogsProvider>
+				<LeftPanel active="chat" />
+			</EditorDialogsProvider>,
+		);
+
+		await screen.findByText("Latest reply");
+		expect(chatSelectSession).toHaveBeenCalledWith(session.projectId, newer.id);
+	});
+
 	it("streams Markdown, ignores unrelated events and reconciles one final message with a working rewind ID", async () => {
 		let finish!: (result: AiEditionChatResult) => void;
 		chatRun.mockReturnValue(

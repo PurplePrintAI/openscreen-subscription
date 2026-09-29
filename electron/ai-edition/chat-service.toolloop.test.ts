@@ -4,7 +4,10 @@
 // tests mock `invokeOpenScreenAgent` directly — that's the seam chat-service
 // crosses to drive the agentic turn.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	type AxcutDocument,
 	createEmptyDocument,
@@ -15,7 +18,13 @@ vi.mock("./deep-agent/service", () => ({
 	invokeOpenScreenAgent: vi.fn(),
 }));
 
-import { createSession, rewindToMessage, runChat } from "./chat-service";
+import {
+	configureChatSessionStorage,
+	createSession,
+	rewindToMessage,
+	runChat,
+	selectSession,
+} from "./chat-service";
 import { invokeOpenScreenAgent } from "./deep-agent/service";
 import type { LlmConfigStore } from "./llm-config-store";
 
@@ -321,6 +330,40 @@ describe("runChat tool loop", () => {
 		// ponytail: keep TS happy about `events` — the variable is used above.
 		void events;
 		void streamAgent;
+	});
+});
+
+describe("persisted chat turn", () => {
+	let userDataPath: string;
+
+	beforeEach(async () => {
+		userDataPath = await mkdtemp(path.join(tmpdir(), "openscreen-chat-turn-"));
+		configureChatSessionStorage(userDataPath);
+	});
+
+	afterEach(async () => {
+		configureChatSessionStorage(null);
+		await rm(userDataPath, { recursive: true, force: true });
+	});
+
+	it("restores the transcript and its rewind checkpoint after a restart", async () => {
+		const projectId = "proj_restart_turn";
+		const session = createSession(projectId);
+		const document = createEmptyDocument({ projectId, title: "Test" });
+		const result = await runChat(projectId, session.id, "Trim the opening", stubConfig(), document);
+		expect(result.success).toBe(true);
+		const before = selectSession(projectId, session.id)?.messages;
+		expect(before?.map((message) => message.role)).toEqual(["user", "assistant"]);
+
+		configureChatSessionStorage(userDataPath);
+		expect(selectSession(projectId, session.id)?.messages).toEqual(before);
+		const userMessageId = before?.[0]?.id;
+		expect(userMessageId).toBeDefined();
+		const rewound = rewindToMessage(projectId, session.id, userMessageId!);
+		expect(rewound.success).toBe(true);
+
+		configureChatSessionStorage(userDataPath);
+		expect(selectSession(projectId, session.id)?.messages).toHaveLength(1);
 	});
 });
 

@@ -3,7 +3,10 @@
 // turn itself (so we can read the history it was given) and the chat model
 // behind the summarizer, so no test here needs a provider or a key.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./deep-agent/service", () => ({
 	invokeOpenScreenAgent: vi.fn(),
@@ -16,6 +19,7 @@ vi.mock("./deep-agent/chat-model", () => ({
 
 import {
 	compactSessionNow,
+	configureChatSessionStorage,
 	createSession,
 	getSessionContextUsage,
 	runChat,
@@ -236,5 +240,37 @@ describe("compaction", () => {
 				`turn ${turn} was handed a payload that did not end with the user's message`,
 			).toBe(`${LONG}#${turn}`);
 		});
+	});
+});
+
+describe("persisted compaction", () => {
+	let userDataPath: string;
+
+	beforeEach(async () => {
+		userDataPath = await mkdtemp(path.join(tmpdir(), "openscreen-chat-compact-"));
+		configureChatSessionStorage(userDataPath);
+	});
+
+	afterEach(async () => {
+		configureChatSessionStorage(null);
+		await rm(userDataPath, { recursive: true, force: true });
+	});
+
+	it("keeps the compacted model boundary while restoring the full transcript", async () => {
+		stubSummarizer("EARLIER CONTEXT");
+		const projectId = "proj_compact_restart";
+		const session = createSession(projectId);
+		for (let index = 0; index < 4; index += 1) {
+			await runChat(projectId, session.id, "Prompt " + index + " ".repeat(300), stubConfig());
+		}
+		const compacted = await compactSessionNow(projectId, session.id, stubConfig());
+		expect(compacted).not.toBeNull();
+
+		configureChatSessionStorage(userDataPath);
+		expect(selectSession(projectId, session.id)?.messages).toHaveLength(8);
+		await runChat(projectId, session.id, "Next turn", stubConfig());
+		const modelHistory = histories.at(-1) ?? [];
+		expect(modelHistory[0]?.content).toBe("EARLIER CONTEXT");
+		expect(modelHistory.some((message) => message.content.startsWith("Prompt 0 "))).toBe(false);
 	});
 });

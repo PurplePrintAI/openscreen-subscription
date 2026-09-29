@@ -1,10 +1,13 @@
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type AxcutDocument, createEmptyDocument } from "../../src/lib/ai-edition/schema";
 import {
 	appendGeneratedScene,
+	configureChatSessionStorage,
 	createSession,
+	deleteProjectSessions,
 	deleteSession,
 	listSessions,
 	renameSession,
@@ -233,6 +236,19 @@ describe("runTimelineOperation", () => {
 		expect(session?.messages[0].role).toBe("assistant");
 	});
 
+	it("records the summary when a timeline operation creates its first chat", async () => {
+		const { documents } = makeDocumentsStub();
+		const result = await runTimelineOperation(
+			"proj_run_new",
+			"missing-session",
+			{ type: "add_trim_range", startSec: 5, endSec: 8 },
+			"Trimmed silence",
+			documents,
+		);
+		expect(result.success).toBe(true);
+		expect(listSessions("proj_run_new")).toEqual([expect.objectContaining({ messageCount: 1 })]);
+	});
+
 	it("returns success:false on getProject failure", async () => {
 		const documents = new BrokenDocumentService({ stored: makeDocument() });
 		const s = createSession("proj_run_err");
@@ -246,5 +262,78 @@ describe("runTimelineOperation", () => {
 		expect(result.success).toBe(false);
 		if (result.success) return;
 		expect(result.error).toBe("disk is dead");
+	});
+});
+
+describe("chat session persistence", () => {
+	let userDataPath: string;
+
+	beforeEach(async () => {
+		userDataPath = await mkdtemp(path.join(tmpdir(), "openscreen-chat-sessions-"));
+		configureChatSessionStorage(userDataPath);
+	});
+
+	afterEach(async () => {
+		configureChatSessionStorage(null);
+		await rm(userDataPath, { recursive: true, force: true });
+	});
+
+	it("restores renamed conversations and generated-image messages after a restart", () => {
+		const projectId = "proj_saved_chat";
+		const session = createSession(projectId);
+		renameSession(projectId, session.id, "Storyboard");
+		const generated = appendGeneratedScene(
+			projectId,
+			session.id,
+			"A violet sphere",
+			"C:/studio/source.png",
+		);
+		const other = createSession("proj_other_chat");
+
+		configureChatSessionStorage(userDataPath);
+
+		expect(listSessions(projectId)).toEqual([
+			expect.objectContaining({ id: session.id, title: "Storyboard", messageCount: 2 }),
+		]);
+		expect(selectSession(projectId, session.id)?.messages).toEqual([
+			generated.userMessage,
+			generated.assistantMessage,
+		]);
+		expect(selectSession(projectId, session.id)?.messages[1]?.generatedImagePath).toBe(
+			"C:/studio/source.png",
+		);
+		expect(listSessions("proj_other_chat")[0]?.id).toBe(other.id);
+	});
+
+	it("keeps deletion durable and removes all chats when their project is deleted", async () => {
+		const projectId = "proj_delete_chat";
+		const first = createSession(projectId);
+		const second = createSession(projectId);
+		expect(deleteSession(projectId, first.id)).toBe(true);
+
+		configureChatSessionStorage(userDataPath);
+		expect(listSessions(projectId).map((session) => session.id)).toEqual([second.id]);
+
+		deleteProjectSessions(projectId);
+		configureChatSessionStorage(userDataPath);
+		expect(listSessions(projectId)).toEqual([]);
+		await expect(
+			readFile(path.join(userDataPath, "chat-sessions", projectId + ".json"), "utf8"),
+		).rejects.toMatchObject({ code: "ENOENT" });
+	});
+
+	it("does not replace a corrupt history file with an empty conversation", async () => {
+		const projectId = "proj_corrupt_chat";
+		const file = path.join(userDataPath, "chat-sessions", projectId + ".json");
+		await mkdir(path.dirname(file), { recursive: true });
+		await writeFile(file, "{unfinished", "utf8");
+
+		expect(() => listSessions(projectId)).toThrow("Cannot load saved conversations");
+		expect(() => createSession(projectId)).toThrow("Cannot load saved conversations");
+		expect(await readFile(file, "utf8")).toBe("{unfinished");
+	});
+
+	it("rejects a project id that could escape the chat directory", () => {
+		expect(() => createSession("../outside")).toThrow("Invalid chat project id");
 	});
 });

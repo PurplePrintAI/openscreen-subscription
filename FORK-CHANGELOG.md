@@ -17,6 +17,17 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
+## Unreleased — AI conversation persistence
+
+- Saves each project's AI conversations, messages, generated-image references,
+  manual compaction state and rewind checkpoints under the local Studio profile.
+  Reopening the app restores the transcript and selects the newest conversation.
+- Writes a temporary file and atomically replaces the prior history after every
+  change. An unreadable history file is left untouched instead of being silently
+  replaced with an empty one. Deleting a project also removes its saved chats.
+- Older builds stored conversations only in memory, so chats already lost on
+  restart before this change cannot be recovered.
+
 ## Unreleased — ChatGPT subscription image scenes
 
 - Adds an explicit image-scene action to the AI session whenever ChatGPT

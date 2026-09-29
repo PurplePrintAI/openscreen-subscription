@@ -632,6 +632,8 @@ function ModelQuickPopover({
 
 function ChatStripPanel() {
 	const t = useScopedT("editor");
+	const tRef = useRef(t);
+	tRef.current = t;
 	const tc = useScopedT("common");
 	// The Auto-enhance confirmation is timeline-owned copy, fired from here —
 	// see the prompt-bus effect below.
@@ -655,9 +657,8 @@ function ChatStripPanel() {
 	// Mirror in a ref so refreshSessions can read the current selection without
 	// listing activeSessionId in its deps — otherwise refreshSessions is recreated
 	// on every selection change, which re-runs the project effect below (with
-	// preferFirst=true) and forces the selection back to list[0]. That feedback
-	// loop is what made "new conversation" jump to the oldest chat instead of the
-	// freshly-created empty one.
+	// preferNewest=true) and forces the selection back to the newest chat. That
+	// feedback loop would override a conversation the user just selected.
 	const activeSessionIdRef = useRef<string | null>(activeSessionId);
 	activeSessionIdRef.current = activeSessionId;
 	const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -710,7 +711,7 @@ function ChatStripPanel() {
 		}
 	}, []);
 
-	const refreshSessions = useCallback(async (pid: string, preferFirst = false) => {
+	const refreshSessions = useCallback(async (pid: string, preferNewest = false) => {
 		try {
 			const list = await nativeBridgeClient.aiEdition.chatListSessions(pid);
 			if (projectIdRef.current !== pid) return;
@@ -720,11 +721,13 @@ function ChatStripPanel() {
 				setMessages([]);
 				return;
 			}
-			if (preferFirst || !list.some((s) => s.id === activeSessionIdRef.current)) {
-				setActiveSessionId(list[0].id);
+			if (preferNewest || !list.some((s) => s.id === activeSessionIdRef.current)) {
+				setActiveSessionId(list[list.length - 1].id);
 			}
-		} catch {
-			// ponytail: silent — shim mode or missing project
+		} catch (error) {
+			toast.error(tRef.current("chat.chatFailed"), {
+				description: error instanceof Error ? error.message : String(error),
+			});
 		}
 	}, []);
 
@@ -829,8 +832,12 @@ function ChatStripPanel() {
 				} else {
 					setMessages([]);
 				}
-			} catch {
-				// ponytail: silent — shim mode
+			} catch (error) {
+				if (!cancelled) {
+					toast.error(tRef.current("chat.chatFailed"), {
+						description: error instanceof Error ? error.message : String(error),
+					});
+				}
 			}
 		})();
 		return () => {
