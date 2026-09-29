@@ -33,17 +33,32 @@ third-party notices remain included.
   record/edit/export pass, Developer ID signing and notarization remain open.
 - A future-version updater download and installation has not yet been tested.
 
-## Verification required before publication
+## Candidate artifact (validation only)
 
-- [ ] Clean Windows x64 package from the merged source, with native payload,
-  package identity, update origin, CLI boot, license/notices and unsigned status
-  checks passing.
-- [ ] Record the exact source commit, CI run, installer byte size, SHA-256 and
-  latest.yml values in these notes and the GitHub release draft.
+- PR head: feff6d2e80b8020b572c688afd6f9dd9a04d913e. The pull-request
+  runner checked out merge commit 163122750ef6ca7aa42bb8ed0b0257e72738b92f,
+  which combines that head with the already merged fork/main.
+- [Full CI](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36513534474)
+  and [clean Windows packaging](https://github.com/PurplePrintAI/openscreen-subscription/actions/runs/36513534491)
+  passed. The package validated its native payload, product identity, update
+  origin, packaged CLI, license/notices, checksums and unsigned status.
+- Installer: PurplePrint-Studio-1.10.0-subscription.12-Windows-x64-Setup.exe
+  (245,994,048 bytes).
+- SHA-256: B7611D41E5B0C607B8400958DE1ED12CC783096DC9110ED7AF0D538030A33C3A.
+- The installer matches windows-validation.json and SHA256SUMS-Windows.txt.
+  Its SHA-512 and byte size also match latest.yml. Authenticode status:
+  NotSigned.
+- This GitHub Actions artifact is a temporary validation download, not a
+  published release or active update feed entry.
+
+## Remaining gates before publication
+
 - [ ] Verify the owner-installed .12 candidate preserves the active profile.
   Earlier .11 development candidates passed an image-scene import/export test
   and a one-turn Claude conversation restore test, but that is not .12 package
   validation.
+- [ ] Copy the verified candidate details into a GitHub release draft, with
+  Windows-only and unsigned limitations visible to downloaders.
 - [ ] Receive explicit fork-owner approval before publishing a GitHub Release.
 
 ## 한국어 요약
