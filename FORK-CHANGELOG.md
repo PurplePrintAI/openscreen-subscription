@@ -17,6 +17,181 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
+## Unreleased — Production workflow integration review
+
+- Keeps a successfully saved product-demo draft visible when cancellation arrives
+  during the save. Holds the job lock through final status persistence to prevent
+  a second plan from replacing an unfinished request's state.
+- Decouples the shared Studio renderer trust check from product-capture services.
+- Adds a no-launch local QA preparation script with a new isolated profile,
+  complete hashed native/runtime inputs and manual launch/stop commands. Existing
+  profiles, provider credentials and personal voice references are not copied.
+- See [integration review](technical-documentation/testing/integration-review-2026-10-14.md).
+  This remains local development work, not a released installer.
+
+## Unreleased — Windows MP4 duration correction
+
+- Supplies one output-frame duration only when the Windows video encoder returns
+  an unknown packet duration, before mux timestamp rescaling and including flush.
+  Existing packet durations, PTS/DTS, picture content and AAC timing are unchanged.
+- Extends native timing regressions for H.264 24/30/60fps, a one-frame export and
+  H.265. Rebuilt native-module exports of the existing 19-second draft report
+  correct video duration and average FPS at both 30 and 60fps.
+- All 570 decoded pictures of the 30fps result match the prior GUI export.
+  This is headless native validation, not a new GUI/installer/release approval.
+  See [duration QA](technical-documentation/testing/export-duration-2026-10-14.md)
+  and the [integration review plan](docs/studio-integration-review-plan.md).
+
+## Unreleased — Natural-language scene planning
+
+- Adds an **AI planning** tab using the configured API, Codex or Claude text
+  provider. Explicit disclosure/consent precedes sending the brief, registered
+  source metadata and current plan; transcript excerpts are optional.
+- Proposes a strict, source-bound scene plan with rationale/missing materials.
+  No editor tools, media upload, capture, generation or publishing are exposed.
+- Allows native animatic review before explicit adoption into the scene sheet.
+  Saving and assembling remain separate; stale or cancelled responses cannot
+  overwrite a changed project. Footage has not been visually analyzed.
+- This is an isolated development candidate, not an installer or release.
+
+## Unreleased — Scene revision and recheck workflow
+
+- Adds **Revise & check** to film planning: one-scene proposals, before/after
+  source/output timing, caption/zoom comparison and bounded native previews.
+- Requires explicit acceptance before updating the plan, blocks stale proposals
+  and preserves later edits when undo would overwrite them. The editor timeline
+  remains unchanged; assembly continues to create a separate draft.
+- Persists separate user picture and reused-narration checks. Changed scenes,
+  shifted timing and changed voice/tone context require rechecking. Rendering
+  never approves scenes. Review JSON excludes private snapshots and retains
+  pending final-output verification.
+- Isolated from the previous tone checkout and installed app. See
+  [scene planning architecture](technical-documentation/architecture/scene-planning.md).
+
+## Unreleased — Narration tone selection and tuning
+
+- New preset narration defaults to B (confident product introduction), with A
+  (bright and clear), neutral delivery and bounded extra delivery directions.
+- Uses local 1.7B CustomVoice instruction control, checked in both main process
+  and Python. Unsupported models cannot silently ignore the requested tone;
+  clone mode clearly retains reference-based delivery without A/B controls.
+- Saves tone/model metadata, restores it, and preserves legacy audio identity.
+  Script/tone changes require a fresh matching audition before applying; actual
+  playback, rather than a play request, enables Apply.
+- Separate-worktree tests, build and real local generation passed. Native GUI
+  results are recorded in [tone QA](technical-documentation/testing/narration-tone-2026-10-14.md).
+  Installed Studio and Claude workspaces remain unchanged.
+
+## Unreleased — Composited animatic preview
+
+- Adds a separate **Animatic** tab to film planning, using a private Studio
+  compositor view for actual captions, manual zoom and hard cuts. Play/pause,
+  scrub and scene jumps do not replace the open editor document or playhead.
+- Requires native pixels before enabling playback and shows backend/init errors
+  explicitly. Planning edits reset the preview; closing releases the view.
+- Fixes a paused preview turning blank on scroll when native frame dimensions
+  differ from the canvas layout. Keeps its pixels until a new packet arrives.
+- Fixes pre-metadata audio seeks and source replacement: narration/source audio
+  wait for metadata, seek before playing, and pause on replacement or unmount.
+- Isolated Windows QA verified 19-second silent playback and unsaved caption
+  edits. Six native/export frames passed measured comparison; both existing
+  voice modes passed real Chromium audio-clock and waveform/40% mix checks.
+  Narrated Studio GUI validation remains pending. No
+  installed profile, Claude workspace or release was changed. See
+  [the animatic validation record](technical-documentation/testing/animatic-2026-10-14.md)
+  and [A/V measurements](technical-documentation/testing/animatic-av-2026-10-14.md).
+
+## Unreleased — Scene planning and storyboard preview
+
+- Adds **Film plan · Scene sheet** to the Studio product menu. Registered video
+  assets can be arranged into reviewed scenes with source ranges, editable text
+  and manual zoom direction, without a provider call or recording.
+- Adds planning and preview tabs, with original video frames, source/output
+  times, caption/zoom intent and a 390px mobile-width view. This scene sheet is
+  not a final composited preview; use the separate animatic or editor for effects.
+- Quantizes scene boundaries to 30fps and derives the assembly, captions, zoom
+  anchors and review checkpoints from the same plan. Plans can be imported,
+  downloaded, saved with undo and restored on restart. Assembly saves a new
+  project, preserving the source timeline; later manual timeline edits are not
+  silently written back into the planning snapshot.
+- Removes the required decorative eyebrow and runtime-test overlay from the
+  HyperFrames user workflow. The no-footage diagnostic remains identified.
+- Windows isolated QA verified three scenes, an 18-to-19-second plan change,
+  storyboard/mobile views, save/undo/redo, full restart of the saved plan and
+  actual GUI MP4 export. No installer, installed profile or Claude workspace was
+  changed. See [the validation record](technical-documentation/testing/scene-planning-2026-10-14.md).
+
+## Unreleased — Editable product-scene zoom direction
+
+- Adds optional reviewed zoom intervals and scale to product-demo shot plans.
+  Focus comes from stable observed heading/panel geometry, never invented model
+  coordinates. Unavailable focus keeps the full view and reports a warning.
+- Saves normal clip-anchored Studio zoom regions, with existing easing, editing
+  and undo. Fixes preset changes being ignored when a custom scale was present;
+  the inspector now displays the effective custom scale too.
+- Builds an 18-second actual PurplePrint product pilot with two 1.25x focus
+  regions and the previously authorized local founder voice. Native-input GUI
+  editing, undo, restart restoration and 1080p MP4 export were verified.
+- Development-only: the pilot uses existing high-resolution footage; automatic
+  capture remains 720p/up to 12 sampled fps, and full-film voice/shot alignment
+  is not yet automated. See the [verification record](technical-documentation/testing/product-demo-2026-10-11.md).
+
+## Unreleased — Local narration development integration
+
+- Adds a separate developer CLI for Korean preset narration or an explicitly
+  authorized local reference voice. No TTS API key or subscription is used.
+- Requires preinstalled model files, disables inference networking, and preserves
+  existing output takes. Personal recordings and model weights remain outside Git.
+- Validates both modes on Windows/CUDA with matching-script samples and new real
+  product footage; the document pane is widened before capture. The video retains
+  the product's own UI without added eyebrows or decorative counters.
+- Adds the development Studio Narration menu: preset/reference choice, local
+  reference transcription, script, generation/cancel, playback before apply,
+  replace/remove, output offset and original-audio gain. Saves an undoable
+  project layer and mixes it into GUI MP4 export without re-encoding video.
+- Verifies both modes in the Windows QA app through preview, apply, full restart
+  and GUI MP4 export, with full decode and audio-offset checks. Corrects Korean
+  locale detection (`ko-KR`) in the new production dialogs and menu. An earlier
+  intermittent native export crash remains unresolved despite successful retries.
+- This is not yet a released installer; Mac and portable narration packing are
+  not supported by this slice. See the
+  [runtime proof](tools/narration/README.md) and
+  [verification record](technical-documentation/testing/narration-2026-10-11.md).
+
+## Unreleased — Local HyperFrames rendering preview
+
+- Pins HyperFrames 0.8.146 and GSAP 3.14.2 in a separate development runtime;
+  the Electron dependency tree and installed release are unchanged.
+- Adds a Studio menu for runtime status, scene text/duration and an optional
+  registered project video asset. Renders a bounded local HTML template into
+  1080p/30fps silent MP4 and saves a separate editable Studio project.
+- Retains HTML, parameters, original source offset, copied assets, poster and
+  diagnostics. Original recordings/projects are not overwritten. The rendered
+  graphics are flattened; changing them requires another render.
+- Runs without AI/TTS/cloud commands, ambient AI keys, global installs or agent
+  configuration changes. Cancellation stops the owned renderer process tree.
+- Validates render geometry, duration and full decode before project import.
+  Diagnostic graphics are explicitly labelled as tests, not product footage.
+- The real PurplePrint 15–20 second quality pilot waits for the independently
+  prepared demo/tour. Runtime bundling, installer UX and macOS validation remain
+  separate work. See [local runtime setup](tools/hyperframes/README.md).
+
+## Unreleased — Product demo production preview
+
+- Adds a Studio menu flow for a product URL and value-oriented brief, AI shot-plan
+  review, isolated browser recording, and a new editable project with caption overlays.
+- Supports public single-page websites and the existing Codex/Claude subscription
+  runtimes. Captures only the dedicated browser viewport, without the user's Chrome
+  cookies, desktop, microphone or other application windows.
+- Bounds recording below five minutes and limits actions to observed headings and
+  tabs. Cancellation and failures close the product browser; incomplete takes are
+  not reported as a completed draft.
+- Pilot: PurplePrint public website → 12 scenes → approximately 2:10 silent draft.
+  Sample coaching/report screens are labelled as examples, not a new live session.
+- Experimental and not released: login/forms, native desktop products, narration,
+  multi-page exploration and AI-chat intent routing remain outside this first slice.
+  See [implementation and validation boundaries](technical-documentation/architecture/product-demo-production.md).
+
 ## Unreleased — AI conversation persistence
 
 - Saves each project's AI conversations, messages, generated-image references,
