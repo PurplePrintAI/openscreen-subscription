@@ -19,6 +19,9 @@ For the dated review of newer upstream changes, see
 
 ## Unreleased — Local runtime setup
 
+- The Windows CI payload passed isolated configuration, consent, cancel/discard,
+  live runtime recognition, restart and read-only override checks without running
+  Setup. See [CI setup QA](technical-documentation/testing/runtime-setup-ci-2026-10-14.md).
 - Adds a Studio setup panel for CLI discovery and explicit local voice/motion
   configuration, reachable from the menu and missing-runtime feature screens.
 - Separates executable discovery from account connection and file checks from

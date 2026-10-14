@@ -1,5 +1,8 @@
 # Local runtime setup QA — 2026-10-14
 
+The subsequent [Windows CI package QA](runtime-setup-ci-2026-10-14.md) verifies
+the actual packaged payload. This document retains the earlier developer QA.
+
 Scope: separate `feat/studio-runtime-setup` worktree based on PR #10's
 `9aa17b213b9449d957450de31bdc0cf4a961de17`. Existing PR #10, installed Studio,
 original profiles/models and Claude-owned work were not changed. No merge,

@@ -60,6 +60,9 @@ Windows 네이티브 인코더가 길이를 알 수 없다고 반환한 비디�
    구분하고, 준비된 Python·모델·HyperFrames 경로를 선택·검증·동의 후 저장하는
    화면을 구현했다. 누락 안내와 재시작 복원도 격리 QA로 확인했다.
    [설정 QA](../technical-documentation/testing/runtime-setup-2026-10-14.md).
+   PR #10에 의존하는 Draft PR #11로 올렸고, 실제 Windows CI 패키지에서도
+   저장·취소·복원·읽기 전용 설정과 생성 화면의 환경 인식을 확인했다.
+   [패키지 설정 QA](../technical-documentation/testing/runtime-setup-ci-2026-10-14.md).
    자동 설치·다운로드 용량/여유 공간 검사·의존성 복구·새 PC 검증은 아직 남아 있다.
 3. **추가 품질 개선:** 기획안의 근거·수정 이력 보존과 실제 화면에 맞는 구간·줌
    제안은 별도 범위를 합의한다. 현재 AI 기획은 영상 픽셀을 분석하지 않는다.
