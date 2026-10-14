@@ -29,7 +29,7 @@ who reads and writes the project document.
 | [transcription-and-captions.md](architecture/transcription-and-captions.md) | On-device speech to text, and the caption layer derived from it |
 | [ai-agent.md](architecture/ai-agent.md) | The optional agent: tool loop, checkpoints, context management |
 | [llm-providers.md](architecture/llm-providers.md) | Provider registry, auth modes, credential storage |
-| [studio-runtime-setup.md](architecture/studio-runtime-setup.md) | Optional CLI/voice/motion discovery, local path selection and configuration trust boundaries |
+| [studio-runtime-setup.md](architecture/studio-runtime-setup.md) | Optional runtime configuration, confirmed preset-model installation/reuse and trust boundaries |
 | [native-bridge.md](architecture/native-bridge.md) | The renderer ↔ main-process contract every native capability goes through |
 | [decisions.md](architecture/decisions.md) | **The decision ledger** — what is settled, what was rejected and why |
 

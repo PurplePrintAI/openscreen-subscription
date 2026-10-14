@@ -17,6 +17,23 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
+## Unreleased — Preset voice model setup
+
+- Splits preset narration from optional cloning/transcription dependencies.
+  Existing complete configurations remain valid; clone paths can be disconnected
+  without deleting their models.
+- Adds an explicitly confirmed Windows x64 preset-model setup flow: choose trusted
+  Python and storage, run offline Python/CUDA diagnostics, review download size
+  and free space, then download or reuse the pinned 1.7B CustomVoice snapshot.
+- Verifies file sizes/SHA-256, uses isolated staging, handles cancellation and
+  protects existing model folders/configuration. Closing the owner aborts work;
+  normal app quit waits for cleanup. No private voice/project upload is involved.
+- Python/packages/drivers remain prerequisites. This is not complete fresh-PC
+  provisioning, Mac support, a new installer release or an inference-time download.
+- See [setup architecture](technical-documentation/architecture/studio-runtime-setup.md#preset-model-installer).
+- Isolated app verification covered preset-only local generation, preview/apply
+  and restart; [QA record](technical-documentation/testing/preset-voice-setup-2026-10-15.md).
+
 ## Unreleased — Local runtime setup
 
 - The Windows CI payload passed isolated configuration, consent, cancel/discard,

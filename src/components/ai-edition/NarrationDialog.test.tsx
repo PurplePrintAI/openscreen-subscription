@@ -75,6 +75,21 @@ it("requires preview before apply, stores layer and preserves the document", asy
 		{ history: true },
 	);
 });
+it("preset-only setup enables generation but keeps cloning unavailable", async () => {
+	status.runtime = {
+		available: true,
+		presetAvailable: true,
+		cloneAvailable: false,
+		presetToneControl: true,
+	};
+	render(<NarrationDialog open onClose={vi.fn()} />);
+	await screen.findByText(/로컬 런타임 구성됨/);
+	fireEvent.change(screen.getByLabelText("대본"), { target: { value: "기본 음성" } });
+	expect((screen.getByText("나레이션 생성") as HTMLButtonElement).disabled).toBe(false);
+	fireEvent.change(screen.getByLabelText("목소리"), { target: { value: "clone" } });
+	fireEvent.click(screen.getByRole("checkbox"));
+	expect((screen.getByText("녹음 선택 · 자동 전사") as HTMLButtonElement).disabled).toBe(true);
+});
 it("clone reference picker is locked until explicit permission", async () => {
 	render(<NarrationDialog open onClose={vi.fn()} />);
 	await screen.findByText(/로컬 런타임 구성됨/);

@@ -16,10 +16,12 @@ export function StudioSetupDialog({
 	open,
 	onClose,
 	onOpenProviders,
+	onOpenInstaller,
 }: {
 	open: boolean;
 	onClose: () => void;
 	onOpenProviders: () => void;
+	onOpenInstaller?: () => void;
 }) {
 	const { locale } = useI18n(),
 		ko = locale.startsWith("ko");
@@ -80,7 +82,12 @@ export function StudioSetupDialog({
 			if (current !== epoch.current) return;
 			setSnapshot(reply.snapshot);
 			setMessage(outcome(reply.result));
-			if (input.action === "pick" || input.action === "reset" || input.action === "save")
+			if (
+				input.action === "pick" ||
+				input.action === "reset" ||
+				input.action === "save" ||
+				input.action === "clear-clone"
+			)
 				setTrusted({ narration: false, hyperframes: false });
 		} catch {
 			if (current === epoch.current)
@@ -134,8 +141,8 @@ export function StudioSetupDialog({
 				<p>
 					{narration
 						? text(
-								"기본 목소리와 동의받은 목소리 복제에 사용합니다. Windows·CUDA 환경에서 검증했으며, Python 패키지·GPU의 실제 동작은 생성 시 확인합니다.",
-								"For preset speech and consented voice cloning. Tested on Windows/CUDA; Python dependencies and GPU operation are checked during generation.",
+								"기본 음성에는 Python과 CustomVoice만 필요합니다. 복제·전사 모델은 목소리 복제를 사용할 때만 추가하세요. Windows·CUDA 환경에서 검증했으며 실제 실행은 별도 확인합니다.",
+								"Preset speech needs only Python and CustomVoice. Add Base/transcription models only for cloning. Tested on Windows/CUDA; execution is checked separately.",
 							)
 						: text(
 								"준비된 HyperFrames 0.8.146·GSAP 3.14.2 환경을 선택하세요. Node 22+, 전용 브라우저, FFmpeg/ffprobe와 local-runtime.json이 필요합니다.",
@@ -143,6 +150,18 @@ export function StudioSetupDialog({
 							)}
 				</p>
 				{value.readOnly && <p role="status">{outcome("readonly")}</p>}
+				{narration && onOpenInstaller && (
+					<button
+						type="button"
+						disabled={busy || value.readOnly || value.changed || snapshot?.hyperframes.changed}
+						onClick={() => {
+							close();
+							onOpenInstaller();
+						}}
+					>
+						{text("기본 음성 모델 설치·재사용", "Install / reuse preset voice model")}
+					</button>
+				)}
 				{fields.map((field) => (
 					<div className={styles.field} key={field}>
 						<div>
@@ -180,6 +199,20 @@ export function StudioSetupDialog({
 							"The configuration or required app tools could not be checked. Reselect paths or check the app package.",
 						)}
 					</p>
+				)}
+				{narration && (
+					<button
+						type="button"
+						disabled={
+							busy || value.readOnly || (!value.paths.cloneModel && !value.paths.whisperModel)
+						}
+						onClick={() => void request({ action: "clear-clone" })}
+					>
+						{text(
+							"복제 환경 연결만 해제 · 모델 파일 유지",
+							"Disconnect clone paths · keep model files",
+						)}
+					</button>
 				)}
 				{narration && (
 					<p>
@@ -282,8 +315,8 @@ export function StudioSetupDialog({
 							<summary>{text("설치 전 확인할 사항", "Before installing runtimes")}</summary>
 							<p>
 								{text(
-									"음성 모델은 수 GB 이상의 별도 저장 공간이 필요합니다. 기본·복제·전사 모델마다 용량이 다르며, 이 화면의 크기는 이미 선택한 가중치 파일만 계산합니다. D 드라이브 등 원하는 위치에 환경을 준비한 후 연결할 수 있습니다. 자동 설치와 새 PC 지원 검증은 아직 제공하지 않습니다.",
-									"Voice models require multiple GB of separate storage. Size varies by model; the size here counts only selected weight files. Prepare tools/models on your preferred drive and connect them. Automatic installation and fresh-machine validation are not yet provided.",
+									"기본 음성 모델 설치·재사용에서는 별도 동의 후 고정 버전 모델을 다운로드하거나 검증해 연결합니다. Python·패키지·GPU 드라이버는 먼저 준비해야 합니다. 복제·전사 모델의 자동 설치와 새 PC 전체 설정 검증은 아직 제공하지 않습니다.",
+									"Preset setup can download or verify a pinned model after separate consent. Prepare Python/packages/GPU drivers first. Automatic clone/transcription installation and fresh-machine setup validation are not provided yet.",
 								)}
 							</p>
 						</details>

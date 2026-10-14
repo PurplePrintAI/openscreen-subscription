@@ -98,6 +98,8 @@ export interface NarrationStatus {
 	phase: "idle" | "reference" | "generating" | "verifying" | "ready" | "cancelled" | "error";
 	runtime: {
 		available: boolean;
+		presetAvailable?: boolean;
+		cloneAvailable?: boolean;
 		error?: string;
 		presetToneControl?: boolean;
 		presetModelSize?: string;

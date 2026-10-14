@@ -43,6 +43,7 @@ import {
 	type UnsavedChoice,
 } from "./Modals";
 import { NarrationDialog } from "./NarrationDialog";
+import { NarrationInstallDialog } from "./NarrationInstallDialog";
 import { Preview } from "./Preview";
 import { ProductDemoDialog } from "./ProductDemoDialog";
 import type { TrimTarget } from "./RightPanes";
@@ -149,6 +150,7 @@ export function NewEditorShell() {
 	const [motionOpen, setMotionOpen] = useState(false);
 	const [narrationOpen, setNarrationOpen] = useState(false);
 	const [setupOpen, setSetupOpen] = useState(false);
+	const [voiceInstallOpen, setVoiceInstallOpen] = useState(false);
 	const openSetup = () => {
 		setNarrationOpen(false);
 		setMotionOpen(false);
@@ -1451,6 +1453,17 @@ export function NewEditorShell() {
 				open={setupOpen}
 				onClose={() => setSetupOpen(false)}
 				onOpenProviders={() => openDialog("providers")}
+				onOpenInstaller={() => {
+					setSetupOpen(false);
+					setVoiceInstallOpen(true);
+				}}
+			/>
+			<NarrationInstallDialog
+				open={voiceInstallOpen}
+				onClose={() => {
+					setVoiceInstallOpen(false);
+					setSetupOpen(true);
+				}}
 			/>
 			<NarrationDialog
 				open={narrationOpen}
