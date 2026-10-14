@@ -25,6 +25,7 @@ import {
 interface Dependencies {
 	root: string;
 	runtimeDir: string;
+	resolveRuntimeDir?: () => Promise<string>;
 	getDocument: (id: string) => Promise<AxcutDocument>;
 	saveDocument: (doc: AxcutDocument) => Promise<AxcutDocument>;
 	run?: typeof runLocal;
@@ -102,8 +103,22 @@ export class HyperframesService {
 		};
 	}
 	async status(): Promise<HyperframesStatus> {
-		if (!this.active) this.state.runtime = await runtimeStatus(this.deps.runtimeDir);
+		if (!this.active) {
+			try {
+				this.state.runtime = await runtimeStatus(await this.runtimeDir());
+			} catch {
+				this.state.runtime = {
+					available: false,
+					version: HYPERFRAMES_VERSION,
+					runtimeDir: "",
+					error: "Local runtime configuration is invalid.",
+				};
+			}
+		}
 		return structuredClone(this.state);
+	}
+	private runtimeDir(): Promise<string> {
+		return this.deps.resolveRuntimeDir?.() ?? Promise.resolve(this.deps.runtimeDir);
 	}
 	cancel(): void {
 		if (!this.active) return;
@@ -135,7 +150,8 @@ export class HyperframesService {
 		const run = this.deps.run ?? runLocal;
 		try {
 			await fs.mkdir(path.join(folder, "assets"), { recursive: true });
-			const runtime = await loadRuntime(this.deps.runtimeDir);
+			const runtimeDir = await this.runtimeDir();
+			const runtime = await loadRuntime(runtimeDir);
 			const env = runtimeEnvironment(runtime, folder);
 			controller.signal.throwIfAborted();
 			const version = await run(
@@ -151,7 +167,7 @@ export class HyperframesService {
 			this.state.runtime = {
 				available: true,
 				version: HYPERFRAMES_VERSION,
-				runtimeDir: this.deps.runtimeDir,
+				runtimeDir,
 			};
 			if (scene.source) await this.copySource(scene, folder, runtime, env, controller.signal, run);
 			await fs.copyFile(runtime.gsapPath, path.join(folder, "assets", "gsap.min.js"));

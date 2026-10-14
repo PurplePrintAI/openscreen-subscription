@@ -1,0 +1,17 @@
+.content { display: grid; gap: 16px; color: var(--fg); }
+.content p { margin: 6px 0; color: var(--fg-2); line-height: 1.6; font-size: 13px; }
+.card { padding: 18px; border: 1px solid var(--border); border-radius: 12px; display: grid; gap: 12px; }
+.card h3 { margin: 0; font-size: 15px; }
+.heading, .cli { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.heading span, .cli span { color: var(--muted); font-size: 12px; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 12px; }
+.field strong { font-size: 12px; }
+.field code { display: block; overflow-wrap: anywhere; margin-top: 5px; font-size: 11px; color: var(--muted); }
+.content button { border: 1px solid var(--border); background: var(--surface); color: var(--fg); padding: 9px 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 12px; }
+.content button:disabled { opacity: .45; cursor: not-allowed; }
+.content button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.content .primary { background: var(--accent); color: white; justify-self: start; }
+.actions { display: flex; gap: 10px; }
+.consent { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.6; }
+.content .warning { color: var(--danger, #ef6464); font-size: 12px; }
+.content summary { cursor: pointer; font-size: 13px; }

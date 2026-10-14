@@ -28,6 +28,7 @@ export interface TopBarActions {
 	openScenePlan?: () => void;
 	openMotion?: () => void;
 	openNarration?: () => void;
+	openSetup?: () => void;
 	save: () => void;
 	export: () => void;
 	openSettings: () => void;
@@ -426,6 +427,17 @@ function AppMenu({ actions }: { actions: TopBarActions }) {
 						<Sparkles size={15} />
 						{tEditor("providerSettings.title")}
 					</button>
+					{actions.openSetup && (
+						<button
+							type="button"
+							role="menuitem"
+							className={styles.appMenuRow}
+							onClick={run(actions.openSetup)}
+						>
+							<Info size={15} />
+							{locale.startsWith("ko") ? "Studio 환경 설정" : "Studio setup"}
+						</button>
+					)}
 					{actions.openScenePlan && (
 						<button
 							type="button"

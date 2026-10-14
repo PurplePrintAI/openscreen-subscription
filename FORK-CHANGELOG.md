@@ -17,6 +17,24 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
+## Unreleased — Local runtime setup
+
+- The Windows CI payload passed isolated configuration, consent, cancel/discard,
+  live runtime recognition, restart and read-only override checks without running
+  Setup. See [CI setup QA](technical-documentation/testing/runtime-setup-ci-2026-10-14.md).
+- Adds a Studio setup panel for CLI discovery and explicit local voice/motion
+  configuration, reachable from the menu and missing-runtime feature screens.
+- Separates executable discovery from account connection and file checks from
+  actual GPU/runtime availability. No automatic install, download or execution.
+- Uses native path pickers, model validation, trust confirmation, atomic saved
+  configuration and conflict protection. Explicit development overrides remain
+  read-only. HyperFrames adopts saved runtime paths for subsequent jobs.
+- Replaces the prominent raw HyperFrames path error with localized setup guidance
+  and expandable technical details. Handles regional Korean locales.
+- See [runtime setup](technical-documentation/architecture/studio-runtime-setup.md).
+- Verified native-picker integration through QA selections, saved paths, live
+  feature recognition and restart restoration; [dated QA record](technical-documentation/testing/runtime-setup-2026-10-14.md).
+
 ## Unreleased — Production workflow integration review
 
 - The Windows CI package passed isolated scene-sheet/revision/assembly,

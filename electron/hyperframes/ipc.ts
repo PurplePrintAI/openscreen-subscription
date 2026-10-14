@@ -7,6 +7,7 @@ import {
 } from "../../src/lib/hyperframes";
 import type { DocumentService } from "../ai-edition/document-service";
 import { isStudioProductionSender } from "../ipc/studioProductionSender";
+import { resolveHyperframesDirectory } from "../studio-setup/service";
 import { HyperframesService } from "./service";
 
 export function registerHyperframesIpc(documents: DocumentService): void {
@@ -15,6 +16,12 @@ export function registerHyperframesIpc(documents: DocumentService): void {
 		runtimeDir:
 			process.env.STUDIO_HYPERFRAMES_RUNTIME_DIR ||
 			path.join(app.getAppPath(), "tools", "hyperframes"),
+		resolveRuntimeDir: () =>
+			resolveHyperframesDirectory(
+				app.getPath("userData"),
+				path.join(app.getAppPath(), "tools", "hyperframes"),
+				process.env.STUDIO_HYPERFRAMES_RUNTIME_DIR,
+			),
 		getDocument: (id) => documents.getProject(id),
 		saveDocument: (doc) => documents.saveProject(doc),
 	});

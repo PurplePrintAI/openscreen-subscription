@@ -46,6 +46,13 @@ directory before launching. The main process reads it; the renderer cannot suppl
 an executable or command. Missing configuration produces an unavailable status,
 not a global install, download or cloud fallback.
 
+Without an environment override, **PurplePrint Studio → Studio setup** can select
+an already prepared runtime directory and save it to the app's userData
+`hyperframes-runtime.json`. Selection, validation and explicit trust precede save.
+The next status check/render resolves this directory without restarting Studio.
+The selected runtime's `local-runtime.json` and files are not modified. An explicit
+environment override takes precedence and is read-only in the setup panel.
+
 ## Studio use
 
 Build/start the development app. Open **PurplePrint Studio → HyperFrames · Local

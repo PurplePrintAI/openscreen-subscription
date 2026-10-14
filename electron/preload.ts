@@ -22,6 +22,11 @@ import {
 	SCENE_PLANNER_CHANNEL,
 } from "../src/lib/scene-planner";
 import type { ShortcutBinding } from "../src/lib/shortcuts";
+import {
+	STUDIO_SETUP_CHANNEL,
+	type StudioSetupReply,
+	type StudioSetupRequest,
+} from "../src/lib/studio-setup";
 import type { AiEditionChatEvent } from "../src/native/contracts";
 import { NATIVE_BRIDGE_CHANNEL, type NativeBridgeRequest } from "../src/native/contracts";
 import type { RecordingPrefs } from "./ipc/handlers";
@@ -43,6 +48,8 @@ const assetBaseUrl = assetBaseUrlArg ? assetBaseUrlArg.slice(ASSET_BASE_URL_ARG_
 const PLATFORM = process.platform;
 
 contextBridge.exposeInMainWorld("electronAPI", {
+	studioSetup: (request: StudioSetupRequest): Promise<StudioSetupReply> =>
+		ipcRenderer.invoke(STUDIO_SETUP_CHANNEL, request),
 	mixNarrationExport: (request: NarrationExportRequest) =>
 		ipcRenderer.invoke(NARRATION_EXPORT_CHANNEL, request),
 	scenePlanner: (request: PlannerRequest): Promise<PlannerReply> =>

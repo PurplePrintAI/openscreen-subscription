@@ -14,10 +14,12 @@ export function HyperframesDialog({
 	open,
 	onClose,
 	onOpenDraft,
+	onOpenSetup,
 }: {
 	open: boolean;
 	onClose: () => void;
 	onOpenDraft: (id: string) => Promise<void>;
+	onOpenSetup?: () => void;
 }) {
 	const { locale } = useI18n();
 	const ko = locale.startsWith("ko");
@@ -151,7 +153,28 @@ export function HyperframesDialog({
 							? "런타임 설정 필요"
 							: "Runtime setup required"}
 				</p>
-				{!status.runtime.available && <p className={styles.error}>{status.runtime.error}</p>}
+				{!status.runtime.available && (
+					<>
+						<p className={styles.note}>
+							{ko
+								? "로컬 모션 환경을 찾지 못했거나 필수 파일이 맞지 않습니다. Studio 환경 설정에서 준비된 폴더를 선택하고 다시 확인하세요. 자동 다운로드하지 않습니다."
+								: "The local motion runtime is missing or incomplete. Choose a prepared folder in Studio setup and check again. Nothing is downloaded automatically."}
+						</p>
+						{onOpenSetup && (
+							<div className={styles.actions}>
+								<button type="button" disabled={busy} onClick={onOpenSetup}>
+									{ko ? "Studio 환경 설정 열기" : "Open Studio setup"}
+								</button>
+							</div>
+						)}
+						{status.runtime.error && (
+							<details>
+								<summary>{ko ? "기술 정보" : "Technical details"}</summary>
+								<p className={styles.path}>{status.runtime.error}</p>
+							</details>
+						)}
+					</>
+				)}
 				<label>
 					{ko ? "영상 소스" : "Video source"}
 					<select

@@ -48,6 +48,7 @@ import { ProductDemoDialog } from "./ProductDemoDialog";
 import type { TrimTarget } from "./RightPanes";
 import { importPendingRecording } from "./recordingImport";
 import { ScenePlanDialog } from "./ScenePlanDialog";
+import { StudioSetupDialog } from "./StudioSetupDialog";
 import v4 from "./v4/EditorShellV4.module.css";
 import { type EditorMode, EditorTopBar } from "./v4/EditorTopBar";
 import { type Facet, FloatingInspector } from "./v4/FloatingInspector";
@@ -147,6 +148,12 @@ export function NewEditorShell() {
 	const [scenePlanOpen, setScenePlanOpen] = useState(false);
 	const [motionOpen, setMotionOpen] = useState(false);
 	const [narrationOpen, setNarrationOpen] = useState(false);
+	const [setupOpen, setSetupOpen] = useState(false);
+	const openSetup = () => {
+		setNarrationOpen(false);
+		setMotionOpen(false);
+		setSetupOpen(true);
+	};
 	const handleOpenGeneratedProject = useCallback(
 		async (id: string) => {
 			const current = useProjectStore.getState();
@@ -1223,6 +1230,7 @@ export function NewEditorShell() {
 					openScenePlan: () => setScenePlanOpen(true),
 					openMotion: () => setMotionOpen(true),
 					openNarration: () => setNarrationOpen(true),
+					openSetup,
 					save: () => void handleSave(),
 					export: handleExport,
 					openSettings: handleOpenSettings,
@@ -1439,8 +1447,18 @@ export function NewEditorShell() {
 				onClose={() => setProductDemoOpen(false)}
 				onOpenDraft={handleOpenGeneratedProject}
 			/>
-			<NarrationDialog open={narrationOpen} onClose={() => setNarrationOpen(false)} />
+			<StudioSetupDialog
+				open={setupOpen}
+				onClose={() => setSetupOpen(false)}
+				onOpenProviders={() => openDialog("providers")}
+			/>
+			<NarrationDialog
+				open={narrationOpen}
+				onClose={() => setNarrationOpen(false)}
+				onOpenSetup={openSetup}
+			/>
 			<HyperframesDialog
+				onOpenSetup={openSetup}
 				open={motionOpen}
 				onClose={() => setMotionOpen(false)}
 				onOpenDraft={handleOpenGeneratedProject}
