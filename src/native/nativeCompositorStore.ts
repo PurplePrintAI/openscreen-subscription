@@ -126,25 +126,28 @@ export function subscribeNativeCompositor(listener: () => void): () => void {
  * clickBounce (x10) and to smoothing/motionBlur (x100). Sending a slider-space
  * value from here would scale the whole preview by 10 or 100 on load.
  */
-export function pushAllNativeParams(settings: EditorSettingsSnapshot): void {
-	setNativeParam("backgroundBlur", settings.showBlur);
-	setNativeParam("motionBlur", settings.motionBlurAmount);
-	setNativeParam("shadow", settings.shadowIntensity);
-	setNativeParam("roundness", settings.borderRadius / NATIVE_SCREEN_BASE_RADIUS_PX);
-	setNativeParam("padding", settings.padding / 100);
+export function pushAllNativeParams(
+	settings: EditorSettingsSnapshot,
+	push: (key: string, value: CompositorParamValue) => void = setNativeParam,
+): void {
+	push("backgroundBlur", settings.showBlur);
+	push("motionBlur", settings.motionBlurAmount);
+	push("shadow", settings.shadowIntensity);
+	push("roundness", settings.borderRadius / NATIVE_SCREEN_BASE_RADIUS_PX);
+	push("padding", settings.padding / 100);
 	// Only a literal colour is a param; a gradient or an image wallpaper travels
 	// in the scene instead, and pushing its name here would be meaningless.
 	if (settings.wallpaper.startsWith("#")) {
-		setNativeParam("backgroundColor", settings.wallpaper);
+		push("backgroundColor", settings.wallpaper);
 	}
 
-	setNativeParam("webcamSize", settings.webcamSizePreset / NATIVE_WEBCAM_BASE_PCT);
-	setNativeParam("webcamMirror", settings.webcamMirrored);
-	setNativeParam("webcamShape", settings.webcamMaskShape);
+	push("webcamSize", settings.webcamSizePreset / NATIVE_WEBCAM_BASE_PCT);
+	push("webcamMirror", settings.webcamMirrored);
+	push("webcamShape", settings.webcamMaskShape);
 
-	setNativeParam("cursorShow", settings.cursorShow);
-	setNativeParam("cursorSize", settings.cursor.size);
-	setNativeParam("cursorClickBounce", settings.cursor.clickBounce);
-	setNativeParam("cursorSmoothing", settings.cursor.smoothing);
-	setNativeParam("cursorMotionBlur", settings.cursor.motionBlur);
+	push("cursorShow", settings.cursorShow);
+	push("cursorSize", settings.cursor.size);
+	push("cursorClickBounce", settings.cursor.clickBounce);
+	push("cursorSmoothing", settings.cursor.smoothing);
+	push("cursorMotionBlur", settings.cursor.motionBlur);
 }
