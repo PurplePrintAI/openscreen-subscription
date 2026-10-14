@@ -316,6 +316,8 @@ export interface OpenScreenChatModelConfig {
 	apiKey?: string;
 	baseUrl?: string;
 	reasoningEffort?: string;
+	/** One-shot planning must not automatically retry a paid request. */
+	maxRetries?: number;
 }
 
 // ponytail: placeholder API key for self-hosted OpenAI-compatible endpoints
@@ -429,6 +431,7 @@ export async function createOpenScreenChatModel(
 
 	if (config.provider === "anthropic") {
 		return new ChatAnthropic({
+			...(config.maxRetries !== undefined ? { maxRetries: config.maxRetries } : {}),
 			apiKey: config.apiKey,
 			model: config.model,
 			// ponytail: ChatAnthropic accepts `anthropicApiUrl` for self-hosted
@@ -444,6 +447,7 @@ export async function createOpenScreenChatModel(
 
 	if (config.provider === "mistral") {
 		return new ChatMistralAI({
+			...(config.maxRetries !== undefined ? { maxRetries: config.maxRetries } : {}),
 			apiKey: config.apiKey,
 			model: config.model,
 		});
@@ -458,6 +462,7 @@ export async function createOpenScreenChatModel(
 				: config.baseUrl;
 	const apiKey = resolveOpenAIChatApiKey(config.provider, config.apiKey);
 	return new ChatOpenAI({
+		...(config.maxRetries !== undefined ? { maxRetries: config.maxRetries } : {}),
 		...(apiKey ? { apiKey } : {}),
 		model: config.model,
 		...(reasoningOptions.reasoning ? { reasoning: reasoningOptions.reasoning } : {}),
@@ -485,6 +490,7 @@ async function createLocalProviderChatModel(
 			// base URL here must be the bare `/anthropic` origin (matching
 			// provider-registry.ts's baseUrl) — not `/anthropic/v1`.
 			return new ChatAnthropic({
+				...(config.maxRetries !== undefined ? { maxRetries: config.maxRetries } : {}),
 				apiKey: config.apiKey,
 				model: config.model,
 				anthropicApiUrl: config.baseUrl ?? "https://api.minimax.io/anthropic",

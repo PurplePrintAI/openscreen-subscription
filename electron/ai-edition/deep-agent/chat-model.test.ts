@@ -18,6 +18,18 @@ function clientConfig(model: unknown): Record<string, unknown> {
 	return (model as { clientConfig?: Record<string, unknown> }).clientConfig ?? {};
 }
 
+it("disables SDK retries for a planning call without changing other callers", async () => {
+	for (const provider of ["openai", "anthropic", "mistral", "minimax"]) {
+		const model = await createOpenScreenChatModel({
+			provider,
+			model: "test-model",
+			apiKey: "test-key",
+			maxRetries: 0,
+		});
+		expect((model.caller as unknown as { maxRetries: number }).maxRetries).toBe(0);
+	}
+});
+
 describe("createOpenScreenChatModel — provider aliases", () => {
 	it("routes the `claude` alias to the Anthropic SDK, not the OpenAI fallback", async () => {
 		const model = await createOpenScreenChatModel({
