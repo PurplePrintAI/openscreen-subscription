@@ -7,6 +7,15 @@ import type { runLocal } from "../hyperframes/runtime";
 import { NarrationService, narrationEnvironment } from "./service";
 
 const roots: string[] = [];
+it("keeps a Windows-compatible user name without inheriting provider secrets", () => {
+	vi.stubEnv("USERNAME", undefined);
+	vi.stubEnv("OPENAI_API_KEY", "must-not-reach-worker");
+	vi.stubEnv("ANTHROPIC_API_KEY", "must-not-reach-worker");
+	const env = narrationEnvironment();
+	expect(env.USERNAME).toBe(os.userInfo().username);
+	expect(env.OPENAI_API_KEY).toBeUndefined();
+	expect(env.ANTHROPIC_API_KEY).toBeUndefined();
+});
 afterEach(async () => {
 	vi.unstubAllEnvs();
 	for (const root of roots.splice(0)) {

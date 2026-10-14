@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { z } from "zod";
 import {
@@ -42,6 +43,10 @@ export function narrationEnvironment(): NodeJS.ProcessEnv {
 		if (process.env[key]) env[key] = process.env[key];
 	return {
 		...env,
+		// PyTorch's cache setup calls Python getpass.getuser(). Windows has no
+		// pwd module fallback when the sanitized environment omits every user
+		// name variable. Preserve only the local account name, never API keys.
+		USERNAME: process.env.USERNAME || os.userInfo().username,
 		PYTHONIOENCODING: "utf-8",
 		HF_HUB_OFFLINE: "1",
 		TRANSFORMERS_OFFLINE: "1",
