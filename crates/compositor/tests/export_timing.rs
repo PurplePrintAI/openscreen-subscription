@@ -4,6 +4,9 @@
 //! decoder by one SOURCE frame per OUTPUT frame emits the right number of
 //! frames while covering only `out_fps / source_fps` of the recording. Frame
 //! count alone therefore proves nothing — the content has to be checked.
+//! MP4 assertions also check video-stream duration and average fps: an AAC
+//! track can make the container look complete while the final video sample
+//! has zero duration.
 //!
 //! So the fixture is a 4 s / 60 fps clip whose colour changes every second
 //! (red → green → blue → white). A correct export spans all four colours; a
@@ -34,9 +37,10 @@
 use openscreen_compositor::compositor::Compositor;
 use openscreen_compositor::config::Cfg;
 use openscreen_compositor::d3d::Gpu;
+use openscreen_compositor::ffi::*;
 use openscreen_compositor::gif_export::{self, GifExportParams};
 use openscreen_compositor::pipeline::{self, ClipSource, ExportCodec, ExportParams};
-use std::path::PathBuf;
+use std::{ffi::CString, path::PathBuf, ptr};
 
 const SOURCE_SEC: f64 = 4.0;
 
@@ -120,27 +124,55 @@ fn whole_clip(dir: &PathBuf) -> ClipSource {
     }
 }
 
-/// MP4 at 30 fps over a 4 s source must emit 120 frames — i.e. the walk is
-/// driven by OUTPUT time, not by "one source frame per output frame" (which
-/// would still emit 120 frames but cover only 2 s of the recording; the GIF
-/// test below is the one that catches the coverage half).
-#[test]
-fn mp4_export_frame_count_follows_output_fps() {
-    let Some(dir) = media_dir() else {
-        eprintln!("skipped: set OPENSCREEN_TEST_MEDIA");
-        return;
-    };
+/// Read the muxed video stream, not the container duration (AAC padding can hide
+/// a missing last-frame duration). Use the same pinned libavformat as production.
+fn video_timing(path: &str) -> (f64, f64, f64) {
+    unsafe {
+        let mut fmt = ptr::null_mut();
+        let path = CString::new(path).expect("path");
+        averr(
+            avformat_open_input(&mut fmt, path.as_ptr(), ptr::null_mut(), ptr::null_mut()),
+            "open exported MP4",
+        )
+        .expect("open exported MP4");
+        let result = (|| -> anyhow::Result<_> {
+            averr(
+                avformat_find_stream_info(fmt, ptr::null_mut()),
+                "stream info",
+            )?;
+            for index in 0..sn_fmt_nb_streams(fmt) {
+                let stream = sn_fmt_stream(fmt, index as i32);
+                if (*(*stream).codecpar).codec_type == AVMediaType::AVMEDIA_TYPE_VIDEO {
+                    let tick = (*stream).time_base.num as f64 / (*stream).time_base.den as f64;
+                    let fps = (*stream).avg_frame_rate;
+                    return Ok((
+                        (*stream).duration as f64 * tick,
+                        tick,
+                        fps.num as f64 / fps.den as f64,
+                    ));
+                }
+            }
+            anyhow::bail!("export has no video stream")
+        })();
+        avformat_close_input(&mut fmt);
+        result.expect("video stream timing")
+    }
+}
+
+fn check_mp4_timing(dir: &PathBuf, fps: u32, codec: ExportCodec, label: &str, seconds: f64) {
     let gpu = Gpu::create(false).expect("gpu");
     let params = ExportParams {
         width: 640,
         height: 360,
-        fps: Some(30),
-        codec: ExportCodec::H264,
+        fps: Some(fps),
+        codec,
     };
     let comp = Compositor::new_sized(&gpu, params.width, params.height).expect("compositor");
-    let out = dir.join("out_timing.mp4");
+    let out = dir.join(format!("out_timing_{label}_{fps}.mp4"));
+    let mut clip = whole_clip(dir);
+    clip.source_end_sec = seconds;
     let stats = pipeline::run_composited_multi(
-        &[whole_clip(&dir)],
+        &[clip],
         &out.to_string_lossy(),
         &gpu,
         &comp,
@@ -150,13 +182,49 @@ fn mp4_export_frame_count_follows_output_fps() {
     )
     .expect("mp4 export");
 
+    let expected_frames = (seconds * fps as f64).round() as u64;
     assert_eq!(
-        stats.frames, 120,
-        "4 s of source at 30 fps out must be 120 frames, got {}",
-        stats.frames
+        stats.frames, expected_frames,
+        "{label} @ {fps} fps: exported frame count"
     );
     let probed = pipeline::probe_frame_count(&out.to_string_lossy()).expect("probe");
-    assert_eq!(probed, 120, "muxed file disagrees with the reported count");
+    assert_eq!(
+        probed, expected_frames,
+        "muxed file disagrees with the reported count"
+    );
+    let (duration, tick, average_fps) = video_timing(&out.to_string_lossy());
+    assert!(
+        (duration - seconds).abs() <= tick,
+        "{label} @ {fps} fps: video stream ends at {duration}s instead of {seconds}s"
+    );
+    assert!(
+        (average_fps - fps as f64).abs() < 1e-6,
+        "{label}: muxed average frame rate is {average_fps}, expected {fps}"
+    );
+}
+
+/// Counts and stream duration must both follow OUTPUT fps, including the final
+/// sample. Container duration alone can appear correct because of its AAC track.
+#[test]
+fn mp4_export_frame_count_follows_output_fps() {
+    let Some(dir) = media_dir() else {
+        eprintln!("skipped: set OPENSCREEN_TEST_MEDIA");
+        return;
+    };
+    for fps in [24, 30, 60] {
+        check_mp4_timing(&dir, fps, ExportCodec::H264, "h264", SOURCE_SEC);
+    }
+    // No following timestamp exists from which the muxer could infer duration.
+    check_mp4_timing(&dir, 30, ExportCodec::H264, "single_frame", 1.0 / 30.0);
+}
+
+#[test]
+fn hevc_export_retains_final_frame_duration() {
+    let Some(dir) = media_dir() else {
+        eprintln!("skipped: set OPENSCREEN_TEST_MEDIA");
+        return;
+    };
+    check_mp4_timing(&dir, 30, ExportCodec::H265, "hevc", SOURCE_SEC);
 }
 
 /// The GIF must cover the WHOLE timeline, not just its first

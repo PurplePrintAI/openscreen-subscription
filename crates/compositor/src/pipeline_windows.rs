@@ -1604,6 +1604,16 @@ unsafe fn drain_encoder(
         }
         averr(r, "receive_packet")?;
         (*opkt).stream_index = (*ostream).index;
+        // Every submitted video frame occupies one tick of the encoder's
+        // 1/fps time base. Some encoders (notably QSV) leave duration unknown.
+        // MP4 can infer earlier durations from adjacent timestamps, but not
+        // the final sample: leaving it at zero shortens the video stream by
+        // one frame and inflates avg_frame_rate. Preserve known durations and
+        // fill the missing value BEFORE rescaling, including delayed packets
+        // returned during flush. Do not change PTS/DTS or the AAC path.
+        if (*opkt).duration == 0 {
+            (*opkt).duration = 1;
+        }
         av_packet_rescale_ts(opkt, (*ectx).time_base, (*ostream).time_base);
         averr(
             av_interleaved_write_frame(octx, opkt),

@@ -87,6 +87,19 @@ and **one** encoder + muxer pair:
 
 ## Output formats and codecs
 
+### Windows video sample duration
+
+The Windows encoder uses a constant output frame rate and a `1/fps` codec time
+base. In `pipeline_windows::drain_encoder`, a packet whose duration is unknown
+(`0`) receives one encoder tick before `av_packet_rescale_ts`. Known durations,
+PTS and DTS remain unchanged. The same drain runs after encoder flush, so the
+final sample contributes its full duration to the MP4 video stream. AAC uses
+its separate encoder and is not subject to this rule.
+
+`crates/compositor/tests/export_timing.rs` checks video-stream duration and
+average frame rate as well as frame counts. Container duration alone is not a
+valid check: an audio track can hide a video stream shortened by one frame.
+
 The native MP4 export takes `width`, `height`, `frameRate`, and `codec` as
 parameters on `exportMulti` and writes H.264 (AMF) by default. The
 user-facing codec choice crosses as the plain `ExportVideoCodec` string
