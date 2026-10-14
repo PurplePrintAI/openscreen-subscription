@@ -19,6 +19,11 @@ For the dated review of newer upstream changes, see
 
 ## Unreleased — Production workflow integration review
 
+- The Windows CI package passed isolated scene-sheet/revision/assembly,
+  packaged local narration, restart and narrated 1080p MP4 verification.
+  Setup was not executed; the installed app and original inputs were preserved.
+  See [CI package QA](technical-documentation/testing/ci-package-studio-qa-2026-10-14.md)
+  for artifact identity, measurements and remaining setup/release gates.
 - Automated Electron execution found and fixed two real runtime gaps: Windows
   narration workers now retain the local user name required by PyTorch cache
   setup while still excluding provider secrets, and narrated Studio MP4s use

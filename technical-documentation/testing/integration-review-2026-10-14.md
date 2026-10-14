@@ -1,5 +1,10 @@
 # Studio integration review and isolated QA — 2026-10-14
 
+Historical preparation record. Its **not launched** and **manual checks pending**
+statuses were superseded by [automated QA](automated-studio-qa-2026-10-14.md), then
+[CI package QA](ci-package-studio-qa-2026-10-14.md). Keep the original scope/results
+below as history, not as the current task status.
+
 Scope: feature-focused local review, dependency-ordered commits, and a local
 developer QA folder. No installer replacement, remote push/PR/release, Claude
 workspace changes, additional provider calls, voice generation, browser driving
