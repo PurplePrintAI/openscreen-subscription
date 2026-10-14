@@ -127,6 +127,8 @@ export class NarrationInstallService {
 		await fs.mkdir(folder, { recursive: true });
 		const env = {
 			...narrationEnvironment(),
+			// Packaged scripts may live in a read-only install directory.
+			PYTHONDONTWRITEBYTECODE: "1",
 			TORCH_HOME: folder,
 			CUDA_CACHE_PATH: path.join(folder, "cuda"),
 		};

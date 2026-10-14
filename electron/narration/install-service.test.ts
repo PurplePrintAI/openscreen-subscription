@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, expect, it, vi } from "vitest";
 import { narrationInstallRequest } from "../../src/lib/narration-install";
+import * as localRuntime from "../hyperframes/runtime";
 import { NarrationInstallService } from "./install-service";
 import manifest from "./preset-manifest.json";
 
@@ -59,6 +60,24 @@ async function fixture() {
 	}
 	return { root, python, profile, model, deps, service, config, select, payload };
 }
+it("runs the offline probe without writing bytecode into packaged resources", async () => {
+	const f = await fixture();
+	const run = vi
+		.spyOn(localRuntime, "runLocal")
+		.mockResolvedValue(JSON.stringify({ ready: true, python: "3.12.13", cuda: true }));
+	const service = new NarrationInstallService({ ...f.deps, probe: undefined });
+	await service.pick(1, "python", async () => f.python);
+	await service.pick(1, "storage", async () => f.root);
+	expect((await service.prepare(1, "download")).plan?.issues).toEqual([]);
+	expect(run).toHaveBeenCalledWith(
+		await fs.realpath(f.python),
+		[path.join(f.root, "probe_runtime.py")],
+		expect.any(String),
+		expect.objectContaining({ PYTHONDONTWRITEBYTECODE: "1", HF_HUB_OFFLINE: "1" }),
+		expect.any(AbortSignal),
+		90_000,
+	);
+});
 it("requires native selections, Python trust, and separate install consent", () => {
 	for (const raw of [
 		{ action: "plan", mode: "download" },
