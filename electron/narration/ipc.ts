@@ -1,12 +1,51 @@
 import path from "node:path";
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { NARRATION_CHANNEL, narrationRequestSchema } from "../../src/lib/narration";
+import {
+	NARRATION_CHANNEL,
+	NARRATION_EXPORT_CHANNEL,
+	narrationExportRequestSchema,
+	narrationRequestSchema,
+} from "../../src/lib/narration";
+import type { DocumentService } from "../ai-edition/document-service";
 import { isStudioProductionSender } from "../ipc/studioProductionSender";
 import { resolveFfmpeg } from "../media/audioPeaks";
+import { consumeNarrationExport, mixNarrationExport } from "./export";
 import { NarrationService } from "./service";
 
-export function registerNarrationIpc() {
+export function registerNarrationIpc(documents: DocumentService) {
 	const services = new Map<number, NarrationService>();
+	const exports = new Map<number, AbortController>();
+	ipcMain.handle(NARRATION_EXPORT_CHANNEL, async (event, raw) => {
+		if (
+			event.senderFrame !== event.sender.mainFrame ||
+			!isStudioProductionSender(
+				event.senderFrame.url,
+				app.getAppPath(),
+				process.env.VITE_DEV_SERVER_URL,
+			)
+		)
+			throw new Error("Untrusted narration export caller.");
+		const request = narrationExportRequestSchema.parse(raw);
+		if (exports.has(event.sender.id)) throw new Error("A narration export is already running.");
+		consumeNarrationExport(event.sender.id, request.outputPath);
+		const controller = new AbortController();
+		const cancel = () => controller.abort();
+		exports.set(event.sender.id, controller);
+		event.sender.once("destroyed", cancel);
+		try {
+			await mixNarrationExport(
+				request,
+				{ ffmpeg: resolveFfmpeg, getDocument: (id) => documents.getProject(id) },
+				controller.signal,
+			);
+			return { success: true };
+		} catch (error) {
+			return { success: false, message: String(error) };
+		} finally {
+			event.sender.removeListener("destroyed", cancel);
+			exports.delete(event.sender.id);
+		}
+	});
 	ipcMain.handle(NARRATION_CHANNEL, async (event, raw) => {
 		if (
 			event.senderFrame !== event.sender.mainFrame ||
@@ -59,6 +98,7 @@ export function registerNarrationIpc() {
 		}
 	});
 	app.on("before-quit", () => {
+		for (const controller of exports.values()) controller.abort();
 		for (const service of services.values()) service.cancel();
 	});
 }

@@ -61,6 +61,18 @@ export const narrationLayerSchema = narrationTakeSchema.extend({
 });
 export type NarrationTake = z.infer<typeof narrationTakeSchema>;
 export type NarrationLayer = z.infer<typeof narrationLayerSchema>;
+export const NARRATION_EXPORT_CHANNEL = "studio:narration-export";
+export const narrationExportRequestSchema = z
+	.object({
+		projectId: z.string().regex(/^[\w-]+$/),
+		outputPath: z
+			.string()
+			.max(4096)
+			.refine((value) => /^(?:[A-Za-z]:[\\/]|\/(?!\/))/.test(value)),
+		expectedLayer: narrationLayerSchema,
+	})
+	.strict();
+export type NarrationExportRequest = z.infer<typeof narrationExportRequestSchema>;
 export const narrationInputSchema = z.discriminatedUnion("mode", [
 	z
 		.object({

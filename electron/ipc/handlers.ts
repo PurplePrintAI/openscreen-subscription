@@ -66,6 +66,7 @@ import {
 } from "../media/cursorSidecar";
 import { findMediaLinksByFingerprint, registerMediaLinks } from "../media/mediaLinksRegistry";
 import { relinkProjectMedia } from "../media/projectMediaRelinker";
+import { approveNarrationExport } from "../narration/export";
 import { registerNarrationIpc } from "../narration/ipc";
 import {
 	type LinuxCaptureSourceKind,
@@ -3497,56 +3498,60 @@ export function registerIpcHandlers(
 		return resolveAssetBasePath();
 	});
 
-	ipcMain.handle("pick-export-save-path", async (_, fileName: string, exportFolder?: string) => {
-		try {
-			const isGif = fileName.toLowerCase().endsWith(".gif");
-			const filters = isGif
-				? [{ name: mainT("dialogs", "fileDialogs.gifImage"), extensions: ["gif"] }]
-				: [{ name: mainT("dialogs", "fileDialogs.mp4Video"), extensions: ["mp4"] }];
+	ipcMain.handle(
+		"pick-export-save-path",
+		async (event, fileName: string, exportFolder?: string) => {
+			try {
+				const isGif = fileName.toLowerCase().endsWith(".gif");
+				const filters = isGif
+					? [{ name: mainT("dialogs", "fileDialogs.gifImage"), extensions: ["gif"] }]
+					: [{ name: mainT("dialogs", "fileDialogs.mp4Video"), extensions: ["mp4"] }];
 
-			// Prefer the user's last export folder if it still exists, else ~/Downloads.
-			// Validate here because the renderer can't stat the filesystem.
-			let defaultDir = app.getPath("downloads");
-			if (exportFolder) {
-				try {
-					const stats = await fs.stat(exportFolder);
-					if (stats.isDirectory()) {
-						defaultDir = exportFolder;
+				// Prefer the user's last export folder if it still exists, else ~/Downloads.
+				// Validate here because the renderer can't stat the filesystem.
+				let defaultDir = app.getPath("downloads");
+				if (exportFolder) {
+					try {
+						const stats = await fs.stat(exportFolder);
+						if (stats.isDirectory()) {
+							defaultDir = exportFolder;
+						}
+					} catch (err) {
+						console.warn(
+							`Could not access remembered export folder "${exportFolder}", falling back to Downloads:`,
+							err,
+						);
 					}
-				} catch (err) {
-					console.warn(
-						`Could not access remembered export folder "${exportFolder}", falling back to Downloads:`,
-						err,
-					);
 				}
-			}
-			const dialogOptions = buildDialogOptions(
-				{
-					title: isGif
-						? mainT("dialogs", "fileDialogs.saveGif")
-						: mainT("dialogs", "fileDialogs.saveVideo"),
-					defaultPath: path.join(defaultDir, fileName),
-					filters,
-					properties: ["createDirectory", "showOverwriteConfirmation"],
-				},
-				getMainWindow(),
-			);
-			const result = await dialog.showSaveDialog(dialogOptions);
+				const dialogOptions = buildDialogOptions(
+					{
+						title: isGif
+							? mainT("dialogs", "fileDialogs.saveGif")
+							: mainT("dialogs", "fileDialogs.saveVideo"),
+						defaultPath: path.join(defaultDir, fileName),
+						filters,
+						properties: ["createDirectory", "showOverwriteConfirmation"],
+					},
+					getMainWindow(),
+				);
+				const result = await dialog.showSaveDialog(dialogOptions);
 
-			if (result.canceled || !result.filePath) {
-				return { success: false, canceled: true, message: "Export canceled" };
-			}
+				if (result.canceled || !result.filePath) {
+					return { success: false, canceled: true, message: "Export canceled" };
+				}
 
-			return { success: true, path: path.normalize(result.filePath) };
-		} catch (error) {
-			console.error("Failed to show save dialog:", error);
-			return {
-				success: false,
-				message: "Failed to show save dialog",
-				error: String(error),
-			};
-		}
-	});
+				approveNarrationExport(event.sender.id, result.filePath);
+				return { success: true, path: path.normalize(result.filePath) };
+			} catch (error) {
+				console.error("Failed to show save dialog:", error);
+				return {
+					success: false,
+					message: "Failed to show save dialog",
+					error: String(error),
+				};
+			}
+		},
+	);
 
 	ipcMain.handle("write-export-to-path", async (_, videoData: ArrayBuffer, filePath: string) => {
 		try {
@@ -4191,7 +4196,7 @@ export function registerIpcHandlers(
 
 	registerProductDemoIpc(aiEditionDocuments, getAiEditionLlmConfig);
 	registerHyperframesIpc(aiEditionDocuments);
-	registerNarrationIpc();
+	registerNarrationIpc(aiEditionDocuments);
 	registerScenePlannerIpc(getAiEditionLlmConfig);
 	registerNativeBridgeHandlers({
 		getPlatform: () => process.platform,

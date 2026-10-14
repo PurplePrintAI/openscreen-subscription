@@ -3,8 +3,6 @@ import { createEmptyDocument } from "./ai-edition/schema";
 import { withNarration } from "./narration";
 import { mixProjectNarration } from "./narration-export";
 
-const mix = vi.hoisted(() => vi.fn());
-vi.mock("./exporter/voiceoverMix", () => ({ mixVoiceoverIntoVideo: mix }));
 afterEach(() => {
 	vi.unstubAllGlobals();
 	vi.clearAllMocks();
@@ -20,28 +18,26 @@ const doc = withNarration(createEmptyDocument({ projectId: "qa", title: "QA" }),
 	offsetSec: 1.5,
 	originalGain: 0,
 });
-it("mixes the saved voice at the saved offset and checks disk write success", async () => {
-	vi.stubGlobal(
-		"fetch",
-		vi.fn(async () => new Response(new Blob(["media"]))),
-	);
-	mix.mockResolvedValue(new Blob(["mixed"]));
-	const write = vi.fn(async () => ({ success: true }));
-	vi.stubGlobal("window", { electronAPI: { writeExportToPath: write } });
+it("uses native mixing even when renderer AudioEncoder is unavailable", async () => {
+	vi.stubGlobal("AudioEncoder", undefined);
+	const mix = vi.fn(async () => ({ success: true }));
+	vi.stubGlobal("window", { electronAPI: { mixNarrationExport: mix } });
 	await mixProjectNarration(doc, "C:/out.mp4");
-	expect(mix).toHaveBeenCalledWith(
-		expect.any(Blob),
-		expect.objectContaining({ mode: "replace", offsetSec: 1.5, originalGain: 0 }),
-	);
-	expect(write).toHaveBeenCalledWith(expect.any(ArrayBuffer), "C:/out.mp4");
+	expect(mix).toHaveBeenCalledWith({
+		projectId: "qa",
+		outputPath: "C:/out.mp4",
+		expectedLayer: expect.objectContaining({ offsetSec: 1.5, originalGain: 0 }),
+	});
 });
-it("missing narration does not overwrite the already exported video", async () => {
-	vi.stubGlobal(
-		"fetch",
-		vi.fn(async () => new Response(null, { status: 404 })),
-	);
-	const write = vi.fn();
-	vi.stubGlobal("window", { electronAPI: { writeExportToPath: write } });
+it("missing native mixing reports preservation rather than using a browser fallback", async () => {
+	vi.stubGlobal("window", { electronAPI: {} });
 	await expect(mixProjectNarration(doc, "C:/out.mp4")).rejects.toThrow("preserved");
-	expect(write).not.toHaveBeenCalled();
+});
+it("propagates native verification errors", async () => {
+	vi.stubGlobal("window", {
+		electronAPI: {
+			mixNarrationExport: async () => ({ success: false, message: "Mix decode failed" }),
+		},
+	});
+	await expect(mixProjectNarration(doc, "C:/out.mp4")).rejects.toThrow("Mix decode failed");
 });

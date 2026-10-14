@@ -6,6 +6,8 @@ import {
 } from "../src/lib/hyperframes";
 import {
 	NARRATION_CHANNEL,
+	NARRATION_EXPORT_CHANNEL,
+	type NarrationExportRequest,
 	type NarrationRequest,
 	type NarrationStatus,
 } from "../src/lib/narration";
@@ -41,6 +43,8 @@ const assetBaseUrl = assetBaseUrlArg ? assetBaseUrlArg.slice(ASSET_BASE_URL_ARG_
 const PLATFORM = process.platform;
 
 contextBridge.exposeInMainWorld("electronAPI", {
+	mixNarrationExport: (request: NarrationExportRequest) =>
+		ipcRenderer.invoke(NARRATION_EXPORT_CHANNEL, request),
 	scenePlanner: (request: PlannerRequest): Promise<PlannerReply> =>
 		ipcRenderer.invoke(SCENE_PLANNER_CHANNEL, request),
 	narration: (request: NarrationRequest): Promise<NarrationStatus> =>
