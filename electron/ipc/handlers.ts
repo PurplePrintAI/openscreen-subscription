@@ -67,6 +67,7 @@ import {
 import { findMediaLinksByFingerprint, registerMediaLinks } from "../media/mediaLinksRegistry";
 import { relinkProjectMedia } from "../media/projectMediaRelinker";
 import { approveNarrationExport } from "../narration/export";
+import { registerNarrationInstallIpc } from "../narration/install-ipc";
 import { registerNarrationIpc } from "../narration/ipc";
 import {
 	type LinuxCaptureSourceKind,
@@ -4199,6 +4200,7 @@ export function registerIpcHandlers(
 	registerHyperframesIpc(aiEditionDocuments);
 	registerNarrationIpc(aiEditionDocuments);
 	registerStudioSetupIpc();
+	registerNarrationInstallIpc();
 	registerScenePlannerIpc(getAiEditionLlmConfig);
 	registerNativeBridgeHandlers({
 		getPlatform: () => process.platform,

@@ -33,6 +33,7 @@ const required = [
 	"node_modules/electron/dist/electron.exe",
 	"tools/narration/generate.py",
 	"tools/narration/transcribe.py",
+	"tools/narration/probe_runtime.py",
 ];
 for (const file of required) await fs.access(path.join(repo, file));
 if (options.has("narration-runtime")) {
@@ -84,7 +85,7 @@ for (const relative of [
 	"THIRD-PARTY-NOTICES.md",
 ])
 	await copyTree(relative);
-for (const file of ["generate.py", "transcribe.py", "README.md"])
+for (const file of ["generate.py", "transcribe.py", "probe_runtime.py", "README.md"])
 	await copyTree(`tools/narration/${file}`);
 await fs.symlink(
 	await fs.realpath(path.join(repo, "node_modules")),

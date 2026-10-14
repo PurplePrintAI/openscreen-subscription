@@ -120,6 +120,9 @@ export function NarrationDialog({
 	const tone = resolveNarrationTone({ preset: tonePreset, direction: toneDirection });
 	const needsToneControl = mode === "preset" && Boolean(narrationToneInstruction(tone));
 	const unsupportedTone = needsToneControl && status.runtime.presetToneControl !== true;
+	const runtimeAvailable =
+		(mode === "preset" ? status.runtime.presetAvailable : status.runtime.cloneAvailable) ??
+		status.runtime.available;
 	const matchesTone = (value: { mode: "preset" | "clone"; tone?: NarrationTone }) =>
 		value.mode !== "preset" || narrationToneMatches(value.tone, tone);
 	const take =
@@ -191,7 +194,7 @@ export function NarrationDialog({
 		>
 			<div className={styles.content}>
 				<p className={styles.note}>
-					{status.runtime.available
+					{runtimeAvailable
 						? ko
 							? "Qwen3-TTS · 로컬 런타임 구성됨 · GPU는 생성 시 확인합니다."
 							: "Qwen3-TTS · Local runtime configured; GPU checked on generation."
@@ -199,7 +202,7 @@ export function NarrationDialog({
 							? "로컬 음성 런타임 설치·구성이 필요합니다. 자동 다운로드하지 않습니다."
 							: status.runtime.error}
 				</p>
-				{!status.runtime.available && onOpenSetup && (
+				{!runtimeAvailable && onOpenSetup && (
 					<div className={styles.actions}>
 						<button type="button" disabled={busy} onClick={onOpenSetup}>
 							{ko ? "Studio 환경 설정 열기" : "Open Studio setup"}
@@ -296,7 +299,7 @@ export function NarrationDialog({
 						<div className={styles.actions}>
 							<button
 								type="button"
-								disabled={busy || !consent || !status.runtime.available}
+								disabled={busy || !consent || !runtimeAvailable}
 								onClick={() => void perform({ action: "pick-reference", speakerConsent: true })}
 							>
 								{ko ? "녹음 선택 · 자동 전사" : "Choose recording · Transcribe"}
@@ -349,7 +352,7 @@ export function NarrationDialog({
 						disabled={
 							busy ||
 							!document ||
-							!status.runtime.available ||
+							!runtimeAvailable ||
 							unsupportedTone ||
 							!text.trim() ||
 							(mode === "clone" && (!consent || !status.reference || !referenceText.trim()))

@@ -35,6 +35,7 @@ export interface StudioSetupSnapshot {
 export const studioSetupRequestSchema = z.discriminatedUnion("action", [
 	z.object({ action: z.literal("status") }).strict(),
 	z.object({ action: z.literal("reset") }).strict(),
+	z.object({ action: z.literal("clear-clone") }).strict(),
 	z
 		.object({ action: z.literal("pick"), field: z.enum([...NARRATION_FIELDS, "hyperframesDir"]) })
 		.strict(),

@@ -35,6 +35,7 @@ async function fixture(run?: typeof runLocal) {
 	};
 	await fs.writeFile(runtime.pythonPath, "");
 	await fs.writeFile(path.join(root, "generate.py"), "");
+	await fs.writeFile(path.join(root, "transcribe.py"), "");
 	for (const [key, dir] of Object.entries(runtime)) {
 		if (key === "pythonPath") continue;
 		await fs.mkdir(dir);
@@ -78,6 +79,23 @@ async function fixture(run?: typeof runLocal) {
 		}),
 	};
 }
+it("preset runs without clone/transcription models and reports each mode separately", async () => {
+	const f = await fixture();
+	const file = path.join(f.root, "runtime.json"),
+		config = JSON.parse(await fs.readFile(file, "utf8"));
+	delete config.cloneModel;
+	delete config.whisperModel;
+	await fs.writeFile(file, JSON.stringify(config));
+	await fs.unlink(path.join(f.root, "transcribe.py"));
+	expect((await f.service.status()).runtime).toMatchObject({
+		available: true,
+		presetAvailable: true,
+		cloneAvailable: false,
+	});
+	expect(
+		(await f.service.generate({ mode: "preset", projectId: "qa", text: "기본 음성만" })).phase,
+	).toBe("ready");
+});
 it("preset never reads a reference and yields only a verified take", async () => {
 	const { root, service, calls } = await fixture();
 	const result = await service.generate({ mode: "preset", projectId: "qa", text: "한국어" });

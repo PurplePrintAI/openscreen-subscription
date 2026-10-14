@@ -11,6 +11,11 @@ import {
 	type NarrationRequest,
 	type NarrationStatus,
 } from "../src/lib/narration";
+import {
+	NARRATION_INSTALL_CHANNEL,
+	type NarrationInstallRequest,
+	type VoiceInstallStatus,
+} from "../src/lib/narration-install";
 import type { NativeLinuxRecordingRequest } from "../src/lib/nativeLinuxRecording";
 import type { NativeMacRecordingRequest } from "../src/lib/nativeMacRecording";
 import type { NativeWindowsRecordingRequest } from "../src/lib/nativeWindowsRecording";
@@ -48,6 +53,8 @@ const assetBaseUrl = assetBaseUrlArg ? assetBaseUrlArg.slice(ASSET_BASE_URL_ARG_
 const PLATFORM = process.platform;
 
 contextBridge.exposeInMainWorld("electronAPI", {
+	narrationInstall: (request: NarrationInstallRequest): Promise<VoiceInstallStatus> =>
+		ipcRenderer.invoke(NARRATION_INSTALL_CHANNEL, request),
 	studioSetup: (request: StudioSetupRequest): Promise<StudioSetupReply> =>
 		ipcRenderer.invoke(STUDIO_SETUP_CHANNEL, request),
 	mixNarrationExport: (request: NarrationExportRequest) =>

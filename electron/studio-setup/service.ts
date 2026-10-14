@@ -21,8 +21,8 @@ const narrationConfig = z
 	.object({
 		pythonPath: localPath,
 		presetModel: localPath,
-		cloneModel: localPath,
-		whisperModel: localPath,
+		cloneModel: localPath.optional(),
+		whisperModel: localPath.optional(),
 	})
 	.strict();
 const motionConfig = z.object({ runtimeDir: localPath }).strict();
@@ -126,6 +126,12 @@ export class StudioSetupService {
 		};
 		if (draft.configErrors.has(kind)) section.issues.configuration = "invalid";
 		for (const field of fields) {
+			if (
+				(field === "cloneModel" || field === "whisperModel") &&
+				!draft.paths.cloneModel &&
+				!draft.paths.whisperModel
+			)
+				continue;
 			const value = draft.paths[field];
 			if (!value) {
 				section.issues[field] = "missing";
@@ -168,7 +174,8 @@ export class StudioSetupService {
 		if (kind === "narration") {
 			try {
 				await fs.access(path.join(this.deps.narrationScriptDir, "generate.py"));
-				await fs.access(path.join(this.deps.narrationScriptDir, "transcribe.py"));
+				if (draft.paths.whisperModel)
+					await fs.access(path.join(this.deps.narrationScriptDir, "transcribe.py"));
 				if (!this.deps.ffmpeg()) throw new Error("Missing FFmpeg");
 			} catch {
 				section.issues.configuration = "unavailable";
@@ -191,6 +198,14 @@ export class StudioSetupService {
 			narration: await this.inspect("narration", draft),
 			hyperframes: await this.inspect("hyperframes", draft),
 		};
+	}
+	async clearClone(owner: number): Promise<StudioSetupReply> {
+		const draft = await this.draft(owner);
+		if (this.readOnly("narration"))
+			return { snapshot: await this.status(owner), result: "readonly" };
+		delete draft.paths.cloneModel;
+		delete draft.paths.whisperModel;
+		return { snapshot: await this.status(owner) };
 	}
 	async pick(
 		owner: number,

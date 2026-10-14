@@ -48,6 +48,7 @@ export function registerStudioSetupIpc() {
 			.then(async () => {
 				if (event.sender.isDestroyed()) throw new Error("Setup window closed.");
 				if (request.action === "reset") service.reset(id);
+				if (request.action === "clear-clone") return await service.clearClone(id);
 				if (request.action === "pick") {
 					const owner = BrowserWindow.fromWebContents(event.sender);
 					if (!owner) throw new Error("Editor is unavailable.");

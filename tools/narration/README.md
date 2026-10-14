@@ -86,17 +86,23 @@ approve naturalness, speaker similarity, consent, or commercial suitability.
 ## Studio integration
 
 Open **PurplePrint Studio → Studio setup** to select an already prepared Python
-executable and the three model directories. Validate the displayed paths,
+executable and CustomVoice; Base and faster-whisper are an optional pair for cloning.
+Validate the displayed paths,
 acknowledge trust and save; editing JSON manually is not required. This writes
 only Studio's userData configuration, never the selected models or Python install.
 The panel checks files rather than executing Python or downloading dependencies.
+Its separate **Install / reuse preset voice model** dialog supports Windows x64:
+explicit trust enables an offline Python/GPU diagnostic, then a separate reviewed
+plan/confirmation can download the pinned 1.7B CustomVoice snapshot (4.52 GB) or
+verify/reuse existing files. Python, packages and drivers must already be prepared.
+See [setup architecture](../../technical-documentation/architecture/studio-runtime-setup.md#preset-model-installer).
 
 Set `STUDIO_NARRATION_RUNTIME` to the absolute runtime JSON for development, or
 place `narration-runtime.json` in the app's userData folder. Neither executable
 paths nor model paths are accepted from renderer IPC. An explicit environment
 override makes the corresponding setup section read-only. Workers are launched
 without a shell or ambient AI credentials. Closing the owning window or cancelling
-stops the owned process tree. Python/model installation remains a manual preflight.
+stops the owned process tree. Python/package installation remains a manual preflight.
 
 Studio menu → **나레이션 / Narration** → Korean preset or authorized reference →
 script (up to 600 characters) → preset tone/direction → generate → preview → apply.
@@ -122,5 +128,5 @@ audio timeline. After changing video edits, review narration alignment again.
 CLI export's existing `--audio`, `--audio-mode`, `--audio-offset` remain separate;
 CLI does not automatically consume this new project layer. Portable project
 packing does not yet collect the narration WAV, so keep the local take folder
-available. Runtime installer UX, reference deletion UI and Mac validation remain
+available. Full dependency provisioning, reference deletion UI and Mac validation remain
 outside this development slice. Manual desktop verification is recorded separately.

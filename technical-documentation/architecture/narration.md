@@ -16,8 +16,11 @@ cannot choose Python/model executables or arbitrary input/output paths.
 local recordings with FFmpeg's file/pipe protocol allowlist and caps processing at
 31 seconds (3–30 seconds are accepted). It transcribes locally, then generates
 using pinned local models, normalizes the result and fully decodes it before
-returning an applicable take. Script/recording upload and automatic model download
-are not implemented. The worker environment excludes ambient AI credentials.
+returning an applicable take. Script/recording upload and generation-triggered
+downloads are not implemented. Preset-only configuration does not require clone
+or transcription models. A separately confirmed
+[preset-model setup flow](studio-runtime-setup.md#preset-model-installer) can
+download or reuse a pinned model. The worker environment excludes ambient AI credentials.
 It preserves the local Windows user name (falling back to `os.userInfo`) because
 PyTorch cache initialization calls Python `getpass.getuser`, whose `pwd` fallback
 is unavailable on Windows when all user-name variables have been stripped.

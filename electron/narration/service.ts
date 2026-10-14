@@ -15,9 +15,9 @@ import { runLocal } from "../hyperframes/runtime";
 
 const runtimeSchema = z.object({
 	pythonPath: z.string(),
-	cloneModel: z.string(),
-	presetModel: z.string(),
-	whisperModel: z.string(),
+	cloneModel: z.string().optional(),
+	presetModel: z.string().optional(),
+	whisperModel: z.string().optional(),
 });
 interface Dependencies {
 	root: string;
@@ -59,11 +59,15 @@ export class NarrationService {
 	private controller: AbortController | null = null;
 	private references = new Map<string, string>();
 	constructor(private deps: Dependencies) {}
-	private async runtime() {
+	private async runtime(mode: "preset" | "clone" | "reference") {
 		const config = runtimeSchema.parse(
 			JSON.parse(await fs.readFile(this.deps.runtimeFile, "utf8")),
 		);
-		for (const [key, value] of Object.entries(config)) {
+		const modelKey =
+			mode === "reference" ? "whisperModel" : mode === "clone" ? "cloneModel" : "presetModel";
+		for (const key of ["pythonPath", modelKey] as const) {
+			const value = config[key];
+			if (!value) throw new Error(`Missing ${key}`);
 			if (!path.isAbsolute(value))
 				throw new Error(`Runtime ${key} must be an absolute local path.`);
 			const file =
@@ -73,24 +77,30 @@ export class NarrationService {
 			if (!(await fs.stat(file)).isFile()) throw new Error(`Missing ${key}`);
 		}
 		if (!this.deps.ffmpeg()) throw new Error("FFmpeg is unavailable.");
-		await fs.access(path.join(this.deps.scriptDir, "generate.py"));
+		await fs.access(
+			path.join(this.deps.scriptDir, mode === "reference" ? "transcribe.py" : "generate.py"),
+		);
 		return config;
 	}
 	async status(): Promise<NarrationStatus> {
 		if (!this.controller) {
-			try {
-				const runtime = await this.runtime();
-				this.state.runtime = {
-					available: true,
-					...(await this.toneCapability(runtime.presetModel)),
-				};
-			} catch {
-				this.state.runtime = {
-					available: false,
-					error:
-						"Local narration runtime is not configured. Python, Qwen3-TTS models and a CUDA GPU are required. No automatic download.",
-				};
-			}
+			const [preset, clone, reference] = await Promise.all([
+				this.runtime("preset").catch(() => null),
+				this.runtime("clone").catch(() => null),
+				this.runtime("reference").catch(() => null),
+			]);
+			this.state.runtime = {
+				available: !!preset || !!(clone && reference),
+				presetAvailable: !!preset,
+				cloneAvailable: !!(clone && reference),
+				...(preset ? await this.toneCapability(preset.presetModel!) : {}),
+				...(!preset && !(clone && reference)
+					? {
+							error:
+								"Configure the local runtime for the selected voice mode. No automatic download.",
+						}
+					: {}),
+			};
 		}
 		return structuredClone(this.state);
 	}
@@ -136,7 +146,7 @@ export class NarrationService {
 	}
 	async prepareReference(file: string) {
 		return this.job("reference", async (folder, signal) => {
-			const runtime = await this.runtime();
+			const runtime = await this.runtime("reference");
 			if (
 				!path.isAbsolute(file) ||
 				![".wav", ".flac", ".m4a", ".mp3"].includes(path.extname(file).toLowerCase())
@@ -179,7 +189,7 @@ export class NarrationService {
 				[
 					path.join(this.deps.scriptDir, "transcribe.py"),
 					"--model",
-					runtime.whisperModel,
+					runtime.whisperModel!,
 					"--audio",
 					wav,
 					"--output",
@@ -202,13 +212,13 @@ export class NarrationService {
 	async generate(raw: NarrationInput) {
 		const input = narrationInputSchema.parse(raw);
 		return this.job("generating", async (folder, signal) => {
-			const runtime = await this.runtime(),
+			const runtime = await this.runtime(input.mode),
 				run = this.deps.run ?? runLocal;
 			let job: Record<string, unknown> = { mode: input.mode, text: input.text };
 			const tone = input.mode === "preset" ? resolveNarrationTone(input.tone) : undefined;
 			const instruct = tone ? narrationToneInstruction(tone) : "";
 			if (tone) {
-				if (instruct && !(await this.toneCapability(runtime.presetModel)).presetToneControl)
+				if (instruct && !(await this.toneCapability(runtime.presetModel!)).presetToneControl)
 					throw new Error(
 						"Tone control requires local Qwen3-TTS 1.7B CustomVoice. Configure it or select the original tone without extra direction.",
 					);

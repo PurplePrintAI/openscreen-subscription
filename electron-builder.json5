@@ -79,7 +79,7 @@
   // userData cache on first use by electron/stt/modelManager.ts, so no model
   // files are bundled at build time.
   "extraResources": [
-    { "from": "tools/narration", "to": "narration", "filter": ["generate.py", "transcribe.py", "README.md"] },
+    { "from": "tools/narration", "to": "narration", "filter": ["generate.py", "transcribe.py", "probe_runtime.py", "README.md"] },
     // Attribution + LGPL source offer for the bundled ffmpeg DLLs and
     // whisper.cpp binaries. Redistributing LGPL libraries obliges us to ship
     // the notice with them, so it goes in resources/, not just in the repo.

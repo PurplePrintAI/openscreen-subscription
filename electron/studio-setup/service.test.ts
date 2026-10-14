@@ -61,6 +61,21 @@ async function fixture(overrides = false) {
 	}
 	return { root, file, config, service, deps, select };
 }
+it("saves a preset-only runtime and disconnects clone paths without deleting model files", async () => {
+	const f = await fixture();
+	await f.select();
+	await f.service.save(1, "narration");
+	await f.service.clearClone(1);
+	expect((await f.service.status(1)).narration.valid).toBe(true);
+	expect((await f.service.save(1, "narration")).result).toBe("saved");
+	expect(JSON.parse(await fs.readFile(f.file, "utf8"))).toEqual({
+		pythonPath: f.config.pythonPath,
+		presetModel: f.config.presetModel,
+	});
+	expect((await fs.stat(path.join(f.config.cloneModel, "model.safetensors"))).isFile()).toBe(true);
+	await f.service.pick(1, "cloneModel", async () => f.config.cloneModel);
+	expect((await f.service.save(1, "narration")).result).toBe("invalid");
+});
 it("discovery is read-only; picker selections require a separate save and survive restart", async () => {
 	const f = await fixture();
 	expect((await f.service.status(1)).cli).toMatchObject({
