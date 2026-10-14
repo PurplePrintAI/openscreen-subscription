@@ -18,6 +18,9 @@ local recordings with FFmpeg's file/pipe protocol allowlist and caps processing 
 using pinned local models, normalizes the result and fully decodes it before
 returning an applicable take. Script/recording upload and automatic model download
 are not implemented. The worker environment excludes ambient AI credentials.
+It preserves the local Windows user name (falling back to `os.userInfo`) because
+PyTorch cache initialization calls Python `getpass.getuser`, whose `pwd` fallback
+is unavailable on Windows when all user-name variables have been stripped.
 
 ## Project and playback
 
@@ -56,13 +59,27 @@ used by the native scene into output-time spans. `NarrationPlayback` follows tha
 clock on play, pause and seek. Source audio gain is multiplied independently of
 the editor's existing audio gain so removing narration restores that setting.
 
-GUI MP4 export mixes the rendered video with the saved narration using the existing
-voiceover mixer and checks the final write before reporting success. The video
-stream is copied; audio is encoded. The new layer is not automatically used by
-the old CLI export or portable pack commands. GIF is silent, and narration beyond
-the output duration is cut. The first integration accepts short scripts and a
-512-MiB output-video ceiling; full streaming mix and a multi-track audio timeline
-are separate work.
+GUI MP4 export uses the bundled FFmpeg in the main process; it does not require
+renderer WebCodecs/`AudioEncoder` or load the full video into browser memory.
+The native Save dialog grants a one-use output path to that renderer window.
+The mixer accepts only that path and the exact narration layer loaded from the
+saved project. It rejects changed layers, source-recording destinations and
+non-regular files. IPC checks the trusted main frame, serializes each window's
+export and cancels owned mixing when the window closes or the app quits.
+
+Native compositor MP4s contain an AAC bed even when source clips are silent.
+FFmpeg applies the saved original gain and voice offset, pads the voice and ends
+the mix with that bed. Video packets are copied; audio is encoded to AAC. It
+writes a unique sibling temporary file, fully decodes it, rechecks the saved layer
+and output identity, then atomically replaces the selected export. Failure or
+cancellation before promotion preserves the original export and removes only
+the owned temporary file. There is no renderer 512-MiB memory ceiling on this path;
+child-process timeouts still bound work.
+
+The saved layer is not automatically used by the old CLI export or portable pack
+commands. The legacy CLI `--audio` WebCodecs mixer is unchanged and is not covered
+by this Studio GUI verification. GIF remains silent; narration beyond the video
+duration is cut. A multi-track audio timeline is separate work.
 
 ## Verification
 

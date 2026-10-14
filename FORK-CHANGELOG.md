@@ -19,6 +19,16 @@ For the dated review of newer upstream changes, see
 
 ## Unreleased — Production workflow integration review
 
+- Automated Electron execution found and fixed two real runtime gaps: Windows
+  narration workers now retain the local user name required by PyTorch cache
+  setup while still excluding provider secrets, and narrated Studio MP4s use
+  bundled FFmpeg instead of requiring renderer WebCodecs.
+- Native narration mixing requires the caller's Save-dialog path grant and the
+  exact saved layer, verifies a temporary output and preserves the existing
+  export on failure/cancellation. Actual 20-second 1080p output, 1.5-second voice
+  offset, unchanged video pixels and full restart restoration were verified.
+  See [automated QA](technical-documentation/testing/automated-studio-qa-2026-10-14.md).
+
 - Keeps a successfully saved product-demo draft visible when cancellation arrives
   during the save. Holds the job lock through final status persistence to prevent
   a second plan from replacing an unfinished request's state.
