@@ -39,10 +39,25 @@ export function narrationEnvironment(): NodeJS.ProcessEnv {
 		"USERPROFILE",
 		"LOCALAPPDATA",
 		"APPDATA",
+		// NVML (nvidia-smi) needs these to locate NVIDIA driver components.
+		"ProgramFiles",
+		"ProgramW6432",
 	])
 		if (process.env[key]) env[key] = process.env[key];
 	return {
 		...env,
+		// Restricted desktop launchers can omit these standard Windows locations.
+		...(process.platform === "win32"
+			? {
+					ProgramFiles:
+						process.env.ProgramFiles ||
+						path.join(path.parse(process.env.SystemRoot || "C:\\Windows").root, "Program Files"),
+					ProgramW6432:
+						process.env.ProgramW6432 ||
+						process.env.ProgramFiles ||
+						path.join(path.parse(process.env.SystemRoot || "C:\\Windows").root, "Program Files"),
+				}
+			: {}),
 		// PyTorch's cache setup calls Python getpass.getuser(). Windows has no
 		// pwd module fallback when the sanitized environment omits every user
 		// name variable. Preserve only the local account name, never API keys.

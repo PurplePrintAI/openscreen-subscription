@@ -7,6 +7,7 @@ export const narrationInstallRequest = z.discriminatedUnion("action", [
 		.object({
 			action: z.literal("plan"),
 			mode: z.enum(["download", "reuse"]),
+			runtimeMode: z.enum(["existing", "managed"]).optional(),
 			trustPython: z.literal(true),
 		})
 		.strict(),
@@ -38,6 +39,10 @@ export interface VoiceInstallPlan {
 	expiresAt: number;
 	probe?: VoiceProbe;
 	issues: string[];
+	runtimeMode?: "existing" | "managed";
+	runtimeRoot?: string;
+	runtimeDownloadBytes?: number;
+	hardware?: { name: string; memoryMiB: number; driver: string; compute: number };
 }
 export interface VoiceInstallStatus {
 	phase:
@@ -46,6 +51,8 @@ export interface VoiceInstallStatus {
 		| "review"
 		| "installing"
 		| "verifying"
+		| "provisioning"
+		| "testing"
 		| "complete"
 		| "cancelled"
 		| "error";
@@ -53,4 +60,7 @@ export interface VoiceInstallStatus {
 	plan?: VoiceInstallPlan;
 	receivedBytes?: number;
 	error?: string;
+	step?: "downloading-runtime" | "extracting-python" | "installing-packages";
+	sample?: { audioPath: string; durationSec: number };
+	diagnosticStage?: "import-soundfile" | "import-torch" | "import-qwen" | "cuda";
 }

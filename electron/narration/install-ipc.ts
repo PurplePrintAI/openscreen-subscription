@@ -48,7 +48,7 @@ export function registerNarrationInstallIpc() {
 		if (active || quitting) throw new Error("Installer is busy.");
 		activeOwner = id;
 		const operation = (async () => {
-			if (request.action === "plan") return service.prepare(id, request.mode);
+			if (request.action === "plan") return service.prepare(id, request.mode, request.runtimeMode);
 			if (request.action === "install") return service.install(id, request.planId);
 			const owner = BrowserWindow.fromWebContents(event.sender);
 			if (!owner) throw new Error("Editor is unavailable.");

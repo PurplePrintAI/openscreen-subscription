@@ -315,8 +315,8 @@ export function StudioSetupDialog({
 							<summary>{text("설치 전 확인할 사항", "Before installing runtimes")}</summary>
 							<p>
 								{text(
-									"기본 음성 모델 설치·재사용에서는 별도 동의 후 고정 버전 모델을 다운로드하거나 검증해 연결합니다. Python·패키지·GPU 드라이버는 먼저 준비해야 합니다. 복제·전사 모델의 자동 설치와 새 PC 전체 설정 검증은 아직 제공하지 않습니다.",
-									"Preset setup can download or verify a pinned model after separate consent. Prepare Python/packages/GPU drivers first. Automatic clone/transcription installation and fresh-machine setup validation are not provided yet.",
+									"기본 음성 준비에서는 별도 동의 후 전용 Python·패키지·모델을 설치하거나 기존 환경을 연결할 수 있습니다. GPU 드라이버는 먼저 준비해야 합니다. 복제·전사 모델의 자동 설치와 Mac·CPU 지원은 아직 제공하지 않습니다.",
+									"Preset setup can install dedicated Python/packages/models after consent or connect existing tools. Prepare GPU drivers separately. Automatic clone/transcription installation and Mac/CPU support are not provided yet.",
 								)}
 							</p>
 						</details>

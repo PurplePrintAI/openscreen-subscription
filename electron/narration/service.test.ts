@@ -11,10 +11,15 @@ it("keeps a Windows-compatible user name without inheriting provider secrets", (
 	vi.stubEnv("USERNAME", undefined);
 	vi.stubEnv("OPENAI_API_KEY", "must-not-reach-worker");
 	vi.stubEnv("ANTHROPIC_API_KEY", "must-not-reach-worker");
+	vi.stubEnv("ProgramFiles", "C:/Program Files");
+	vi.stubEnv("ProgramW6432", "C:/Program Files");
 	const env = narrationEnvironment();
 	expect(env.USERNAME).toBe(os.userInfo().username);
 	expect(env.OPENAI_API_KEY).toBeUndefined();
 	expect(env.ANTHROPIC_API_KEY).toBeUndefined();
+	expect(env.ProgramFiles).toBe("C:/Program Files");
+	expect(env.ProgramW6432).toBe("C:/Program Files");
+	expect(env.PYTHONNOUSERSITE).toBeUndefined();
 });
 afterEach(async () => {
 	vi.unstubAllEnvs();

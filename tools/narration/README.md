@@ -94,7 +94,11 @@ The panel checks files rather than executing Python or downloading dependencies.
 Its separate **Install / reuse preset voice model** dialog supports Windows x64:
 explicit trust enables an offline Python/GPU diagnostic, then a separate reviewed
 plan/confirmation can download the pinned 1.7B CustomVoice snapshot (4.52 GB) or
-verify/reuse existing files. Python, packages and drivers must already be prepared.
+verify/reuse existing files. Existing-Python mode expects Python/packages to be
+prepared. Dedicated mode can install pinned Python 3.12.15 and preset packages
+into a new venv on the chosen drive, then generates a fixed test sentence before
+connecting it. Drivers remain a prerequisite. No source build or system-Python
+modification is performed.
 See [setup architecture](../../technical-documentation/architecture/studio-runtime-setup.md#preset-model-installer).
 
 Set `STUDIO_NARRATION_RUNTIME` to the absolute runtime JSON for development, or
@@ -102,7 +106,8 @@ place `narration-runtime.json` in the app's userData folder. Neither executable
 paths nor model paths are accepted from renderer IPC. An explicit environment
 override makes the corresponding setup section read-only. Workers are launched
 without a shell or ambient AI credentials. Closing the owning window or cancelling
-stops the owned process tree. Python/package installation remains a manual preflight.
+stops the owned process tree. Dedicated setup is separate from generation; ordinary
+generation never installs a runtime implicitly.
 
 Studio menu → **나레이션 / Narration** → Korean preset or authorized reference →
 script (up to 600 characters) → preset tone/direction → generate → preview → apply.

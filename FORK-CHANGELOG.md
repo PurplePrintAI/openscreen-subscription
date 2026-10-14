@@ -17,6 +17,21 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
+## Unreleased — Dedicated preset voice runtime
+
+- Adds Windows/NVIDIA preflight and separately confirmed setup of a dedicated
+  Python, venv and fixed preset-voice packages on the user's selected drive.
+- Shows complete download/disk requirements, reuses existing model files, checks
+  hashes, runs offline wheel installation and validates actual test speech before
+  connecting the new runtime. Existing Python/installations are preserved.
+- Adds local diagnostic stages/errors and a longer cold-start validation bound;
+  failed/cancelled attempts clean only their own new directory and preserve settings.
+- Driver installation, CPU/Mac, automatic clone/transcription setup and download
+  resumption remain separate work. This is development work, not a released installer.
+- Local Windows QA: fresh dedicated environment installation, test speech,
+  preview, normal narration application and restart restoration passed; see the
+  [dated report](technical-documentation/testing/managed-voice-runtime-2026-10-15.md).
+
 ## Unreleased — Preset voice model setup
 
 - Splits preset narration from optional cloning/transcription dependencies.
