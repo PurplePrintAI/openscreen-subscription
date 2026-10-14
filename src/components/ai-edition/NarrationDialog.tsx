@@ -15,7 +15,15 @@ import {
 import { ModalShell } from "./Modals";
 import styles from "./ProductDemoDialog.module.css";
 
-export function NarrationDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function NarrationDialog({
+	open,
+	onClose,
+	onOpenSetup,
+}: {
+	open: boolean;
+	onClose: () => void;
+	onOpenSetup?: () => void;
+}) {
 	const { locale } = useI18n(),
 		ko = locale.startsWith("ko");
 	const document = useProjectStore((s) => s.document);
@@ -191,6 +199,13 @@ export function NarrationDialog({ open, onClose }: { open: boolean; onClose: () 
 							? "로컬 음성 런타임 설치·구성이 필요합니다. 자동 다운로드하지 않습니다."
 							: status.runtime.error}
 				</p>
+				{!status.runtime.available && onOpenSetup && (
+					<div className={styles.actions}>
+						<button type="button" disabled={busy} onClick={onOpenSetup}>
+							{ko ? "Studio 환경 설정 열기" : "Open Studio setup"}
+						</button>
+					</div>
+				)}
 				<label>
 					{ko ? "목소리" : "Voice"}
 					<select

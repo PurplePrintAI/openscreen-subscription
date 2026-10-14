@@ -50,6 +50,16 @@ beforeEach(() => {
 	Object.defineProperty(window, "electronAPI", { configurable: true, value: { hyperframes: api } });
 });
 afterEach(cleanup);
+it("offers setup guidance before showing raw runtime diagnostics", async () => {
+	current.runtime.available = false;
+	current.runtime.error = "ENOENT private-runtime-path";
+	const setup = vi.fn();
+	render(<HyperframesDialog open onClose={vi.fn()} onOpenDraft={vi.fn()} onOpenSetup={setup} />);
+	await screen.findByText(/로컬 모션 환경을 찾지 못했거나/);
+	expect(screen.getByText("ENOENT private-runtime-path").closest("details")?.open).toBe(false);
+	fireEvent.click(screen.getByRole("button", { name: "Studio 환경 설정 열기" }));
+	expect(setup).toHaveBeenCalledOnce();
+});
 it("removes the previous ready project while a subsequent render is in flight", async () => {
 	current = { ...current, phase: "ready", projectId: "proj_previous" };
 	render(<HyperframesDialog open onClose={vi.fn()} onOpenDraft={vi.fn()} />);

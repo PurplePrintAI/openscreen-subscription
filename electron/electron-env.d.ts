@@ -24,6 +24,9 @@ declare namespace NodeJS {
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
 	electronAPI: {
+		studioSetup?: (
+			request: import("../src/lib/studio-setup").StudioSetupRequest,
+		) => Promise<import("../src/lib/studio-setup").StudioSetupReply>;
 		mixNarrationExport?: (
 			request: import("../src/lib/narration").NarrationExportRequest,
 		) => Promise<{ success: boolean; message?: string }>;

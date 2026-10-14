@@ -91,6 +91,7 @@ import {
 import { patchWebmDurationOnDisk } from "../recording/webm-duration";
 import { reindexRecordingOnDisk } from "../recording/webm-seek-index";
 import { registerScenePlannerIpc } from "../scene-planner/ipc";
+import { registerStudioSetupIpc } from "../studio-setup/ipc";
 import { registerNativeBridgeHandlers } from "./nativeBridge";
 import { RecordingStreamRegistry, registerRecordingStreamHandlers } from "./recordingStream";
 
@@ -4197,6 +4198,7 @@ export function registerIpcHandlers(
 	registerProductDemoIpc(aiEditionDocuments, getAiEditionLlmConfig);
 	registerHyperframesIpc(aiEditionDocuments);
 	registerNarrationIpc(aiEditionDocuments);
+	registerStudioSetupIpc();
 	registerScenePlannerIpc(getAiEditionLlmConfig);
 	registerNativeBridgeHandlers({
 		getPlatform: () => process.platform,

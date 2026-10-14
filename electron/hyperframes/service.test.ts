@@ -102,6 +102,26 @@ async function fixture() {
 }
 
 describe("local composition boundary", () => {
+	it("resolves saved runtime changes for the next status and render", async () => {
+		const f = await fixture();
+		let selected = path.join(f.root, "not-configured");
+		const service = new HyperframesService({
+			root: path.join(f.root, "configured-jobs"),
+			runtimeDir: selected,
+			resolveRuntimeDir: async () => selected,
+			getDocument: async () => f.document,
+			saveDocument: f.saveDocument,
+			run: f.run,
+		});
+		expect((await service.status()).runtime.available).toBe(false);
+		selected = f.runtimeDir;
+		expect((await service.status()).runtime).toMatchObject({
+			available: true,
+			runtimeDir: selected,
+		});
+		expect((await service.render(scene)).phase).toBe("ready");
+		expect(f.saveDocument).toHaveBeenCalledOnce();
+	});
 	it("escapes text and rejects arbitrary script, source paths and excessive duration", () => {
 		const html = buildMotionComposition({ ...scene, title: '<script>alert("x")</script>' });
 		expect(html).toContain("&lt;script&gt;");

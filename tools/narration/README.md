@@ -85,9 +85,16 @@ approve naturalness, speaker similarity, consent, or commercial suitability.
 
 ## Studio integration
 
+Open **PurplePrint Studio → Studio setup** to select an already prepared Python
+executable and the three model directories. Validate the displayed paths,
+acknowledge trust and save; editing JSON manually is not required. This writes
+only Studio's userData configuration, never the selected models or Python install.
+The panel checks files rather than executing Python or downloading dependencies.
+
 Set `STUDIO_NARRATION_RUNTIME` to the absolute runtime JSON for development, or
 place `narration-runtime.json` in the app's userData folder. Neither executable
-paths nor model paths are accepted from renderer IPC. Workers are launched
+paths nor model paths are accepted from renderer IPC. An explicit environment
+override makes the corresponding setup section read-only. Workers are launched
 without a shell or ambient AI credentials. Closing the owning window or cancelling
 stops the owned process tree. Python/model installation remains a manual preflight.
 
