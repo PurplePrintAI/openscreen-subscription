@@ -54,6 +54,7 @@ import type { CursorTelemetryReader } from "../ai-edition/deep-agent/service";
 import { DocumentService } from "../ai-edition/document-service";
 import { LlmConfigStore } from "../ai-edition/llm-config-store";
 import { isDiagnosticModeEnabled, mainLogBuffer } from "../diagnostics/main-log-buffer";
+import { registerHyperframesIpc } from "../hyperframes/ipc";
 import { mainT } from "../i18n";
 import { getInstallChannel } from "../install-channel";
 import { RECORDINGS_DIR } from "../main";
@@ -65,6 +66,7 @@ import {
 } from "../media/cursorSidecar";
 import { findMediaLinksByFingerprint, registerMediaLinks } from "../media/mediaLinksRegistry";
 import { relinkProjectMedia } from "../media/projectMediaRelinker";
+import { registerNarrationIpc } from "../narration/ipc";
 import {
 	type LinuxCaptureSourceKind,
 	LinuxNativeCaptureSession,
@@ -74,6 +76,7 @@ import { requestMacCursorAccessibilityAccess } from "../native-bridge/cursor/rec
 import { findPipeWireCursorHelperPath } from "../native-bridge/cursor/recording/pipeWireCursorRecordingSession";
 import type { CursorRecordingSession } from "../native-bridge/cursor/recording/session";
 import { toHelperRect } from "../native-bridge/helperCoordinates";
+import { registerProductDemoIpc } from "../product-demo/ipc";
 import { scoreDeviceNameMatch } from "../recording/deviceNameMatching";
 import {
 	isSalvageableFragmentedCapture,
@@ -86,6 +89,7 @@ import {
 } from "../recording/nativeWindowsCaptureStop";
 import { patchWebmDurationOnDisk } from "../recording/webm-duration";
 import { reindexRecordingOnDisk } from "../recording/webm-seek-index";
+import { registerScenePlannerIpc } from "../scene-planner/ipc";
 import { registerNativeBridgeHandlers } from "./nativeBridge";
 import { RecordingStreamRegistry, registerRecordingStreamHandlers } from "./recordingStream";
 
@@ -4185,6 +4189,10 @@ export function registerIpcHandlers(
 		return aiEditionLlmConfigInstance;
 	};
 
+	registerProductDemoIpc(aiEditionDocuments, getAiEditionLlmConfig);
+	registerHyperframesIpc(aiEditionDocuments);
+	registerNarrationIpc();
+	registerScenePlannerIpc(getAiEditionLlmConfig);
 	registerNativeBridgeHandlers({
 		getPlatform: () => process.platform,
 		getCurrentProjectPath: () => currentProjectPath,

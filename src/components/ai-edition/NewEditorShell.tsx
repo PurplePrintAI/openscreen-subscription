@@ -32,6 +32,7 @@ import type { AiEditionProjectSummary } from "@/native/contracts";
 import { resolveVisibleClips } from "@/native/sceneDescription";
 import { useNativePlaybackSync } from "@/native/useNativePlaybackSync";
 import { ExportDialog } from "./ExportDialog";
+import { HyperframesDialog } from "./HyperframesDialog";
 import { LeftPanel } from "./LeftPanel";
 import {
 	EditClipModal,
@@ -41,9 +42,12 @@ import {
 	UnsavedChangesModal,
 	type UnsavedChoice,
 } from "./Modals";
+import { NarrationDialog } from "./NarrationDialog";
 import { Preview } from "./Preview";
+import { ProductDemoDialog } from "./ProductDemoDialog";
 import type { TrimTarget } from "./RightPanes";
 import { importPendingRecording } from "./recordingImport";
+import { ScenePlanDialog } from "./ScenePlanDialog";
 import v4 from "./v4/EditorShellV4.module.css";
 import { type EditorMode, EditorTopBar } from "./v4/EditorTopBar";
 import { type Facet, FloatingInspector } from "./v4/FloatingInspector";
@@ -139,6 +143,33 @@ export function NewEditorShell() {
 	// mounted per trigger site.
 	const [editClipTarget, setEditClipTarget] = useState<AxcutClip | null>(null);
 	const [exportOpen, setExportOpen] = useState(false);
+	const [productDemoOpen, setProductDemoOpen] = useState(false);
+	const [scenePlanOpen, setScenePlanOpen] = useState(false);
+	const [motionOpen, setMotionOpen] = useState(false);
+	const [narrationOpen, setNarrationOpen] = useState(false);
+	const handleOpenGeneratedProject = useCallback(
+		async (id: string) => {
+			const current = useProjectStore.getState();
+			if (
+				current.dirty &&
+				current.document &&
+				!(await saveDocument(current.document, { history: false }))
+			) {
+				throw new Error(
+					"Could not save the current project. The new draft is still saved separately.",
+				);
+			}
+			await loadProject(id);
+			if (
+				useProjectStore.getState().projectId !== id ||
+				useProjectStore.getState().status === "error"
+			) {
+				throw new Error(useProjectStore.getState().error ?? "Could not open the saved draft.");
+			}
+			setMode("edit");
+		},
+		[loadProject, saveDocument],
+	);
 	const [unsavedPrompt, setUnsavedPrompt] = useState<{
 		action: "close" | "new" | "open" | "record";
 		resolve: (choice: UnsavedChoice) => void;
@@ -1188,6 +1219,10 @@ export function NewEditorShell() {
 				actions={{
 					openProject: () => setOpenProjectOpen(true),
 					newProject: () => setNewProjectOpen(true),
+					produceDemo: () => setProductDemoOpen(true),
+					openScenePlan: () => setScenePlanOpen(true),
+					openMotion: () => setMotionOpen(true),
+					openNarration: () => setNarrationOpen(true),
 					save: () => void handleSave(),
 					export: handleExport,
 					openSettings: handleOpenSettings,
@@ -1393,6 +1428,22 @@ export function NewEditorShell() {
 				}}
 				action={unsavedPrompt?.action ?? "new"}
 				onChoose={handleConfirmUnsaved}
+			/>
+			<ScenePlanDialog
+				open={scenePlanOpen}
+				onClose={() => setScenePlanOpen(false)}
+				onOpenDraft={handleOpenGeneratedProject}
+			/>
+			<ProductDemoDialog
+				open={productDemoOpen}
+				onClose={() => setProductDemoOpen(false)}
+				onOpenDraft={handleOpenGeneratedProject}
+			/>
+			<NarrationDialog open={narrationOpen} onClose={() => setNarrationOpen(false)} />
+			<HyperframesDialog
+				open={motionOpen}
+				onClose={() => setMotionOpen(false)}
+				onOpenDraft={handleOpenGeneratedProject}
 			/>
 			<ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} document={document} />
 		</div>

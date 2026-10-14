@@ -24,6 +24,18 @@ declare namespace NodeJS {
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
 	electronAPI: {
+		scenePlanner?: (
+			request: import("../src/lib/scene-planner").PlannerRequest,
+		) => Promise<import("../src/lib/scene-planner").PlannerReply>;
+		narration?: (
+			request: import("../src/lib/narration").NarrationRequest,
+		) => Promise<import("../src/lib/narration").NarrationStatus>;
+		hyperframes?: (
+			request: import("../src/lib/hyperframes").HyperframesRequest,
+		) => Promise<import("../src/lib/hyperframes").HyperframesStatus>;
+		productDemo?: (
+			request: import("../src/lib/product-demo").DemoRequest,
+		) => Promise<import("../src/lib/product-demo").DemoStatus>;
 		invokeNativeBridge: <TData = unknown>(
 			request: import("../src/native/contracts").NativeBridgeRequest,
 		) => Promise<import("../src/native/contracts").NativeBridgeResponse<TData>>;

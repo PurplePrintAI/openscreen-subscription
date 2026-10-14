@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { parseCustomPlaybackSpeedInput } from "@/components/video-editor/customPlaybackSpeed";
 import {
+	getZoomScale,
 	MAX_PLAYBACK_SPEED,
 	SPEED_OPTIONS,
 	ZOOM_DEPTH_SCALES,
@@ -521,12 +522,17 @@ function SelectionPane({ tl, onClose }: { tl: TimelineApi; onClose: () => void }
 					{paneRow(
 						ts("zoom.level"),
 						<select
-							value={region.depth}
+							value={region.customScale != null ? "custom" : region.depth}
 							onChange={(e) =>
 								void tl.updateZoomDepth(region.id, Number(e.target.value) as 1 | 2 | 3 | 4 | 5 | 6)
 							}
 							style={selectStyle}
 						>
+							{region.customScale != null && (
+								<option value="custom" disabled>
+									{getZoomScale(region)}×
+								</option>
+							)}
 							{ZOOM_DEPTHS.map((d) => (
 								<option key={d} value={d}>
 									{/* La table, pas une formule : ce libellé annonçait « 2.0× » là où la pastille de la

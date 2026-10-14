@@ -7,6 +7,7 @@ import {
 import { resolvePlaybackSegments } from "@/lib/ai-edition/document/timeline";
 import type { AxcutClip, AxcutTrimRange, AxcutZoomRegion } from "@/lib/ai-edition/schema";
 import { audioGainScalar } from "@/lib/ai-edition/store/editorSettings";
+import { useProjectStore } from "@/lib/ai-edition/store/projectStore";
 import { useEditorSettings } from "@/lib/ai-edition/store/useEditorSettings";
 import type { PlaybackClockRef } from "@/lib/ai-edition/timeline/playback-clock";
 import { findActiveSpeedRegion, type SpeedRegion } from "@/lib/ai-edition/timeline/speed";
@@ -24,6 +25,7 @@ import {
 	computeZoomPreviewTransform,
 	IDENTITY_ZOOM_TRANSFORM,
 } from "@/lib/ai-edition/timeline/zoom-preview";
+import { getNarration } from "@/lib/narration";
 import {
 	describeMediaError,
 	formatMediaError,
@@ -199,10 +201,12 @@ export function VirtualPreview({
 	const [supplementalAudioEl, setSupplementalAudioEl] = useState<HTMLAudioElement | null>(null);
 	const [supplementalAudioSrc, setSupplementalAudioSrc] = useState<string | null>(null);
 	const [audioProbeComplete, setAudioProbeComplete] = useState(false);
-	const audioGainDbRef = useRef(settings.audioGainDb);
+	const narrationGain = useProjectStore((s) => getNarration(s.document)?.originalGain ?? 1);
+	const effectiveAudioGainDb = settings.audioGainDb + 20 * Math.log10(narrationGain);
+	const audioGainDbRef = useRef(effectiveAudioGainDb);
 	useEffect(() => {
-		audioGainDbRef.current = settings.audioGainDb;
-	}, [settings.audioGainDb]);
+		audioGainDbRef.current = effectiveAudioGainDb;
+	}, [effectiveAudioGainDb]);
 	const audioContextRef = useRef<AudioContext | null>(null);
 	const audioContextCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const audioSourceNodesRef = useRef(new WeakMap<HTMLAudioElement, MediaElementAudioSourceNode>());
@@ -361,9 +365,9 @@ export function VirtualPreview({
 		applyPreviewAudioSettings(
 			audioGraphRef.current,
 			[primaryAudioRef.current, supplementalAudioRef.current],
-			settings.audioGainDb,
+			effectiveAudioGainDb,
 		);
-	}, [settings.audioGainDb]);
+	}, [effectiveAudioGainDb]);
 
 	const setPrimaryAudioElement = useCallback((element: HTMLAudioElement | null) => {
 		primaryAudioRef.current = element;

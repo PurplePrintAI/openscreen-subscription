@@ -119,8 +119,18 @@ const DECLARED: WritePath[] = [
 		"gesture",
 	),
 
+	// Explicitly applying or removing a narration layer records one undo step.
+	w("src/components/ai-edition/NarrationDialog.tsx", "apply", "save", "gesture"),
 	// The persist that follows an undo. Recording it would undo the undo.
 	w("src/components/ai-edition/NewEditorShell.tsx", "NewEditorShell", "save", "automatic"),
+	// Flush already-authored edits before switching to a generated demo draft.
+	// A navigation checkpoint is not another edit/undo step.
+	w(
+		"src/components/ai-edition/NewEditorShell.tsx",
+		"handleOpenGeneratedProject",
+		"save",
+		"automatic",
+	),
 	// "Save" on the unsaved-changes prompt.
 	w("src/components/ai-edition/NewEditorShell.tsx", "handleConfirmUnsaved", "save", "gesture"),
 	// The probed duration folded into the document when the <video> loads. Twice:
@@ -141,6 +151,8 @@ const DECLARED: WritePath[] = [
 	// The window is closing and the user answered "save".
 	w("src/components/ai-edition/NewEditorShell.tsx", "unsubSaveBeforeClose", "save", "gesture"),
 
+	// Explicitly saving the reviewed scene plan records one undo step.
+	w("src/components/ai-edition/ScenePlanDialog.tsx", "savePlan", "save", "gesture"),
 	// The agent's document. The optimistic write is not the edit — the save is, and
 	// it names the pre-agent document as what Ctrl+Z returns to.
 	w(

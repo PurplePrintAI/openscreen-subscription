@@ -33,6 +33,8 @@ import {
 	type GifSizePreset,
 } from "@/lib/exporter";
 import { calculateMp4ExportSettings, wouldUpscale } from "@/lib/exporter/mp4ExportSettings";
+import { getNarration } from "@/lib/narration";
+import { mixProjectNarration } from "@/lib/narration-export";
 import { exportGifNative, exportMultiNative, useIsCpuCompositor } from "@/native";
 import type { CompositorClipInput } from "@/native/contracts";
 import { buildSceneDescription, resolveVisibleClips } from "@/native/sceneDescription";
@@ -330,6 +332,10 @@ export function ExportDialog({ open, onClose, document }: ExportDialogProps) {
 								fps,
 								codec,
 							});
+				if (format === "mp4" && getNarration(document)) {
+					setPhase("writing");
+					await mixProjectNarration(document, pickedPath);
+				}
 				setSavedPath(pickedPath);
 				setPhase("done");
 				toast.success(t("exportDialog.exportedVideo"), {
