@@ -45,6 +45,13 @@ const ADDON_KEYS = [
 ] as const;
 
 describe("pushAllNativeParams", () => {
+	it("can address a private preview without touching the editor view", async () => {
+		const store = await import("./nativeCompositorStore");
+		const sink = vi.fn();
+		store.pushAllNativeParams(DEFAULT_EDITOR_SETTINGS, sink);
+		expect(sink).toHaveBeenCalledWith("padding", DEFAULT_EDITOR_SETTINGS.padding / 100);
+		expect(setCompositorParam).not.toHaveBeenCalled();
+	});
 	beforeEach(() => {
 		vi.resetModules();
 		setCompositorParam.mockClear();

@@ -63,6 +63,8 @@ export interface UseNativeCompositorViewResult {
 	 * "this machine cannot run the compositor" from a preview that is merely black.
 	 */
 	error: string | null;
+	/** At least one validated native pixel packet has reached the canvas. */
+	hasFrame: boolean;
 }
 
 /** swallow+warn wrapper for native-bridge calls. The renderer can run without
@@ -92,6 +94,7 @@ export function useNativeCompositorView(
 	const screenPath = opts.sources?.screenPath;
 	const [viewId, setViewId] = useState<number | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [hasFrame, setHasFrame] = useState(false);
 	// Mirror into a ref so async callbacks always see the freshest id without
 	// re-subscribing the main effect.
 	const viewIdRef = useRef<number | null>(null);
@@ -114,11 +117,11 @@ export function useNativeCompositorView(
 		// Fresh view (source or enablement changed) → the previous view's fatal error
 		// says nothing about this one.
 		setError(null);
+		setHasFrame(false);
 
-		/** Resize the canvas's DRAWING BUFFER to match the offscreen render
-		 *  target's pixel dimensions. Setting `canvas.width` / `canvas.height`
-		 *  is destructive (clears the bitmap), so we only do it on genuine
-		 *  rect changes — handled together with the setRect push below. */
+		/** Prime the drawing buffer before the first frame. After that, only a
+		 *  received pixel packet may resize it: even a position-only scroll can
+		 *  otherwise clear a paused frame when native output dims differ from CSS. */
 		const syncCanvasSize = (rect: CompositorViewRect) => {
 			if (canvas.width !== rect.width) {
 				canvas.width = rect.width;
@@ -148,7 +151,8 @@ export function useNativeCompositorView(
 			if (id == null) {
 				return;
 			}
-			syncCanvasSize(next);
+			// Keep the last painted frame until native publishes its replacement.
+			// Resizing here clears it, but paused views may publish no new generation.
 			safelyCall("setRect", () => setCompositorRect(id, next));
 		};
 
@@ -244,6 +248,7 @@ export function useNativeCompositorView(
 					// Advance only after a successful, validated frame — so a dropped/
 					// malformed packet is retried rather than silently skipped.
 					lastGen = gen;
+					setHasFrame(true);
 					// Sonde de fluidité : signale qu'une frame a réellement été livrée, pour
 					// que les intervalles rAF soient rangés dans l'état « preview active »
 					// plutôt que moyennés avec des périodes de repos.
@@ -338,5 +343,5 @@ export function useNativeCompositorView(
 		safelyCall("setPlaying", () => setCompositorPlaying(id, playing));
 	}, []);
 
-	return { viewId, setParam, setPlaying, error };
+	return { viewId, setParam, setPlaying, error, hasFrame };
 }

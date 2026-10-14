@@ -1,8 +1,26 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
+import {
+	HYPERFRAMES_CHANNEL,
+	type HyperframesRequest,
+	type HyperframesStatus,
+} from "../src/lib/hyperframes";
+import {
+	NARRATION_CHANNEL,
+	NARRATION_EXPORT_CHANNEL,
+	type NarrationExportRequest,
+	type NarrationRequest,
+	type NarrationStatus,
+} from "../src/lib/narration";
 import type { NativeLinuxRecordingRequest } from "../src/lib/nativeLinuxRecording";
 import type { NativeMacRecordingRequest } from "../src/lib/nativeMacRecording";
 import type { NativeWindowsRecordingRequest } from "../src/lib/nativeWindowsRecording";
+import { type DemoRequest, type DemoStatus, PRODUCT_DEMO_CHANNEL } from "../src/lib/product-demo";
 import type { RecordingSession, StoreRecordedSessionInput } from "../src/lib/recordingSession";
+import {
+	type PlannerReply,
+	type PlannerRequest,
+	SCENE_PLANNER_CHANNEL,
+} from "../src/lib/scene-planner";
 import type { ShortcutBinding } from "../src/lib/shortcuts";
 import type { AiEditionChatEvent } from "../src/native/contracts";
 import { NATIVE_BRIDGE_CHANNEL, type NativeBridgeRequest } from "../src/native/contracts";
@@ -25,6 +43,16 @@ const assetBaseUrl = assetBaseUrlArg ? assetBaseUrlArg.slice(ASSET_BASE_URL_ARG_
 const PLATFORM = process.platform;
 
 contextBridge.exposeInMainWorld("electronAPI", {
+	mixNarrationExport: (request: NarrationExportRequest) =>
+		ipcRenderer.invoke(NARRATION_EXPORT_CHANNEL, request),
+	scenePlanner: (request: PlannerRequest): Promise<PlannerReply> =>
+		ipcRenderer.invoke(SCENE_PLANNER_CHANNEL, request),
+	narration: (request: NarrationRequest): Promise<NarrationStatus> =>
+		ipcRenderer.invoke(NARRATION_CHANNEL, request),
+	hyperframes: (request: HyperframesRequest): Promise<HyperframesStatus> =>
+		ipcRenderer.invoke(HYPERFRAMES_CHANNEL, request),
+	productDemo: (request: DemoRequest): Promise<DemoStatus> =>
+		ipcRenderer.invoke(PRODUCT_DEMO_CHANNEL, request),
 	assetBaseUrl,
 
 	// --- Native export encoder -------------------------------------------------

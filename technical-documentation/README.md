@@ -20,6 +20,7 @@ who reads and writes the project document.
 | [document-model.md](architecture/document-model.md) | `AxcutDocument` — the single source of truth, its schema, migrations and persistence |
 | [timeline-model.md](architecture/timeline-model.md) | Time reference frames, clip-anchored modifiers, and the invariants that keep preview and render agreeing |
 | [editor-shell.md](architecture/editor-shell.md) | The editor UI: surfaces, modes, facets, and how to add a region kind |
+| [scene-planning.md](architecture/scene-planning.md) | Saved scene plans, storyboard previews and assembly into separate editable drafts |
 | [preview.md](architecture/preview.md) | Showing the frame at the playhead: scene description, frame delivery, playback sync |
 | [native-compositor.md](architecture/native-compositor.md) | The Rust + D3D11 engine that composites and encodes, for both preview and export |
 | [export-pipeline.md](architecture/export-pipeline.md) | Document to file: render plan, segment loop, audio junctions, output formats |

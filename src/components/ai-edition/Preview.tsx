@@ -10,6 +10,7 @@ import type {
 import { useProjectStore } from "@/lib/ai-edition/store/projectStore";
 import type { SpeedRegion } from "@/lib/ai-edition/timeline/speed";
 import { EditorEmptyState } from "./EditorEmptyState";
+import { NarrationPlayback } from "./NarrationPlayback";
 import styles from "./NewEditorShell.module.css";
 import { PreviewCanvas } from "./PreviewCanvas";
 import { PreviewErrorCard } from "./PreviewErrorCard";
@@ -176,6 +177,7 @@ export function Preview({
 		>
 			{hasProject && hasAsset && previewSources.length > 0 ? (
 				<>
+					<NarrationPlayback />
 					<PreviewCanvas
 						videoSources={previewSources}
 						clips={clips}

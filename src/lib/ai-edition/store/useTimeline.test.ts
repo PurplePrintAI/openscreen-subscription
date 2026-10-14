@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { I18nProvider } from "@/contexts/I18nContext";
 import type { AxcutDocument } from "../schema";
 import { axcutSchemaVersion } from "../schema";
+import { effectiveZoomScale } from "../timeline/zoom-scale";
 import { useProjectStore } from "./projectStore";
 import { clearHistory, redo, undo } from "./undo";
 import { future, past } from "./undoStack";
@@ -960,6 +961,25 @@ describe("useTimeline undo history", () => {
 			error: null,
 		});
 	}
+
+	it("replaces a custom zoom scale with a preset and restores the override on undo", async () => {
+		seed({ ...docWithZoom, zoomRanges: [{ ...docWithZoom.zoomRanges[0], customScale: 1.2 }] });
+		const { result } = renderTimeline();
+		await act(async () => {
+			await result.current.updateZoomDepth("zoom_a", 2);
+		});
+		const changed = useProjectStore.getState().document!.zoomRanges[0];
+		expect(changed.customScale).toBeUndefined();
+		expect(effectiveZoomScale(changed)).toBe(1.5);
+		act(() => {
+			expect(undo()).toBe(true);
+		});
+		expect(effectiveZoomScale(useProjectStore.getState().document!.zoomRanges[0])).toBe(1.2);
+		act(() => {
+			expect(redo()).toBe(true);
+		});
+		expect(effectiveZoomScale(useProjectStore.getState().document!.zoomRanges[0])).toBe(1.5);
+	});
 
 	it("keeps the background duration probe off the undo stack", async () => {
 		// Without `{ history: false }` on `probeAndCorrectClip`'s save, dropping a clip

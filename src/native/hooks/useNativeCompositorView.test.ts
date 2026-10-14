@@ -12,14 +12,15 @@
  * normal no-op, not a failure. Neither may raise the banner.
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { RefObject } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	createCompositorView: vi.fn(),
 	readCompositorFrame: vi.fn(),
 	destroyCompositorView: vi.fn(),
+	setCompositorRect: vi.fn(),
 }));
 
 vi.mock("../compositorViewClient", () => ({
@@ -28,7 +29,7 @@ vi.mock("../compositorViewClient", () => ({
 	destroyCompositorView: mocks.destroyCompositorView,
 	setCompositorParam: vi.fn(),
 	setCompositorPlaying: vi.fn(),
-	setCompositorRect: vi.fn(),
+	setCompositorRect: mocks.setCompositorRect,
 }));
 
 import { useNativeCompositorView } from "./useNativeCompositorView";
@@ -60,6 +61,51 @@ const DEVICE_FAILURE =
 describe("useNativeCompositorView", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+	afterEach(() => vi.unstubAllGlobals());
+
+	it("preserves a paused pixel packet through scroll and pending resize", async () => {
+		mocks.createCompositorView.mockResolvedValue({ id: 7 });
+		mocks.readCompositorFrame.mockResolvedValue(null).mockResolvedValueOnce({
+			gen: 1,
+			width: 4,
+			height: 2,
+			data: new Uint8Array(32),
+		});
+		const drawImage = vi.fn();
+		vi.stubGlobal(
+			"ImageData",
+			class {
+				constructor(..._args: unknown[]) {
+					// Canvas drawing is stubbed; only packet dimensions matter here.
+				}
+			},
+		);
+		vi.stubGlobal("createImageBitmap", vi.fn().mockResolvedValue({ close: vi.fn() }));
+		const ref = stubCanvasRef();
+		const canvas = ref.current!;
+		canvas.getContext = vi.fn(() => ({ drawImage })) as unknown as HTMLCanvasElement["getContext"];
+		let width = 100,
+			top = 0;
+		canvas.getBoundingClientRect = () => new DOMRect(0, top, width, 50);
+		const { result, unmount } = renderHook(() => useNativeCompositorView(ref));
+		await waitFor(() => {
+			expect(drawImage).toHaveBeenCalledOnce();
+			expect(result.current.hasFrame).toBe(true);
+		});
+		for (const nextWidth of [100, 200]) {
+			width = nextWidth;
+			top += 10;
+			const previous = mocks.setCompositorRect.mock.calls.length;
+			act(() => window.dispatchEvent(new Event("scroll")));
+			await waitFor(() =>
+				expect(mocks.setCompositorRect.mock.calls.length).toBeGreaterThan(previous),
+			);
+			expect([canvas.width, canvas.height]).toEqual([4, 2]);
+		}
+		expect(drawImage).toHaveBeenCalledOnce();
+		unmount();
+		expect(mocks.destroyCompositorView).toHaveBeenCalledWith(7);
 	});
 
 	it("surfaces the native message when the render thread dies", async () => {
@@ -100,6 +146,7 @@ describe("useNativeCompositorView", () => {
 
 		await waitFor(() => expect(mocks.readCompositorFrame).toHaveBeenCalled());
 		expect(result.current.error).toBeNull();
+		expect(result.current.hasFrame).toBe(false);
 	});
 
 	it("stays quiet without an Electron bridge — no view id, so nothing is ever polled", async () => {

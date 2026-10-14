@@ -24,6 +24,10 @@ export type EditorMode = "media" | "edit" | "rec";
 export interface TopBarActions {
 	openProject: () => void;
 	newProject: () => void;
+	produceDemo?: () => void;
+	openScenePlan?: () => void;
+	openMotion?: () => void;
+	openNarration?: () => void;
 	save: () => void;
 	export: () => void;
 	openSettings: () => void;
@@ -286,6 +290,7 @@ async function readUpdateVeto(cancelled: () => boolean, apply: (allowed: boolean
 }
 
 function AppMenu({ actions }: { actions: TopBarActions }) {
+	const { locale } = useI18n();
 	const tCommon = useScopedT("common");
 	const tEditor = useScopedT("editor");
 	const tShortcuts = useScopedT("shortcuts");
@@ -421,6 +426,52 @@ function AppMenu({ actions }: { actions: TopBarActions }) {
 						<Sparkles size={15} />
 						{tEditor("providerSettings.title")}
 					</button>
+					{actions.openScenePlan && (
+						<button
+							type="button"
+							role="menuitem"
+							className={styles.appMenuRow}
+							onClick={run(actions.openScenePlan)}
+						>
+							<Sparkles size={15} />
+							{locale.startsWith("ko") ? "영상 기획 · 장면 시트" : "Film plan · Scene sheet"}
+						</button>
+					)}
+					{actions.openNarration && (
+						<button
+							type="button"
+							role="menuitem"
+							className={styles.appMenuRow}
+							onClick={run(actions.openNarration)}
+						>
+							<Sparkles size={15} />
+							{locale.startsWith("ko") ? "나레이션" : "Narration"}
+						</button>
+					)}
+					{actions.openMotion && (
+						<button
+							type="button"
+							role="menuitem"
+							className={styles.appMenuRow}
+							onClick={run(actions.openMotion)}
+						>
+							<Sparkles size={15} />
+							{locale.startsWith("ko") ? "HyperFrames · 로컬 모션" : "HyperFrames · Local motion"}
+						</button>
+					)}
+					{actions.produceDemo && (
+						<button
+							type="button"
+							role="menuitem"
+							className={styles.appMenuRow}
+							onClick={run(actions.produceDemo)}
+						>
+							<Sparkles size={15} />
+							{locale.startsWith("ko")
+								? "제품 소개 영상 만들기 · 실험"
+								: "Create product demo · Preview"}
+						</button>
+					)}
 					<div className={styles.appMenuSep} aria-hidden />
 					{/* Only the PERMANENT half of the veto is applied here. A Store/Flathub/Snap/Nix
 					    copy never offers the check at all; the transient half — not during a take —

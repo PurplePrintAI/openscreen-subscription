@@ -607,9 +607,8 @@ export function useTimeline() {
 		}
 	}, [saveDocument]);
 
-	// Zoom-level control for the region-settings panel (1-6, matches
-	// zoomRegionSchema's depth literal union — 1.0x..3.5x in 0.5x steps per
-	// the `depth/2 + 0.5` label formula used throughout the timeline UI).
+	// Selecting a depth preset replaces an imported/agent-authored custom scale.
+	// Otherwise effectiveZoomScale keeps rendering the old override despite the new label.
 	const updateZoomDepth = useCallback(
 		async (id: string, depth: 1 | 2 | 3 | 4 | 5 | 6) => {
 			if (!document) return;
@@ -617,6 +616,7 @@ export function useTimeline() {
 				...document,
 				zoomRanges: patchPillById(document.zoomRanges, id, {
 					depth,
+					customScale: undefined,
 				}) as AxcutDocument["zoomRanges"],
 			};
 			await saveDocument(next, { history: true });
