@@ -70,6 +70,7 @@ describe("blockedFromInstalling", () => {
 describe("self-update flow", () => {
 	beforeEach(() => {
 		mocks.app.isPackaged = true;
+		mocks.app.getVersion.mockReturnValue("1.9.2");
 		// Back to electron-updater's DEFAULTS before every test, so "these are false" can only
 		// pass because this test's call configured them — not because an earlier test did.
 		mocks.autoUpdater.autoDownload = true;
@@ -125,11 +126,42 @@ describe("self-update flow", () => {
 	});
 
 	it("surfaces an available version", async () => {
-		mocks.autoUpdater.checkForUpdates.mockResolvedValue({ updateInfo: { version: "1.10.0" } });
+		mocks.autoUpdater.checkForUpdates.mockResolvedValue({
+			isUpdateAvailable: true,
+			updateInfo: { version: "1.10.0" },
+		});
 		await expect(checkForSelfUpdate("dmg")).resolves.toEqual({
 			kind: "downloaded",
 			version: "1.10.0",
 		});
+	});
+
+	it.each([
+		{ isUpdateAvailable: false, version: "1.10.0" },
+		{ isUpdateAvailable: false, version: "1.9.1" },
+		{ isUpdateAvailable: true, version: "1.9.1" },
+		{ isUpdateAvailable: true, version: "1.9.2+repacked" },
+		{ isUpdateAvailable: undefined, version: "1.10.0" },
+		{
+			isUpdateAvailable: true,
+			currentVersion: "1.10.0-subscription.12",
+			version: "1.10.0-subscription.11",
+		},
+	])("does not offer an ineligible update: %j", async ({
+		isUpdateAvailable,
+		version,
+		currentVersion,
+	}) => {
+		// The real updater returns updateInfo even for an older, unsupported or
+		// staged-rollout-ineligible release. Metadata alone does not establish eligibility.
+		mocks.app.getVersion.mockReturnValue(currentVersion ?? "1.9.2");
+		mocks.autoUpdater.checkForUpdates.mockResolvedValue({
+			isUpdateAvailable,
+			updateInfo: { version },
+		});
+		await expect(checkForSelfUpdate("nsis")).resolves.toEqual({ kind: "current" });
+		expect(mocks.autoUpdater.downloadUpdate).not.toHaveBeenCalled();
+		expect(mocks.autoUpdater.quitAndInstall).not.toHaveBeenCalled();
 	});
 
 	// A release published before the update feeds existed has no latest*.yml. That must degrade

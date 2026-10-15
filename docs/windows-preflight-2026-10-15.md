@@ -10,6 +10,9 @@ Completed within this scope: approved fresh 7.50 GB provisioning from the CI
 payload, failure-injection recovery, nine-project GUI compatibility and narrated
 MP4/restart checks. See the [verification report](../technical-documentation/testing/windows-preflight-2026-10-15.md).
 NSIS installation, another PC/driver and the other release gates remain separate.
+The [installer/update readiness follow-up](../technical-documentation/testing/windows-installer-readiness-2026-10-15.md)
+records the `.12` installed / `.11` candidate version mismatch, the updater
+eligibility correction and owner-approved Sandbox activation awaiting reboot.
 
 ## Safety and evidence
 
