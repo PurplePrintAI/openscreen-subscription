@@ -196,6 +196,7 @@ it("blocks missing runtime, insufficient storage, unsupported platforms and over
 	expect((await f.service.prepare(1, "download")).plan?.issues).toEqual(
 		expect.arrayContaining(["python", "storage"]),
 	);
+	expect((await f.service.prepare(1, "download", "managed")).plan?.issues).toEqual(["storage"]);
 	await f.select();
 	f.deps.space.mockResolvedValue(0);
 	expect((await f.service.prepare(1, "download")).plan?.issues).toContain("space");

@@ -308,6 +308,8 @@ export class NarrationInstallService {
 			}
 			controller.signal.throwIfAborted();
 			if (this.owner !== owner) throw new Error("closed");
+			// Managed downloads share one storage selection for Python and the model.
+			plan.issues = [...new Set(plan.issues)];
 			plan.expiresAt = Date.now() + 15 * 60_000;
 			this.plan = plan;
 			this.state = { ...this.state, phase: "review", plan };
