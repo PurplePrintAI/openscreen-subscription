@@ -1,8 +1,8 @@
 # Windows pre-release checks — 2026-10-15
 
-**Partial result: network-free failure recovery and copied-project compatibility
-passed. Fresh runtime/model installation has not started; download approval is
-pending. This is not release approval.**
+**Result: fresh runtime/model installation from the final CI package, network-free
+failure recovery and copied-project compatibility passed on the current supported
+Windows/NVIDIA PC. This is not fresh-OS, OS-installer/update or release approval.**
 
 Separate worktree: `D:/dev/openscreen-studio-windows-preflight`, branch
 `test/studio-windows-preflight`, based on PR #13's documentation head `ee194e06`.
@@ -64,24 +64,53 @@ no Windows Downloads known-folder registration, so the owned Electron process's
 Downloads path was explicitly mapped to its QA folder. No registry or real
 Downloads change was made. No physical native picker/HUD/capture claim is made.
 
-## Fresh installation gate
+## Fresh installation from the CI package
 
 A separate empty profile passed the real GPU/storage preflight with no configured
-Python or model. The plan requires **7,502,050,831 download bytes** and
+Python or model. The plan required **7,502,050,831 download bytes** and
 **22,534,436,367 free bytes (20.99 GiB)**. The current NVIDIA RTX 4060 Laptop/8 GiB
-and D: free space passed. The install button was **not pressed**. The app was closed
-while awaiting the owner's separate approval, and no fresh runtime config exists.
+and D: free space passed. The app was initially closed while awaiting the owner's
+separate approval; after approval, a new production process reviewed a new plan
+and executed the real installer. No transport injection was present.
 
-After approval, install Python, all wheels and the complete model into a new
-directory without reusing the prior runtime/model/cache, then verify actual test
-speech, preview, connection and restart. This is a fresh software environment on
-the current PC, not a fresh Windows image or different driver/GPU.
+The single approved attempt downloaded the complete pinned Python/package/model
+payload. It did not use the existing Python, model folder or package cache, and
+did not need a second download attempt. The packaged BSD SoX wheel was the
+intended bundled dependency, not an external cached runtime. Installation was
+observed complete by approximately nine minutes, including network transfer and
+cold initialization; this is a host observation, not a performance guarantee.
+
+| Check | Observed result |
+| --- | --- |
+| Python and packages | New Python 3.12.15 and independent venv. Offline pip dependency check passed. Independent metadata check matched all **89 pinned package versions**. |
+| First GPU diagnostic | Completed in **152.203 seconds** with CUDA/BF16 supported. Stage reporting remained responsive within the five-minute limit. |
+| Complete model transfer | All **12 model files**, including both weight payloads, downloaded into the new owned root. An independent size/SHA-256 pass matched every manifest entry. |
+| Isolation | Executable, base Python, venv, PyTorch, soundfile and Qwen paths all resolved within the new root; user site-packages disabled. Python and model configuration both point to this new root. |
+| Connection gate | Configuration was still absent during the test-speech phase and connected only after successful generation. |
+| Installer sample | **2.96-second mono 24 kHz PCM16 WAV** generated from the fixed neutral sentence. Actual preview reached the end without media errors; full FFmpeg decode passed. |
+| Restart and capability | A new process recognized the new runtime, preset voice and 1.7B tone control. Optional cloning remained unavailable; its models were not installed. |
+| Normal narration | Generated a separate **3.84-second** Korean take with default B tone. Apply was disabled before preview, enabled after actual playback, and saved the take into a new synthetic-video QA project. |
+| New output | App exported **8.000 seconds, 1920×1080, H.264 60 fps, AAC stereo 48 kHz**, 749,711 bytes. Full decode passed; audio mean -22.3 dB / peak -4.4 dB confirmed a non-silent track. |
+| Final restart | Restored the script, B tone, gain and applied 3.84-second audio without another generation. The 1280×800 view was inspected. |
+
+The verified environment remains under the owned D: QA storage directory for
+later use. It was not linked into or copied over the owner's installed Studio.
+This is a fresh software environment on the current PC, not a fresh Windows
+image or a different driver/GPU. No private reference recording or provider call
+was involved.
 
 ## Preservation and status
 
 Evidence remains local under `D:/purpleprint-build/studio-windows-preflight-20261015`.
-All **193 package files**, **20 original project/chat/media files** and **6 protected
-installed/runtime files** retained their hashes. All **five GUI QA launches**
-exited 0; final inspection found zero owned QA processes. Computer Use was never
-started, and no additional downloads began. Existing installation and Claude
-work were not modified. No push, PR, merge or release was performed in this pass.
+All **193 package files**, **20 original project/chat/media files**, **6 protected
+installed/runtime files** and **12 old-model files** retained their hashes. All
+**eight GUI QA launches** exited 0; final inspection found zero owned QA processes.
+Computer Use was never started. Additional payload downloads were limited to the
+single approved 7.50 GB installation. Existing installation and Claude work were
+not modified. No push, PR, merge or release was performed in this pass.
+
+Remaining gates: actual NSIS installation and upgrade/profile migration, signed
+delivery/automatic updates, another supported PC/driver, physical capture/HUD/OS
+dialogs, hard-crash/power-loss recovery, and CPU/Mac support. The legacy CLI info
+limitation above is still open. The requested isolated-runtime, failure-injection
+and GUI project-compatibility scope does not close those separate release gates.

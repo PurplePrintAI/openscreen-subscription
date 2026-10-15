@@ -6,6 +6,11 @@ source `35a7da3b177cd21e83ef773e3c21788d65becfc6`, artifact `11953426673`.
 This branch is local verification work, not a merge/release or installation into
 the owner's existing Studio directory.
 
+Completed within this scope: approved fresh 7.50 GB provisioning from the CI
+payload, failure-injection recovery, nine-project GUI compatibility and narrated
+MP4/restart checks. See the [verification report](../technical-documentation/testing/windows-preflight-2026-10-15.md).
+NSIS installation, another PC/driver and the other release gates remain separate.
+
 ## Safety and evidence
 
 - Reuse the cached CI artifact; verify all 193 extracted files before testing.
