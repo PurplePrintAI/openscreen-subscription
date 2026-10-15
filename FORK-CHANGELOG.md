@@ -31,6 +31,9 @@ For the dated review of newer upstream changes, see
 - Local Windows QA: fresh dedicated environment installation, test speech,
   preview, normal narration application and restart restoration passed; see the
   [dated report](technical-documentation/testing/managed-voice-runtime-2026-10-15.md).
+- Windows CI package QA passed runtime reuse, Korean narration preview/application,
+  restart restoration and 1080p MP4 export. Fixed a duplicate missing-storage warning;
+  [package QA and limits](technical-documentation/testing/managed-voice-runtime-ci-2026-10-15.md).
 
 ## Unreleased — Preset voice model setup
 
