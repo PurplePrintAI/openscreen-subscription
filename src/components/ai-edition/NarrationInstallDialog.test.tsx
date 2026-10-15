@@ -21,6 +21,7 @@ beforeEach(() => {
 				plan: {
 					id: "a24802cc-d5bf-4369-b32a-84fd515de341",
 					mode: request.mode,
+					runtimeMode: request.runtimeMode,
 					pythonPath: "D:/python.exe",
 					modelPath: "D:/model",
 					model: "Qwen CustomVoice",
@@ -49,8 +50,13 @@ it("opening never installs; explicit trust precedes diagnosis and a separate con
 	expect((screen.getByText("진단·설치 계획 확인") as HTMLButtonElement).disabled).toBe(true);
 	fireEvent.click(screen.getByRole("checkbox"));
 	fireEvent.click(screen.getByText("진단·설치 계획 확인"));
-	const install = await screen.findByText("용량·경로 확인 · 다운로드 및 연결");
-	expect(api).toHaveBeenCalledWith({ action: "plan", mode: "download", trustPython: true });
+	const install = await screen.findByText("용량 확인 · 전용 환경 설치 및 테스트 음성 생성");
+	expect(api).toHaveBeenCalledWith({
+		action: "plan",
+		mode: "download",
+		runtimeMode: "managed",
+		trustPython: true,
+	});
 	expect(api.mock.calls.some(([r]) => r.action === "install")).toBe(false);
 	fireEvent.click(install);
 	await screen.findByText(/기본 음성 모델 연결 완료/);
@@ -60,9 +66,9 @@ it("changing modes invalidates approval, and unmount cancels outstanding work", 
 	const view = render(<NarrationInstallDialog open onClose={vi.fn()} />);
 	fireEvent.click(screen.getByRole("checkbox"));
 	fireEvent.click(screen.getByText("진단·설치 계획 확인"));
-	await screen.findByText("용량·경로 확인 · 다운로드 및 연결");
+	await screen.findByText("용량 확인 · 전용 환경 설치 및 테스트 음성 생성");
 	fireEvent.click(screen.getByText("기존 모델 재사용"));
-	expect(screen.queryByText("용량·경로 확인 · 다운로드 및 연결")).toBeNull();
+	expect(screen.queryByText("용량 확인 · 전용 환경 설치 및 테스트 음성 생성")).toBeNull();
 	expect((screen.getByText("진단·설치 계획 확인") as HTMLButtonElement).disabled).toBe(true);
 	view.unmount();
 	expect(api).toHaveBeenCalledWith({ action: "cancel" });

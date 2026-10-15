@@ -85,7 +85,7 @@ for (const relative of [
 	"THIRD-PARTY-NOTICES.md",
 ])
 	await copyTree(relative);
-for (const file of ["generate.py", "transcribe.py", "probe_runtime.py", "README.md"])
+for (const file of ["generate.py", "transcribe.py", "probe_runtime.py", "README.md", "vendor"])
 	await copyTree(`tools/narration/${file}`);
 await fs.symlink(
 	await fs.realpath(path.join(repo, "node_modules")),

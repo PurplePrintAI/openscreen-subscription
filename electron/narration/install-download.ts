@@ -1,15 +1,24 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 
-function allowed(url: URL) {
+function allowed(url: URL, kind: "model" | "runtime") {
 	return (
 		url.protocol === "https:" &&
 		!url.username &&
 		!url.password &&
 		(!url.port || url.port === "443") &&
-		(url.hostname === "huggingface.co" ||
-			url.hostname.endsWith(".huggingface.co") ||
-			url.hostname.endsWith(".hf.co"))
+		(kind === "runtime"
+			? [
+					"github.com",
+					"release-assets.githubusercontent.com",
+					"objects.githubusercontent.com",
+					"files.pythonhosted.org",
+					"download.pytorch.org",
+					"download-r2.pytorch.org",
+				].includes(url.hostname)
+			: url.hostname === "huggingface.co" ||
+				url.hostname.endsWith(".huggingface.co") ||
+				url.hostname.endsWith(".hf.co"))
 	);
 }
 /** Fixed-manifest data only. No credentials, remote scripts, shell or automatic retries. */
@@ -21,6 +30,7 @@ export async function downloadModelFile(
 	signal: AbortSignal,
 	progress: (bytes: number) => void,
 	fetcher: typeof fetch = fetch,
+	kind: "model" | "runtime" = "model",
 ) {
 	const controller = new AbortController();
 	const abort = () => controller.abort();
@@ -34,7 +44,7 @@ export async function downloadModelFile(
 		let target = new URL(url);
 		let response: Response | undefined;
 		for (let i = 0; i < 8; i++) {
-			if (!allowed(target)) throw new Error("download-origin");
+			if (!allowed(target, kind)) throw new Error("download-origin");
 			response = await fetcher(target, {
 				redirect: "manual",
 				credentials: "omit",

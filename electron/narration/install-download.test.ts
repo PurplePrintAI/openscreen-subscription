@@ -112,3 +112,42 @@ it("aborts before requesting data and never overwrites an existing file", async 
 	).rejects.toThrow();
 	expect(await fs.readFile(f.file, "utf8")).toBe("original");
 });
+it("keeps runtime publishers separate from model download origins", async () => {
+	const f = await fixture(),
+		fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("data"));
+	await expect(
+		downloadModelFile(
+			"https://files.pythonhosted.org/package.whl",
+			f.file,
+			4,
+			f.hash,
+			f.signal.signal,
+			vi.fn(),
+			fetcher,
+		),
+	).rejects.toThrow("download-origin");
+	expect(fetcher).not.toHaveBeenCalled();
+	await downloadModelFile(
+		"https://files.pythonhosted.org/package.whl",
+		f.file,
+		4,
+		f.hash,
+		f.signal.signal,
+		vi.fn(),
+		fetcher,
+		"runtime",
+	);
+	expect(await fs.readFile(f.file, "utf8")).toBe("data");
+	await expect(
+		downloadModelFile(
+			"https://huggingface.co/package",
+			f.file,
+			4,
+			f.hash,
+			f.signal.signal,
+			vi.fn(),
+			fetcher,
+			"runtime",
+		),
+	).rejects.toThrow("download-origin");
+});

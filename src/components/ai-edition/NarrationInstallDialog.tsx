@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { toFileUrl } from "@/components/video-editor/projectPersistence";
 import { useI18n } from "@/contexts/I18nContext";
 import type { NarrationInstallRequest, VoiceInstallStatus } from "@/lib/narration-install";
 import { ModalShell } from "./Modals";
@@ -10,12 +11,15 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 	const text = (ko: string, en: string) => (locale.startsWith("ko") ? ko : en);
 	const [status, setStatus] = useState<VoiceInstallStatus | null>(null);
 	const [mode, setMode] = useState<"download" | "reuse">("download");
+	const [runtimeMode, setRuntimeMode] = useState<"existing" | "managed">("managed");
 	const [trusted, setTrusted] = useState(false);
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState(false);
 	const epoch = useRef(0);
 	const busy =
-		pending || (!!status && ["planning", "installing", "verifying"].includes(status.phase));
+		pending ||
+		(!!status &&
+			["planning", "installing", "verifying", "provisioning", "testing"].includes(status.phase));
 	async function request(input: NarrationInstallRequest) {
 		const current = epoch.current;
 		setPending(true);
@@ -62,6 +66,30 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 		};
 	}, [open]);
 	const reasons: Record<string, string> = {
+		"gpu-diagnostic": text(
+			"NVIDIA GPU 진단 도구를 실행하지 못했습니다. 드라이버 설치 상태를 확인하고 다시 시도해 주세요.",
+			"Could not run the NVIDIA diagnostic. Check the driver installation and retry.",
+		),
+		"runtime-packages": text(
+			"전용 Python 패키지 설치·호환성 확인에 실패했습니다. 앱의 로컬 진단 로그에 원인을 남겼습니다.",
+			"Dedicated package installation/check failed. Details were saved in local diagnostic logs.",
+		),
+		"runtime-diagnostic": text(
+			"새 Python의 GPU 초기화 검증을 완료하지 못했습니다. 드라이버 상태를 확인한 뒤 다시 시도하세요. 로컬 진단 로그가 보존됩니다.",
+			"New Python/GPU initialization did not complete. Check the driver and retry. Local diagnostic logs are preserved.",
+		),
+		"runtime-test": text(
+			"테스트 음성을 생성하지 못해 새 환경을 연결하지 않았습니다. GPU 여유 메모리·드라이버 상태를 확인해 주세요.",
+			"Test speech failed, so the new runtime was not connected. Check available GPU memory and drivers.",
+		),
+		gpu: text(
+			"현재 자동 준비는 BF16을 지원하는 NVIDIA GPU와 약 8GB 이상의 VRAM이 필요합니다. 드라이버 설치·업데이트는 직접 진행해 주세요. 기본 영상 편집은 계속 사용할 수 있습니다.",
+			"Automatic setup requires a BF16-capable NVIDIA GPU with about 8 GB VRAM. Install/update drivers separately. Basic video editing remains available.",
+		),
+		"runtime-integrity": text(
+			"실행환경 파일 검증에 실패했습니다. 기존 환경은 유지되며 다시 계획을 확인해 재시도할 수 있습니다.",
+			"Runtime integrity check failed. Existing environments are preserved; review a new plan to retry.",
+		),
 		"cleanup-failed": text(
 			"임시 파일을 정리하지 못했습니다. 선택한 저장 폴더에 이번 작업의 임시 파일이 남아 있을 수 있습니다. 기존 모델과 설정은 유지됩니다.",
 			"Temporary cleanup failed. This attempt’s staging files may remain in the selected folder. Existing models/settings are preserved.",
@@ -105,6 +133,7 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 	const usablePlan =
 		status?.phase === "review" &&
 		plan?.mode === mode &&
+		(plan.runtimeMode ?? "existing") === runtimeMode &&
 		!plan.issues.length &&
 		plan.expiresAt > Date.now();
 	return (
@@ -120,10 +149,28 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 			<div className={styles.content}>
 				<p>
 					{text(
-						"기본 음성만 준비합니다. 목소리 복제·전사 모델은 받지 않습니다. Python·패키지 자체는 아직 자동 설치하지 않습니다.",
-						"Only preset speech is prepared. No cloning/transcription models are downloaded. Python and its packages are not installed automatically.",
+						"기본 음성용 전용 Python·라이브러리·모델을 준비할 수 있습니다. 기존 Python과 다른 앱은 변경하지 않습니다. 목소리 복제·전사 모델과 GPU 드라이버는 설치하지 않습니다.",
+						"Prepare dedicated Python, libraries and a preset model without changing existing Python or other apps. Cloning/transcription models and GPU drivers are not installed.",
 					)}
 				</p>
+				<div className={styles.actions}>
+					{(["managed", "existing"] as const).map((value) => (
+						<button
+							type="button"
+							key={value}
+							aria-pressed={runtimeMode === value}
+							disabled={busy}
+							onClick={() => {
+								setRuntimeMode(value);
+								setTrusted(false);
+							}}
+						>
+							{value === "managed"
+								? text("전용 실행환경 자동 준비", "Set up dedicated runtime")
+								: text("기존 Python 연결", "Use existing Python")}
+						</button>
+					))}
+				</div>
 				<div className={styles.actions}>
 					{(["download", "reuse"] as const).map((value) => (
 						<button
@@ -142,7 +189,12 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 						</button>
 					))}
 				</div>
-				{(["python", mode === "download" ? "storage" : "model"] as const).map((field) => (
+				{(runtimeMode === "managed"
+					? mode === "download"
+						? (["storage"] as const)
+						: (["storage", "model"] as const)
+					: (["python", mode === "download" ? "storage" : "model"] as const)
+				).map((field) => (
 					<div className={styles.field} key={field}>
 						<div>
 							<strong>
@@ -171,20 +223,33 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 						onChange={(e) => setTrusted(e.target.checked)}
 					/>
 					{text(
-						"선택한 Python을 신뢰하며 로컬 진단 실행에 동의합니다. 진단에서는 모델 생성·다운로드를 하지 않습니다.",
-						"I trust this Python and allow an offline diagnostic. This does not generate audio or download models.",
+						runtimeMode === "managed"
+							? "로컬 GPU 진단에 동의합니다. 다운로드·전용 환경 설치·테스트 음성 생성은 계획을 확인한 뒤 별도로 승인합니다."
+							: "선택한 Python을 신뢰하며 로컬 진단 실행에 동의합니다. 진단에서는 모델 생성·다운로드를 하지 않습니다.",
+						runtimeMode === "managed"
+							? "Allow a local GPU diagnostic. Download, runtime setup and test speech require a separate reviewed confirmation."
+							: "I trust this Python and allow an offline diagnostic. This does not generate audio or download models.",
 					)}
 				</label>
 				<button
 					type="button"
 					disabled={busy || !trusted}
-					onClick={() => void request({ action: "plan", mode, trustPython: true })}
+					onClick={() => void request({ action: "plan", mode, runtimeMode, trustPython: true })}
 				>
 					{text("진단·설치 계획 확인", "Diagnose and review plan")}
 				</button>
-				{plan && plan.mode === mode && (
+				{plan && plan.mode === mode && (plan.runtimeMode ?? "existing") === runtimeMode && (
 					<section className={styles.card} aria-label={text("설치 계획", "Installation plan")}>
 						<strong>{plan.model}</strong>
+						{runtimeMode === "managed" && (
+							<p>
+								{text("전용 Python·라이브러리 다운로드", "Dedicated Python/libraries download")}:{" "}
+								{gib(plan.runtimeDownloadBytes ?? 0)}
+								<br />
+								{text("전용 환경 위치", "Dedicated runtime location")}:{" "}
+								<code>{plan.runtimeRoot}</code>
+							</p>
+						)}
 						<code>{plan.revision}</code>
 						<p>
 							{text("다운로드", "Download")}: {gib(plan.downloadBytes)} ·{" "}
@@ -201,6 +266,12 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 							<p>
 								Python {plan.probe.python} · {plan.probe.gpu ?? text("GPU 확인 필요", "Check GPU")}{" "}
 								{plan.probe.vramBytes ? `(${gib(plan.probe.vramBytes)})` : ""}
+							</p>
+						)}
+						{plan.hardware && (
+							<p>
+								{plan.hardware.name} · {(plan.hardware.memoryMiB / 1024).toFixed(1)} GiB ·{" "}
+								{text("드라이버", "Driver")} {plan.hardware.driver}
 							</p>
 						)}
 						{plan.issues.map((issue) => (
@@ -221,24 +292,51 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 								disabled={busy || !trusted}
 								onClick={() => void request({ action: "install", planId: plan.id, confirm: true })}
 							>
-								{mode === "download"
+								{runtimeMode === "managed"
 									? text(
-											"용량·경로 확인 · 다운로드 및 연결",
-											"Confirm size/location · download and connect",
+											"용량 확인 · 전용 환경 설치 및 테스트 음성 생성",
+											"Confirm size · install runtime and generate test speech",
 										)
-									: text(
-											"검증된 모델 연결 · 다운로드 없음",
-											"Connect verified model · no download",
-										)}
+									: mode === "download"
+										? text(
+												"용량·경로 확인 · 다운로드 및 연결",
+												"Confirm size/location · download and connect",
+											)
+										: text(
+												"검증된 모델 연결 · 다운로드 없음",
+												"Connect verified model · no download",
+											)}
 							</button>
 						)}
 					</section>
 				)}
 				{busy && (
 					<p role="status">
-						{status?.phase === "installing"
-							? `${text("다운로드 중", "Downloading")} · ${gib(status.receivedBytes ?? 0)}`
-							: text("진단·파일 검증 중…", "Diagnosing / verifying files…")}
+						{status?.diagnosticStage
+							? {
+									"import-soundfile": text(
+										"오디오 라이브러리 초기화 중…",
+										"Initializing audio libraries…",
+									),
+									"import-torch": text("PyTorch 초기화 중…", "Initializing PyTorch…"),
+									"import-qwen": text(
+										"음성 라이브러리 초기화 중…",
+										"Initializing voice libraries…",
+									),
+									cuda: text("GPU 실행 상태 확인 중…", "Checking GPU execution…"),
+								}[status.diagnosticStage]
+							: status?.phase === "testing"
+								? text("GPU로 테스트 음성을 생성하는 중…", "Generating a test voice on the GPU…")
+								: status?.step === "installing-packages"
+									? text(
+											"다운로드한 패키지를 전용 Python에 설치하는 중…",
+											"Installing downloaded packages into dedicated Python…",
+										)
+									: status?.step === "extracting-python"
+										? text("전용 Python 압축을 푸는 중…", "Extracting dedicated Python…")
+										: status?.phase === "installing" || status?.step === "downloading-runtime"
+											? `${text("다운로드 중", "Downloading")} · ${gib(status.receivedBytes ?? 0)}`
+											: text("진단·파일 검증 중…", "Diagnosing / verifying files…")}
 					</p>
 				)}
 				{busy && (
@@ -256,10 +354,27 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 				{status?.phase === "complete" && (
 					<p role="status">
 						{text(
-							"기본 음성 모델 연결 완료. 나레이션에서 생성·미리 듣기를 시작할 수 있습니다.",
-							"Preset model connected. Open Narration to generate and preview.",
+							status.sample
+								? "전용 환경 설치·테스트 음성 생성·연결을 완료했습니다. 아래에서 음성을 확인한 뒤 나레이션을 사용하세요."
+								: "기본 음성 모델 연결 완료. 나레이션에서 생성·미리 듣기를 시작할 수 있습니다.",
+							status.sample
+								? "Dedicated runtime installed, test speech generated and connected. Preview below before using narration."
+								: "Preset model connected. Open Narration to generate and preview.",
 						)}
 					</p>
+				)}
+				{status?.phase === "complete" && status.sample && (
+					<>
+						<p>
+							{text(
+								"테스트 문장: 퍼플프린트 스튜디오의 기본 음성을 확인합니다.",
+								"Test sentence (Korean): checking PurplePrint Studio’s preset voice.",
+							)}
+						</p>
+						<audio controls preload="metadata" src={toFileUrl(status.sample.audioPath)}>
+							<track kind="captions" />
+						</audio>
+					</>
 				)}
 				{status?.phase === "cancelled" && (
 					<p role="status">
@@ -280,8 +395,8 @@ export function NarrationInstallDialog({ open, onClose }: { open: boolean; onClo
 				)}
 				<p>
 					{text(
-						"다운로드는 Hugging Face의 고정 Qwen 모델 버전만 사용하고 SHA-256으로 검증합니다. 취소 시 이번 임시 파일만 삭제합니다. 이미 검증 완료된 모델은 설정 연결 실패 시에도 남아 재사용할 수 있습니다. 음성·프로젝트 파일은 외부로 보내지 않습니다.",
-						"Downloads use a pinned Qwen revision from Hugging Face, checked with SHA-256. Cancellation deletes only this attempt’s staging files; verified models remain reusable if configuration linking fails. Voice/project files are not uploaded.",
+						"고정 배포본만 다운로드하고 SHA-256으로 검증합니다. 전용 환경 설치가 실패·취소되면 이번에 만든 폴더만 정리합니다. 재시도는 처음부터 진행합니다. 기존 모델·설정은 유지하며 음성·프로젝트 파일은 외부로 보내지 않습니다.",
+						"Only pinned releases are downloaded and SHA-256 checked. Failed/cancelled dedicated setup removes only its newly created folder; retries start over. Existing models/settings stay intact. Voice/project files are not uploaded.",
 					)}
 				</p>
 				<button type="button" disabled={busy} onClick={onClose}>

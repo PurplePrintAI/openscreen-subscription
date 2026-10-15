@@ -78,6 +78,73 @@ it("runs the offline probe without writing bytecode into packaged resources", as
 		90_000,
 	);
 });
+async function managedFixture() {
+	const f = await fixture();
+	f.deps.space.mockResolvedValue(30 * 1024 ** 3);
+	const provision = vi.fn(async (root: string) => {
+		await fs.mkdir(path.join(root, "venv", "Scripts"), { recursive: true });
+		const file = path.join(root, "venv", "Scripts", "python.exe");
+		await fs.writeFile(file, "new interpreter");
+		return file;
+	});
+	const smoke = vi.fn(async (_python: string, _model: string, root: string) => {
+		const audioPath = path.join(root, "sample.wav");
+		await fs.writeFile(audioPath, "sample");
+		return { audioPath, durationSec: 3 };
+	});
+	const hardware = vi.fn(async () => ({
+		name: "fixture",
+		memoryMiB: 8192,
+		driver: "test",
+		compute: 8.9,
+	}));
+	const service = new NarrationInstallService({ ...f.deps, provision, smoke, hardware });
+	await service.pick(1, "storage", async () => f.root);
+	await service.pick(1, "model", async () => f.model);
+	return { ...f, service, provision, smoke, hardware };
+}
+it("plans managed setup without any installed Python and connects only after actual smoke validation", async () => {
+	const f = await managedFixture();
+	const review = await f.service.prepare(1, "reuse", "managed");
+	expect(review.plan?.issues).toEqual([]);
+	expect(review.plan!.downloadBytes).toBeGreaterThan(2e9);
+	expect(f.provision).not.toHaveBeenCalled();
+	expect((await f.service.install(1, review.plan!.id)).phase).toBe("complete");
+	expect(f.smoke).toHaveBeenCalledOnce();
+	expect(JSON.parse(await fs.readFile(f.config, "utf8"))).toEqual({
+		pythonPath: review.plan!.pythonPath,
+		presetModel: await fs.realpath(f.model),
+	});
+	expect(await fs.readFile(f.python, "utf8")).toBe("not executed");
+});
+it("failed managed setup removes only its new runtime and preserves saved configuration/models", async () => {
+	const f = await managedFixture();
+	await fs.writeFile(f.config, '{"existing":true}');
+	const review = await f.service.prepare(1, "reuse", "managed");
+	f.smoke.mockRejectedValueOnce(new Error("GPU allocation failed"));
+	expect((await f.service.install(1, review.plan!.id)).phase).toBe("error");
+	await expect(fs.stat(review.plan!.runtimeRoot!)).rejects.toThrow();
+	expect(await fs.readFile(f.config, "utf8")).toBe('{"existing":true}');
+	expect(
+		await fs.readFile(
+			path.join(f.profile, "narration-diagnostics", `setup-${review.plan!.id}.txt`),
+			"utf8",
+		),
+	).toContain("GPU allocation failed");
+	expect(await fs.readFile(path.join(f.model, "model.safetensors"), "utf8")).toBe(f.payload);
+});
+it("cancellation during managed provisioning cleans up and does not start generation", async () => {
+	const f = await managedFixture();
+	const review = await f.service.prepare(1, "reuse", "managed");
+	f.provision.mockImplementationOnce(async (root) => {
+		f.service.cancel(1);
+		return path.join(root, "venv", "Scripts", "python.exe");
+	});
+	expect((await f.service.install(1, review.plan!.id)).phase).toBe("cancelled");
+	expect(f.smoke).not.toHaveBeenCalled();
+	await expect(fs.stat(f.config)).rejects.toThrow();
+	await expect(fs.stat(review.plan!.runtimeRoot!)).rejects.toThrow();
+});
 it("requires native selections, Python trust, and separate install consent", () => {
 	for (const raw of [
 		{ action: "plan", mode: "download" },
@@ -129,6 +196,7 @@ it("blocks missing runtime, insufficient storage, unsupported platforms and over
 	expect((await f.service.prepare(1, "download")).plan?.issues).toEqual(
 		expect.arrayContaining(["python", "storage"]),
 	);
+	expect((await f.service.prepare(1, "download", "managed")).plan?.issues).toEqual(["storage"]);
 	await f.select();
 	f.deps.space.mockResolvedValue(0);
 	expect((await f.service.prepare(1, "download")).plan?.issues).toContain("space");
