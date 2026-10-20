@@ -66,6 +66,7 @@ import {
 } from "../media/cursorSidecar";
 import { findMediaLinksByFingerprint, registerMediaLinks } from "../media/mediaLinksRegistry";
 import { relinkProjectMedia } from "../media/projectMediaRelinker";
+import { createVideoFrameReader } from "../media/videoFrameReader";
 import { approveNarrationExport } from "../narration/export";
 import { registerNarrationInstallIpc } from "../narration/install-ipc";
 import { registerNarrationIpc } from "../narration/ipc";
@@ -4240,6 +4241,25 @@ export function registerIpcHandlers(
 		runAiEditionChat: (projectId, sessionId, message, document, sink) =>
 			runChat(projectId, sessionId, message, getAiEditionLlmConfig(), document, sink, {
 				cursor: agentCursorTelemetryReader,
+				frames: createVideoFrameReader({
+					resolveApprovedPath: resolveApprovedVideoPath,
+					confirm: async (label) => {
+						const answer = await dialog.showMessageBox({
+							type: "question",
+							title: mainT("dialogs", "videoFrameAnalysis.title"),
+							message: mainT("dialogs", "videoFrameAnalysis.message", { label }),
+							detail: mainT("dialogs", "videoFrameAnalysis.detail"),
+							buttons: [
+								mainT("dialogs", "videoFrameAnalysis.deny"),
+								mainT("dialogs", "videoFrameAnalysis.allow"),
+							],
+							defaultId: 0,
+							cancelId: 0,
+							noLink: true,
+						});
+						return answer.response === 1;
+					},
+				}),
 			}),
 		undoAiEditionToolBatch: (_projectId, _sessionId) => ({
 			success: false,

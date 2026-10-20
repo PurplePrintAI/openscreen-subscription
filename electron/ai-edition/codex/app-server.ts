@@ -7,6 +7,12 @@ import { version } from "../../../package.json";
 import { resolveCodexContextWindow } from "../../../src/lib/ai-edition/modelContextWindow";
 import type { AiEditionLlmModelOption } from "../../../src/native/contracts";
 import { GPT6_MODELS, gpt6ModelOrder } from "../provider-registry";
+import {
+	codexToolContent,
+	type EditorRuntimeTool,
+	type EditorToolOutput,
+	toolOutputSucceeded,
+} from "../runtime-tool";
 
 type ObjectValue = Record<string, unknown>;
 export interface CodexStatus {
@@ -17,12 +23,7 @@ export interface CodexStatus {
 	loginPending?: boolean;
 	error?: string;
 }
-export interface CodexTool {
-	name: string;
-	description: string;
-	inputSchema: ObjectValue;
-	invoke: (args: ObjectValue) => Promise<string>;
-}
+export type CodexTool = EditorRuntimeTool;
 export interface CodexRun {
 	model?: string;
 	effort?: string;
@@ -229,20 +230,19 @@ export class CodexAppServer {
 		if (payload.id !== undefined) {
 			if (payload.method === "item/tool/call" && turn) {
 				const tool = turn.tools.get(String(params.tool));
-				let text = "Tool is not available in this PurplePrint Studio turn.";
+				let output: EditorToolOutput = "Tool is not available in this PurplePrint Studio turn.";
 				let success = false;
 				if (tool && ++turn.toolCalls <= 1000) {
 					try {
-						text = await tool.invoke(object(params.arguments));
-						const result = object(JSON.parse(text));
-						success = !result.error && result.ok !== false;
+						output = await tool.invoke(object(params.arguments));
+						success = toolOutputSucceeded(output);
 					} catch (error) {
-						text = message(error);
+						output = message(error);
 					}
 				}
 				this.send({
 					id: payload.id,
-					result: { contentItems: [{ type: "inputText", text }], success },
+					result: { contentItems: codexToolContent(output), success },
 				});
 			} else {
 				// No shell, file edits, remote MCP approvals or other vendor tools are approved here.

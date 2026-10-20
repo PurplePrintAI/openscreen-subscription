@@ -8,12 +8,9 @@ import {
 	ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-export interface EditorRuntimeTool {
-	name: string;
-	description: string;
-	inputSchema: Record<string, unknown>;
-	invoke: (args: Record<string, unknown>) => Promise<string>;
-}
+import type { EditorRuntimeTool } from "../runtime-tool";
+
+export type { EditorRuntimeTool } from "../runtime-tool";
 
 /** One short-lived loopback MCP endpoint per turn; only existing validated editor tools. */
 export async function startEditorToolServer(tools: EditorRuntimeTool[]) {
@@ -54,7 +51,8 @@ export async function startEditorToolServer(tools: EditorRuntimeTool[]) {
 					content: [{ type: "text", text: "Tool unavailable or turn closed." }],
 				};
 			try {
-				return { content: [{ type: "text", text: await tool.invoke(args) }] };
+				const output = await tool.invoke(args);
+				return typeof output === "string" ? { content: [{ type: "text", text: output }] } : output;
 			} catch {
 				return {
 					isError: true,

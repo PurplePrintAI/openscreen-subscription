@@ -151,6 +151,24 @@ async function streamAgent(
 }
 
 describe("runChat tool loop", () => {
+	it("passes the scoped frame reader through the production chat-to-agent boundary", async () => {
+		const document = fixtureDocument();
+		const session = createSession(document.project.id, "Frame review");
+		const frames = {
+			read: vi.fn(async () => ({ mimeType: "image/jpeg" as const, data: "/9j/2Q==" })),
+		};
+		await runChat(
+			document.project.id,
+			session.id,
+			"Inspect the video",
+			stubConfig(),
+			document,
+			{},
+			{ frames },
+		);
+		expect(invokeMock.mock.calls[0]?.[0].frames).toBe(frames);
+		expect(frames.read).not.toHaveBeenCalled();
+	});
 	it("executes tool calls, chains turns, and returns the mutated document", async () => {
 		invokeMock.mockImplementationOnce(async (args) => {
 			args.sink.toolStart("addTrim", { startSec: 5, endSec: 8, reason: "silence" });

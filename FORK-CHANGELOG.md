@@ -17,6 +17,25 @@ see [FORK.md](FORK.md).
 For the dated review of newer upstream changes, see
 [FORK-UPSTREAM-REVIEW.md](FORK-UPSTREAM-REVIEW.md).
 
+## Unreleased — Imported video reliability and visual editing
+
+- Fixes Windows transcription startup with Korean/Unicode profile directories
+  without moving or redownloading the speech model.
+- Fixes the D3D11 preview seek cache returning a cleared frame after EOF, including
+  the last-frame re-seek encountered after speed edits.
+- Adds bounded `inspectVideoFrames` to the editing agent: approved project assets
+  only, up to four frames per call/eight per turn, with per-turn disclosure consent.
+- Carries actual image content through Claude MCP, Codex dynamic tools, Anthropic
+  API and OpenAI Responses configurations; unverified API transports are gated.
+  Frame metadata includes source time, raw editing-ruler
+  positions, trims and crop coordinates; existing edit consent and undo remain.
+- Local QA only, not a public release or replacement of the installed app. The bugfix
+  package passed isolated Windows IPC checks. One approved Opus 5.5 turn inspected
+  eight real frames and added two zooms to a separate QA document.
+- See [visual editing verification](technical-documentation/testing/video-frame-analysis-2026-10-21.md)
+  for evidence, limits and the distinction between packaged bugfix QA and source-level
+  visual-agent integration checks.
+
 ## Unreleased — Dedicated preset voice runtime
 
 - Adds Windows/NVIDIA preflight and separately confirmed setup of a dedicated

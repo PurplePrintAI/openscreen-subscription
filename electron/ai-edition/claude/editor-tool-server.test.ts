@@ -4,6 +4,33 @@ import { describe, expect, it, vi } from "vitest";
 import { startEditorToolServer } from "./editor-tool-server";
 
 describe("Claude editor MCP endpoint", () => {
+	it("preserves frame images as MCP image content instead of serializing them as text", async () => {
+		const content = [
+			{ type: "text" as const, text: '{"sourceTimeSec":3}' },
+			{ type: "image" as const, mimeType: "image/jpeg" as const, data: "/9j/2Q==" },
+		];
+		const server = await startEditorToolServer([
+			{
+				name: "inspectVideoFrames",
+				description: "frames",
+				inputSchema: { type: "object", properties: {} },
+				invoke: async () => ({ content }),
+			},
+		]);
+		const client = new Client({ name: "vision-test", version: "1" });
+		try {
+			await client.connect(
+				new StreamableHTTPClientTransport(new URL(server.config.url), {
+					requestInit: { headers: server.config.headers },
+				}),
+			);
+			const result = await client.callTool({ name: "inspectVideoFrames", arguments: {} });
+			expect(result.content).toEqual(content);
+		} finally {
+			await client.close();
+			await server.close();
+		}
+	});
 	it("serves only registered tools, rejects foreign access, and closes its port", async () => {
 		const invoke = vi.fn(async () => "editor-result");
 		const server = await startEditorToolServer([
