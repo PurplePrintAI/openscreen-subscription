@@ -48,7 +48,17 @@ import {
 	type OpenScreenAgentSink,
 	SYSTEM_PROMPT,
 	TOOL_DESCRIPTIONS,
+	visualApiFormat,
 } from "./service";
+
+it("offers API vision only on verified image-bearing tool-result transports", () => {
+	expect(visualApiFormat({ provider: "anthropic", model: "claude-opus-5-5" })).toBe("anthropic");
+	expect(visualApiFormat({ provider: "openai", model: "gpt-6-sol", reasoningEffort: "none" })).toBe(
+		"openai-responses",
+	);
+	expect(visualApiFormat({ provider: "openai", model: "gpt-4o" })).toBeUndefined();
+	expect(visualApiFormat({ provider: "google", model: "example" })).toBeUndefined();
+});
 
 // Both rosters used to be re-typed here, and a third time in the workbench. This
 // file is the one that runs in CI, so its copy stayed right and the bench's went
@@ -166,6 +176,38 @@ function recordingSink(): { sink: OpenScreenAgentSink; events: SinkEvent[] } {
 		},
 	};
 }
+
+it.each([
+	"claude-local",
+	"codex-subscription",
+])("connects video inspection to %s while preserving the edit gate", async (provider) => {
+	const runner = provider === "claude-local" ? claudeRun : codexRun;
+	runner.mockImplementationOnce(async (request: CodexRun) => {
+		const inspect = request.tools?.find((item) => item.name === "inspectVideoFrames");
+		expect(inspect).toBeDefined();
+		const result = await inspect!.invoke({ assetId: "asset_1", sourceTimesSec: [2] });
+		expect(result).toMatchObject({
+			content: [expect.anything(), { type: "image", mimeType: "image/jpeg", data: "/9j/2Q==" }],
+		});
+		const edit = request.tools?.find((item) => item.name === "addZoom");
+		expect(
+			String(await edit!.invoke({ startSec: 1, endSec: 3, depth: 3, focus: { cx: 0.7, cy: 0.4 } })),
+		).toContain("consent");
+		return "Read-only visual review";
+	});
+	const { sink } = recordingSink();
+	const doc = fixtureDocument();
+	const result = await invokeOpenScreenAgent({
+		document: doc,
+		model: { provider, model: "test" },
+		history: [],
+		userMessage: "Inspect video",
+		sink,
+		editsAllowed: false,
+		frames: { read: async () => ({ mimeType: "image/jpeg", data: "/9j/2Q==" }) },
+	});
+	expect(result.mutated).toBe(false);
+});
 
 /** `buildTools` returns a tuple with a DISTINCT type per tool, one per zod
  * schema, so `tools.find(...)` is a 21-way union — and `.invoke` is generic, a

@@ -86,5 +86,12 @@
 		"videoFiles": "视频文件",
 		"openscreenProject": "PurplePrint Studio 项目",
 		"allFiles": "所有文件"
+	},
+	"videoFrameAnalysis": {
+		"title": "Allow AI to inspect video frames?",
+		"message": "Send selected frames from “{{label}}” to your current AI provider?",
+		"detail": "Up to 8 still frames may be sent in this chat turn to identify scenes and focus positions. The full video and audio are not sent. Frames may contain private on-screen information. Provider usage limits apply. This permission does not enable project edits.",
+		"deny": "Do not send",
+		"allow": "Allow for this turn"
 	}
 }

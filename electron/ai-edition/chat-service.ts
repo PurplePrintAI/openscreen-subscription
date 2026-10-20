@@ -35,6 +35,7 @@ import type { CursorTelemetryReader } from "./deep-agent/service";
 import type { DocumentService } from "./document-service";
 import type { LlmConfigStore } from "./llm-config-store";
 import { PROVIDER_DEFINITIONS } from "./provider-registry";
+import type { VideoFrameReader } from "./video-frames";
 
 const sessionsByProject = new Map<string, Map<string, ChatSession>>();
 let sessionStore: ChatSessionStore | null = null;
@@ -358,6 +359,7 @@ export interface ChatRunEnv {
 	/** Reads recorded cursor telemetry for an asset. Built in `electron/ipc/
 	 *  handlers.ts`, where the path allow-list lives. */
 	cursor?: CursorTelemetryReader;
+	frames?: VideoFrameReader;
 }
 
 // ponytail: zero-config noop for sink callbacks that the caller did not provide.
@@ -508,6 +510,7 @@ export async function runChat(
 		sink: agentSink,
 		editsAllowed,
 		cursor: env.cursor,
+		frames: env.frames,
 	});
 
 	if (!result.text) {

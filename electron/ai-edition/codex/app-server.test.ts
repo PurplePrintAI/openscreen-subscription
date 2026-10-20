@@ -74,6 +74,55 @@ function fixture(
 }
 
 describe("Codex app-server subscription transport", () => {
+	it("returns dynamic frame images using the native inputImage protocol", async () => {
+		const f = fixture((packet, emit) => {
+			if (packet.method === "turn/start") {
+				emit({ id: packet.id, result: { turn: { id: "vision" } } });
+				emit({
+					id: 177,
+					method: "item/tool/call",
+					params: { threadId: "thread-1", tool: "inspectVideoFrames", arguments: {} },
+				});
+				return true;
+			}
+			if (packet.id === 177) {
+				emit({
+					method: "item/agentMessage/delta",
+					params: { threadId: "thread-1", delta: "Frame inspected" },
+				});
+				emit({
+					method: "turn/completed",
+					params: { threadId: "thread-1", turn: { id: "vision", status: "completed" } },
+				});
+				return true;
+			}
+			return false;
+		});
+		await f.runtime.run({
+			instructions: "Inspect",
+			input: "Video",
+			tools: [
+				{
+					name: "inspectVideoFrames",
+					description: "frames",
+					inputSchema: { type: "object" },
+					invoke: async () => ({
+						content: [
+							{ type: "text", text: '{"sourceTimeSec":3}' },
+							{ type: "image", mimeType: "image/jpeg", data: "/9j/2Q==" },
+						],
+					}),
+				},
+			],
+		});
+		expect(f.sent.find((packet) => packet.id === 177)?.result).toEqual({
+			success: true,
+			contentItems: [
+				{ type: "inputText", text: '{"sourceTimeSec":3}' },
+				{ type: "inputImage", imageUrl: "data:image/jpeg;base64,/9j/2Q==" },
+			],
+		});
+	});
 	it("finds a user-installed CLI when a Finder launch has an empty PATH", () => {
 		const home = mkdtempSync(path.join(os.tmpdir(), "openscreen-codex-home-"));
 		cleanups.push(() => rmSync(home, { recursive: true, force: true }));

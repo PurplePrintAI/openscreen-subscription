@@ -54,6 +54,15 @@ import {
 	setZoomArgs,
 } from "../agent-tools";
 import {
+	createVideoFrameTool,
+	VIDEO_VISION_PROMPT,
+	type VideoFrameApiFormat,
+	type VideoFrameReader,
+	videoFrameToolForApi,
+} from "../video-frames";
+import {
+	type AgentReasoningEffort,
+	buildLangChainReasoningOptions,
 	createOpenScreenChatModel,
 	messageContentToText,
 	messageContentToThinking,
@@ -382,6 +391,7 @@ export interface InvokeArgs {
 	/** Injected by `chat-service` from the Electron layer. Absent in tests and in
 	 *  the workbench unless one is supplied on purpose. */
 	cursor?: CursorTelemetryReader;
+	frames?: VideoFrameReader;
 }
 
 /** One cheap probe per asset, run before the tools are built so the very first
@@ -440,6 +450,21 @@ export interface InvokeResult {
 	reason?: string;
 }
 
+/** Do not offer image tools on transports that stringify tool-result images. */
+export function visualApiFormat(model: OpenScreenChatModelConfig): VideoFrameApiFormat | undefined {
+	if (model.provider === "anthropic") return "anthropic";
+	if (
+		model.provider === "openai" &&
+		buildLangChainReasoningOptions(
+			model.provider,
+			model.model,
+			model.reasoningEffort as AgentReasoningEffort | undefined,
+		).useResponsesApi
+	)
+		return "openai-responses";
+	return undefined;
+}
+
 export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeResult> {
 	const { document, model, history, userMessage, sink } = args;
 	const editsAllowed = args.editsAllowed !== false;
@@ -456,6 +481,19 @@ export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeRes
 		cursor: args.cursor,
 		availableByAssetId,
 	});
+	const apiFrameFormat = visualApiFormat(model);
+	const subscription = model.provider === "claude-local" || model.provider === "codex-subscription";
+	const frameTool =
+		args.frames && (subscription || apiFrameFormat)
+			? createVideoFrameTool(holder, args.frames, sink)
+			: undefined;
+	const systemPrompt =
+		buildSystemPrompt({ editsAllowed }) +
+		(frameTool
+			? `\n\n${VIDEO_VISION_PROMPT}`
+			: args.frames
+				? "\nVideo-frame inspection is not connected for this provider transport. Do not pretend to have seen the video. Supported routes are Claude local, ChatGPT subscription, Anthropic API and OpenAI Responses configurations."
+				: "");
 	if (model.provider === "codex-subscription" || model.provider === "claude-local") {
 		const runtime =
 			model.provider === "claude-local"
@@ -464,20 +502,23 @@ export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeRes
 		const text = await runtime.run({
 			model: model.model,
 			effort: model.reasoningEffort,
-			instructions: buildSystemPrompt({ editsAllowed }),
+			instructions: systemPrompt,
 			input: JSON.stringify([...history, { role: "user", content: userMessage }]),
 			onText: (delta) => sink.text(delta),
 			onThinking: (delta: string) => sink.thinking(delta),
-			tools: tools.map((editorTool) => {
-				const definition = convertToOpenAIFunction(editorTool);
-				return {
-					name: definition.name,
-					description: definition.description ?? "",
-					inputSchema: definition.parameters ?? {},
-					invoke: async (input) =>
-						String(await (editorTool as StructuredToolInterface).invoke(input)),
-				};
-			}),
+			tools: [
+				...tools.map((editorTool) => {
+					const definition = convertToOpenAIFunction(editorTool);
+					return {
+						name: definition.name,
+						description: definition.description ?? "",
+						inputSchema: definition.parameters ?? {},
+						invoke: async (input: Record<string, unknown>) =>
+							String(await (editorTool as StructuredToolInterface).invoke(input)),
+					};
+				}),
+				...(frameTool ? [frameTool] : []),
+			],
 		});
 		return {
 			text,
@@ -488,8 +529,11 @@ export async function invokeOpenScreenAgent(args: InvokeArgs): Promise<InvokeRes
 	const chatModel = await createOpenScreenChatModel(model);
 	const agent = createAgent({
 		model: chatModel,
-		tools,
-		systemPrompt: buildSystemPrompt({ editsAllowed }),
+		tools: [
+			...tools,
+			...(frameTool && apiFrameFormat ? [videoFrameToolForApi(frameTool, apiFrameFormat)] : []),
+		],
+		systemPrompt,
 		middleware: anthropicCachingMiddleware(chatModel),
 	}).withConfig({
 		// ponytail: NOT optional. LangGraph's default is 25 steps, and an

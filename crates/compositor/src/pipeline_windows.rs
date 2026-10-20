@@ -728,6 +728,10 @@ impl Decoder {
         if self.has_peek {
             return self.commit_peek();
         }
+        // avcodec_receive_frame unrefs the output before decoding, including on
+        // EOF/error. A stale timestamp would let seek_to's same-frame fast path
+        // return an empty AVFrame after a seek beyond the end of the clip.
+        self.cur_pts = None;
         if !self.receive_into(self.frame)? {
             return Ok(ptr::null_mut());
         }
@@ -1495,6 +1499,30 @@ unsafe fn run_multi_inner(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn eof_invalidates_cached_pts_before_seeking_back_to_last_frame() -> Result<()> {
+        let Some(dir) = std::env::var_os("OPENSCREEN_TEST_MEDIA") else {
+            eprintln!("skipped: set OPENSCREEN_TEST_MEDIA for the decoder EOF regression");
+            return Ok(());
+        };
+        let file = std::path::PathBuf::from(dir).join("screen_colors.mp4");
+        let gpu = Gpu::create_auto(false)?;
+        unsafe {
+            let mut decoder = Decoder::open(&file.to_string_lossy(), &gpu)?;
+            let mut last_time = None;
+            while !decoder.next()?.is_null() {
+                last_time = Some(decoder.cur_time_sec());
+            }
+            let last_time = last_time.expect("fixture must contain video frames");
+            // avcodec_receive_frame unrefs its output even when it returns EOF.
+            assert!(decoder.cur_pts.is_none(), "EOF retained a stale seek-cache timestamp");
+            let frame = decoder.seek_to(last_time)?;
+            assert!(!frame.is_null(), "last frame should be decoded again");
+            assert!(!(*frame).data[0].is_null(), "last frame must own a D3D11 texture");
+        }
+        Ok(())
+    }
 
     /// L'ordre EST le contrat : tous les candidats zéro-copie d'abord, ceux qui exigent la
     /// mémoire système ensuite (`*_qsv` et `*_mf` sont matériels eux aussi — ce qui les

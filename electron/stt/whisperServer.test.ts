@@ -349,18 +349,20 @@ describe("WhisperServerManager", () => {
 		}
 	});
 
-	it("spawns whisper-stt-server with --model", async () => {
+	it.each([
+		"win32",
+		"linux",
+		"darwin",
+	] as const)("spawns whisper-stt-server on %s", async (platform) => {
 		const fs = await import("node:fs/promises");
 		const { spawn } = await import("node:child_process");
-		const dir = await mkdtemp(path.join(tmpdir(), "whisper-spawn-"));
+		const platformSpy = vi.spyOn(process, "platform", "get").mockReturnValue(platform);
+		const dir = await mkdtemp(path.join(tmpdir(), "whisper-한글 경로-"));
 		try {
 			const modelPath = path.join(dir, "ggml-small-q8_0.bin");
 			await writeFile(modelPath, "dummy-ggml");
-			// ponytail: no `.exe` branch on Windows, because there is no name to get
-			// right: every test here hands `start()` an explicit `binaryPath`, which is
-			// the branch that skips `resolveBinaryPath()` entirely. A `process.platform`
-			// read that decides nothing is a platform gate CI cannot pin and cannot
-			// exercise — it only looks like coverage.
+			// An explicit binary skips resolver probing; the platform still controls
+			// how the Unicode model directory reaches the helper.
 			const fakeBinaryPath = path.join(dir, "whisper-stt-server");
 			// mode 0o755: the manager refuses a helper it cannot execute, and the
 			// default write mode is not executable on POSIX.
@@ -388,7 +390,12 @@ describe("WhisperServerManager", () => {
 				const args = vi.mocked(spawn).mock.calls[0]?.[1] as string[];
 				const modelIdx = args.indexOf("--model");
 				expect(modelIdx).toBeGreaterThan(-1);
-				expect(args[modelIdx + 1]).toBe(modelPath);
+				expect(args[modelIdx + 1]).toBe(
+					platform === "win32" ? path.basename(modelPath) : modelPath,
+				);
+				expect(vi.mocked(spawn).mock.calls[0]?.[2]?.cwd).toBe(
+					platform === "win32" ? path.dirname(modelPath) : undefined,
+				);
 				expect(args).not.toContain("--cuda");
 				expect(args).not.toContain("--int8");
 				expect(args).not.toContain("--vad");
@@ -396,6 +403,7 @@ describe("WhisperServerManager", () => {
 				vi.unstubAllGlobals();
 			}
 		} finally {
+			platformSpy.mockRestore();
 			await rm(dir, { recursive: true, force: true });
 		}
 	});
