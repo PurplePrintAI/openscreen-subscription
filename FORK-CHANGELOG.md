@@ -32,6 +32,9 @@ For the dated review of newer upstream changes, see
 - Local QA only, not a public release or replacement of the installed app. The bugfix
   package passed isolated Windows IPC checks. One approved Opus 5.5 turn inspected
   eight real frames and added two zooms to a separate QA document.
+- Follow-up `.13.qa.3` unpacked Windows QA includes visual editing. One separately
+  approved four-frame Opus 5.5 turn passed packaged extraction/edit/save, restart
+  restoration and post-EOF rendering checks. Existing installation remains unchanged.
 - See [visual editing verification](technical-documentation/testing/video-frame-analysis-2026-10-21.md)
   for evidence, limits and the distinction between packaged bugfix QA and source-level
   visual-agent integration checks.

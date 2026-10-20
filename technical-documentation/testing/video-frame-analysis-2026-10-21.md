@@ -11,8 +11,9 @@ worktree and feature worktree are separate:
 
 The existing installed app does not acquire these features merely because this
 work passed. The packaged `.13.qa.2` QA app contains the **two bug fixes only**.
-Visual-agent code has a successful production Vite build and the integration
-evidence below, but is not yet packaged into a new installer or deployed.
+The subsequent `.13.qa.3` unpacked Windows QA package includes visual-agent code
+and passed the integrated checks below. Neither package is an installed upgrade
+or a published release; no new installer was produced.
 
 ## Bugfix package QA
 
@@ -126,6 +127,66 @@ quality. It sees sampled images, not the whole video stream.
 Real provider execution was verified for Claude only. Codex/API image transports
 were checked at their dependency/protocol boundaries, not with billed model calls.
 The native consent dialog was not driven with Computer Use.
+
+## Integrated Windows package — `.13.qa.3`
+
+Source: `90df8520`, with the same Rust fixes as `.13.qa.2`. The normal native
+freshness guard rejected a copied addon after the worktree checkout; the addon
+was rebuilt offline using the existing SDK/cache, without disabling that guard.
+An initial package also emitted unresolved dependency-path warnings with a
+junction-backed `node_modules`. It was not used for QA. A clean packaging staging
+directory from `git archive HEAD`, physical local dependencies and the verified
+compiled files produced the final `package-ready` directory without those warnings.
+No dependency/model download was required.
+
+The final unsigned unpacked package was built with `--publish never`. Its ASAR
+version is `1.10.0-subscription.13.qa.3`. All 14 compiled Electron files match the
+staged production build, and all 19 native files match the freshly staged payload.
+
+The owner separately approved one additional inference. A new Korean-path profile
+and a copy of the supplied video/project were used. The installed EXE/ASAR and
+original project hashes remained unchanged. The packaged app ran with its existing
+`HEADLESS=true` option: no visible window or Computer Use was required.
+
+The test used the packaged renderer's preload/native-bridge IPC:
+
+- Opened the separate QA project to authorize only its copied media.
+- Used the actual Opus 5.5 Claude CLI runtime and loopback MCP tools for **one turn**.
+- Read exactly four source frames at 5, 15, 25 and 33 seconds with the **packaged**
+  `ffmpeg-shared.exe`, confirmed by spawn tracing. The app's FFmpeg override and
+  `NODE_PATH` variables were unset; a host decoder was not used.
+- Observed one production disclosure-dialog request, including the default/cancel
+  denial settings. Only the native click was substituted with the owner's approved
+  response by an external QA adapter; the extractor, model, MCP and editor were real.
+- Returned one 2.2x zoom spanning raw timeline 4–30 seconds, focused at `(0.68, 0.60)`.
+  The saved draft preserved the 1.25x speed regions and clip list.
+- Saved through the packaged project IPC, restarted the QA app without another model
+  call, and restored both messages and the same saved edits.
+- Rendered the focused region at 17 seconds and then sought through EOF to 35.9 and
+  0 seconds. Hardware-backend frames arrived with generations 1, 2 and 3, distinct
+  image hashes and 960×540 RGBA buffers.
+
+Two probe assumptions were corrected without product changes or repeat inference:
+the first frame needed about 1.2 seconds rather than a fixed 600 ms, and EOF may
+legitimately publish no new bitmap. `readFrame` returning null means retain the
+last bitmap, not necessarily a decoder failure. The regression check therefore
+requires new frame generations on the **subsequent valid seeks**, not at EOF itself.
+The initial failed probe evidence is retained.
+
+This is dependency-focused package integration, not a fresh capture/export suite
+or physical mouse/keyboard validation. It does not establish Mac support, a signed
+installer, continuous scene tracking, or perfect zoom composition. No merge,
+release or installed-app replacement was performed. All owned QA/decoder/Claude
+processes and debug listeners were closed; no Sandbox was started in this stage.
+
+Final package evidence lives outside Git at
+`D:/purpleprint-build/studio-visual-package-20261021`:
+
+- `package-ready/win-unpacked` — final QA package; do not use the earlier `package`.
+- `Open-Isolated-QA.cmd` — explicit isolated-profile launcher for optional manual QA.
+- `evidence/package-manifest.json`, `packaged-qa-result.json`, `cleanup.json`.
+- `media/fixture.openscreen` — saved edited QA copy.
+- `preview.png` — actual packaged compositor image at the zoomed section.
 
 ## Local artifacts
 
