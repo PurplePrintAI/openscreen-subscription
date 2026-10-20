@@ -261,9 +261,14 @@ export class WhisperServerManager {
 			if (this.shuttingDown) {
 				throw new Error("whisper-stt-server manager is shutting down");
 			}
+			// The shipped Windows helper receives narrow argv (the system code page),
+			// but whisper.cpp expects a UTF-8 model path. Keep the fixed ASCII model
+			// filename in argv and let CreateProcessW carry its Unicode directory.
+			const modelCwd =
+				process.platform === "win32" ? path.dirname(path.resolve(options.modelPath)) : undefined;
 			const args = [
 				"--model",
-				options.modelPath,
+				modelCwd ? path.basename(options.modelPath) : options.modelPath,
 				"--port",
 				String(port),
 				"--host",
@@ -272,7 +277,11 @@ export class WhisperServerManager {
 				String(Math.max(1, os.cpus().length)),
 			];
 			if (forceCpu) args.push("--cpu");
-			const child = spawn(binaryPath, args, { stdio: ["ignore", "pipe", "pipe"] });
+			const child = spawn(modelCwd ? path.resolve(binaryPath) : binaryPath, args, {
+				...(modelCwd ? { cwd: modelCwd } : {}),
+				windowsHide: true,
+				stdio: ["ignore", "pipe", "pipe"],
+			});
 			const activeBackend: SttBackend = forceCpu ? "whispercpp-cpu" : resolved.backend;
 
 			this.process = child;
